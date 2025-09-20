@@ -62,6 +62,16 @@ git push origin feature/your-task-name
 
 ⚠️ **Do NOT push directly to** `main` or `dev`. Always create a feature branch and merge via PR.
 
+⚠️ IMPORTANT RULES:
+
+Do NOT push directly to main - Only the team leader can merge to main  
+
+Do NOT push directly to dev - Always create a feature branch and merge via PR
+
+All PRs must be reviewed and approved before merging
+
+
+
 ---
 
 ## 📂 Project Structure
