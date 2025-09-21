@@ -1,10 +1,13 @@
-import wave from "./assets/emotions/drago(wave).svg"
+import { useTranslation } from "react-i18next";
 function App() {
+  const { t } = useTranslation();
+
   return (
     <div>
-      <img src={wave} alt="Drago waves" width={"40%"} />
+      <h1>{t("welcome")}</h1>
+      <LanguageToggle />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
