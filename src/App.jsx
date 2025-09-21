@@ -1,7 +1,8 @@
+import wave from "./assets/emotions/drago(wave).svg"
 function App() {
   return (
     <div>
-      <img src="../public/assets/app icon.svg" alt="App Icon" />
+      <img src={wave} alt="Drago waves" width={"40%"} />
     </div>
   )
 }
