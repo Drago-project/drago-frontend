@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/public/app-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Drago</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/antijingo/Opendyslexic@0.0.1/OpenDyslexic.css">
+
+     <style>
+      /* Dyslexia-friendly base styles */
+      * {
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: 'OpenDyslexic', 'Lexend', Arial, sans-serif;
+        line-height: 1.6;
+        transition: direction 0.3s ease;
+      }
+      
+      /* RTL support */
+      [dir="rtl"] {
+        text-align: right;
+      }
+      
+      [dir="ltr"] {
+        text-align: left;
+      }
+      
+      /* Logical properties for better RTL support */
+      .margin-start { margin-inline-start: 1rem; }
+      .margin-end { margin-inline-end: 1rem; }
+      .padding-start { padding-inline-start: 1rem; }
+      .padding-end { padding-inline-end: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
