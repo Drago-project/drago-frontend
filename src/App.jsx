@@ -1,5 +1,7 @@
 // import { useTranslation } from "react-i18next"
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import "./styles/App.css"
+
 import Home from "./pages/Home";
 import ReadingPage from "./pages/ReadingPage";  
 import LandingPage from "./pages/LandingPage";
