@@ -3,6 +3,7 @@ import LanguageToggle from "./LanguageToggle"
 function NavBar() {
     return (
         <nav>
+             <img src="web-logo.png" />
             <ul>
                  <li><LanguageToggle /></li>
                 <li><NavLink to="/">Home</NavLink></li>
