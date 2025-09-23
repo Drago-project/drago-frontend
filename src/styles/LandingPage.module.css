@@ -226,4 +226,7 @@
   [dir="rtl"] .heroActions {
     justify-content: center;
   }
+  .landingPage{
+    margin-top: var(--spacing-lg);
+  }
 }

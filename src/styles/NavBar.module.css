@@ -2,7 +2,7 @@
 .navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  /* padding: var(--spacing-sm) 0; */
+  padding-top: var(--spacing-xs) ;
   position: fixed;
   top: 0;
   left: 0;
@@ -22,7 +22,7 @@
 }
 
 .logo {
-  height: 80px;
+  height: 70px;
   width: auto;
   transition: transform var(--transition-normal);
 }
@@ -164,6 +164,9 @@
 @media (max-width: 768px) {
   .navList {
     display: none;
+  }
+  .logo{
+    height: 40px;
   }
   
   .mobileMenuButton {
