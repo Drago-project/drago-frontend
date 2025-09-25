@@ -7,7 +7,7 @@ import ReadingPage from "./pages/ReadingPage";
 import LandingPage from "./pages/LandingPage";
 import SignUp from "./pages/SignUp";
 import LogIn from "./pages/LogIn";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/DashBoard";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 
