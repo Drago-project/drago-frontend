@@ -1,29 +1,29 @@
 :root {
   /* Primary Colors from Drago Character */
-  --color-primary: #EFA818; /* Orange/Yellow from character */
-  --color-avatar: #44958E; /* Teal/Green from dragon */
-  --color-secondary: #FDB462; /* Lighter orange */
-  --color-accent: #2D7A73; /* Darker teal */
-  
+  --color-primary: #efa818; /* Orange/Yellow from character */
+  --color-avatar: #44958e; /* Teal/Green from dragon */
+  --color-secondary: #fdb462; /* Lighter orange */
+  --color-accent: #2d7a73; /* Darker teal */
+
   /* Neutral Colors */
-  --color-white: #FFFFFF;
-  --color-light-gray: #F8F9FA;
-  --color-gray: #E9ECEF;
-  --color-dark-gray: #6C757D;
+  --color-white: #ffffff;
+  --color-light-gray: #f8f9fa;
+  --color-gray: #e9ecef;
+  --color-dark-gray: #6c757d;
   --color-black: #212529;
-  
+
   /* Background Colors */
   --bg-primary: var(--color-primary);
   --bg-avatar: var(--color-avatar);
   --bg-light: var(--color-light-gray);
   --bg-white: var(--color-white);
-  
+
   /* Text Colors */
   --text-primary: var(--color-black);
   --text-secondary: var(--color-dark-gray);
   --text-light: var(--color-white);
   --text-accent: var(--color-avatar);
-  
+
   /* Spacing */
   --spacing-xs: 0.5rem;
   --spacing-sm: 1rem;
@@ -31,20 +31,20 @@
   --spacing-lg: 2rem;
   --spacing-xl: 3rem;
   --spacing-2xl: 4rem;
-  
+
   /* Border Radius */
   --radius-sm: 8px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-xl: 32px;
   --radius-full: 50%;
-  
+
   /* Shadows */
   --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
   --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
-  
+
   /* Typography */
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -55,12 +55,12 @@
   --font-size-3xl: 2rem;
   --font-size-4xl: 2.5rem;
   --font-size-5xl: 3rem;
-  
+
   /* Line Heights */
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
-  
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
@@ -88,7 +88,12 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   line-height: var(--line-height-tight);
   margin-bottom: var(--spacing-sm);
   font-weight: 700;
@@ -139,7 +144,7 @@ p {
 }
 
 .btn-primary:hover {
-  background-color: #E6971A;
+  background-color: #e6971a;
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -224,11 +229,16 @@ p {
 }
 
 @keyframes bounce {
-  0%, 20%, 53%, 80%, 100% {
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
     animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
     transform: translate3d(0, 0, 0);
   }
-  40%, 43% {
+  40%,
+  43% {
     animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
     transform: translate3d(0, -8px, 0);
   }

@@ -1,7 +1,11 @@
 /* Landing Page Styles */
 .landingPage {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-secondary) 100%
+  );
   position: relative;
   overflow: hidden;
 }
@@ -63,12 +67,12 @@
   max-width: 400px;
   height: auto;
   filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
-  animation: bounce 3s ease-in-out infinite; 
+  animation: bounce 3s ease-in-out infinite;
 }
 
-
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -144,7 +148,11 @@
 
 /* CTA Section */
 .ctaSection {
-  background: linear-gradient(135deg, var(--color-avatar) 0%, var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-avatar) 0%,
+    var(--color-accent) 100%
+  );
   padding: var(--spacing-2xl) var(--spacing-md);
   text-align: center;
 }
@@ -181,28 +189,28 @@
     gap: var(--spacing-xl);
     text-align: center;
   }
-  
+
   .heroText {
     order: 2;
   }
-  
+
   .heroImage {
     order: 1;
   }
-  
+
   .heroTitle {
     font-size: var(--font-size-3xl);
   }
-  
+
   .heroActions {
     justify-content: center;
   }
-  
+
   .featuresGrid {
     grid-template-columns: 1fr;
     gap: var(--spacing-lg);
   }
-  
+
   .ctaActions {
     flex-direction: column;
     align-items: center;
@@ -226,7 +234,7 @@
   [dir="rtl"] .heroActions {
     justify-content: center;
   }
-  .landingPage{
+  .landingPage {
     margin-top: var(--spacing-lg);
   }
 }

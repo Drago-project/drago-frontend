@@ -2,7 +2,7 @@
 .navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  padding-top: var(--spacing-xs) ;
+  padding-top: var(--spacing-xs);
   position: fixed;
   top: 0;
   left: 0;
@@ -67,7 +67,7 @@
 }
 
 .navLink::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -165,14 +165,14 @@
   .navList {
     display: none;
   }
-  .logo{
+  .logo {
     height: 40px;
   }
-  
+
   .mobileMenuButton {
     display: block;
   }
-  
+
   .navContainer {
     padding: 0 var(--spacing-sm);
   }
