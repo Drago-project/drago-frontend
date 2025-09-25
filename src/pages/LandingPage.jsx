@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import styles from "../styles/LandingPage.module.css";
-import wave from "../assets/emotions/drago(wave).svg"
+import wave from "../assets/emotions/drago(wave).svg";
 
 function LandingPage() {
   const { t, i18n } = useTranslation();
@@ -9,7 +9,6 @@ function LandingPage() {
 
   return (
     <div className={styles.landingPage} dir={isRTL ? "rtl" : "ltr"}>
-
       {/* Hero Section */}
       <section className={styles.heroSection}>
         <div className={styles.heroContent}>
@@ -30,7 +29,11 @@ function LandingPage() {
             </div>
           </div>
           <div>
-            <img src={wave} alt="Drago waves" className="styles.dragoCharacter" />
+            <img
+              src={wave}
+              alt="Drago waves"
+              className="styles.dragoCharacter"
+            />
           </div>
         </div>
       </section>
