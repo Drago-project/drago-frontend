@@ -1,9 +1,10 @@
 function LogIn() {
-    return (
-        <div>
-            
-        </div>
-    )
+  return (
+    <div>
+      <p>hellooooooo from login </p>
+      <img src="public/web-logo2.png" alt="" />
+    </div>
+  );
 }
 
-export default LogIn
+export default LogIn;
