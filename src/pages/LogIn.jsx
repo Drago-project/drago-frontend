@@ -1,10 +1,6 @@
+// import wave from "src/";
 function LogIn() {
-  return (
-    <div>
-      <p>hellooooooo from login </p>
-      <img src="public/web-logo2.png" alt="" />
-    </div>
-  );
+  return <div></div>;
 }
 
 export default LogIn;

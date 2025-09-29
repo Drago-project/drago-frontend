@@ -1,9 +1,15 @@
 function SignUp() {
-    return (
-        <div>
-            <p>Welcome to the Sign Up Page</p>
-        </div>
-    )
+  return (
+    <div>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+      <p>Welcome to the Sign Up Page</p>
+    </div>
+  );
 }
 
-export default SignUp
+export default SignUp;
