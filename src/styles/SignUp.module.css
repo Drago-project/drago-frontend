@@ -1,0 +1,257 @@
+
+p {
+  color: black;
+}
+/* .signup-img{
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  width: 150px;
+  height: 150px;
+  background-color: aqua;
+} */
+.signup-container {
+  width: 350px;
+  margin: 300px auto;
+  padding: 200px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+.signup-container img{
+  margin-top: 250px;
+  height: 150px;
+
+}
+
+.signup-container h2 {
+  margin-bottom: 5px;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+input, select {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.gender {
+  justify-content: space-between;
+}
+
+.signup-btn {
+  background-color: #42b72a;
+  color: #fff;
+  font-weight: bold;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.signup-btn:hover {
+  background-color: #36a420;
+}
+
+.already {
+  margin-top: 10px;
+  color: #1877f2;
+  cursor: pointer;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #f0f2f5;   
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;              
+  font-family: Arial, sans-serif;
+}
+/* خلفية الصفحة */
+body {
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-family: Arial, sans-serif;
+}
+
+/* الصندوق الأساسي */
+.signup-container {
+  width: 400px;
+  padding: 20px 25px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+}
+
+/* العنوان */
+.signup-container h2 {
+  margin-bottom: 5px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.signup-container p {
+  margin-bottom: 15px;
+  color: #555;
+  text-align: center;
+}
+
+/* الفورم */
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* صفوف داخلية */
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+/* input و select */
+input, select {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  transition: 0.3s ease;
+  font-size: 14px;
+}
+
+/* hover + focus */
+input:hover, select:hover {
+  border-color: #1877f2;
+  box-shadow: 0px 0px 5px rgba(24,119,242,0.3);
+}
+input:focus, select:focus {
+  border-color: #1877f2;
+  outline: none;
+  box-shadow: 0px 0px 5px rgba(24,119,242,0.5);
+}
+
+/* gender radio */
+.gender {
+  display: flex;
+  justify-content: space-between;
+}
+.gender label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.gender label:hover {
+  border-color: #1877f2;
+  background: #f0f6ff;
+}
+
+/* زرار */
+.signup-btn {
+  background-color: #42b72a;
+  color: #fff;
+  font-weight: bold;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.signup-btn:hover {
+  background-color: #36a420;
+  transform: scale(1.05);
+}
+
+/* لينك already */
+.already {
+  margin-top: 10px;
+  text-align: center;
+  color: #1877f2;
+  cursor: pointer;
+}
+.already:hover {
+  text-decoration: underline;
+}
+.signup-btn {
+  width: 100%;             
+  background-color: #42b72a;
+  color: #fff;              
+  font-size: 18px;          
+  font-weight: bold;
+  padding: 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.signup-btn:hover {
+  background-color: #36a420; 
+  transform: scale(1.02);  
+}
+/* الصفوف */
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.row input,
+.row select {
+  flex: 1;
+  min-width: 0; 
+
+/* 📱 موبايل صغير */
+@media (max-width: 480px) {
+  .signup-container {
+    width: 95%;       
+    padding: 15px;
+  }
+
+  .row {
+    flex-direction: column; 
+    gap: 8px;
+  }
+
+  .row input,
+  .row select {
+    width: 100%; 
+  }
+
+  .signup-btn {
+    font-size: 16px;
+    padding: 12px;
+  }
+}
