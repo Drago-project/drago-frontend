@@ -27,9 +27,9 @@ body {
 
 /* الصورة */
 .signup-img {
-  margin-top:  250px;
-  width: 200px;
-  height: 200px;
+  margin-top: 90%;
+  width: 50%;
+  height: 50%;
 }
 .signup-logo {
   width: 100%;
