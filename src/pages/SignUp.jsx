@@ -1,7 +1,5 @@
-// import styles from "../styles/SignUp.module.css";
-
 import React, { useState } from "react";
-import styles from "../styles/SignUp.module.css"; // ✅ استخدمي styles صح
+import styles from "../styles/SignUp.module.css";
 import logo from "../assets/emotions/drago(writing).svg";
 
 export default function SignUp() {
@@ -14,6 +12,8 @@ export default function SignUp() {
     gender: "",
     email: "",
     password: "",
+    confirmPassword: "",
+    usage: "",
   });
 
   const handleChange = (e) => {
@@ -22,22 +22,27 @@ export default function SignUp() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
     console.log(form);
   };
 
   return (
     <div className={styles["signup-page"]}>
+      {/* الصورة الجانبية (ديسكتوب بس) */}
       <div className={styles["signup-left"]}>
         <img src={logo} alt="Logo" />
       </div>
 
+      {/* الفورم */}
       <div className={styles["signup-container"]}>
-        <div className={styles["signup-img"]}>
-          <img src={logo} alt="Logo" className={styles["signup-logo"]} />
-        </div>
+        {/* الصورة (موبايل فقط) */}
+        <img src={logo} alt="Logo" className={styles["signup-logo-mobile"]} />
 
-        <h2>Create a new account</h2>
-        <p>It's quick and easy.</p>
+        <h2 className={styles["title"]}>Create a new account</h2>
+        <p className={styles["subtitle"]}>It's quick and easy.</p>
 
         <form onSubmit={handleSubmit} className={styles["signup-form"]}>
           <div className={styles["row"]}>
@@ -59,26 +64,15 @@ export default function SignUp() {
             />
           </div>
 
-          <label>Date of birth</label>
+          <label className={styles["label"]}>Date of birth</label>
           <div className={styles["row"]}>
-            <select
-              name="dobDay"
-              value={form.dobDay}
-              onChange={handleChange}
-              required
-            >
+            <select name="dobDay" value={form.dobDay} onChange={handleChange} required>
               <option value="">Day</option>
               {[...Array(31)].map((_, i) => (
                 <option key={i + 1}>{i + 1}</option>
               ))}
             </select>
-
-            <select
-              name="dobMonth"
-              value={form.dobMonth}
-              onChange={handleChange}
-              required
-            >
+            <select name="dobMonth" value={form.dobMonth} onChange={handleChange} required>
               <option value="">Month</option>
               <option>Jan</option>
               <option>Feb</option>
@@ -93,13 +87,7 @@ export default function SignUp() {
               <option>Nov</option>
               <option>Dec</option>
             </select>
-
-            <select
-              name="dobYear"
-              value={form.dobYear}
-              onChange={handleChange}
-              required
-            >
+            <select name="dobYear" value={form.dobYear} onChange={handleChange} required>
               <option value="">Year</option>
               {Array.from({ length: 100 }, (_, i) => 2025 - i).map((year) => (
                 <option key={year}>{year}</option>
@@ -107,35 +95,16 @@ export default function SignUp() {
             </select>
           </div>
 
-          <label>Gender</label>
-          <div className={styles["row"] + " " + styles["gender"]}>
+          <label className={styles["label"]}>Gender</label>
+          <div className={`${styles["row"]} ${styles["gender"]}`}>
             <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Female"
-                onChange={handleChange}
-                required
-              />{" "}
-              Female
+              <input type="radio" name="gender" value="Female" onChange={handleChange} required /> Female
             </label>
             <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Male"
-                onChange={handleChange}
-              />{" "}
-              Male
+              <input type="radio" name="gender" value="Male" onChange={handleChange} /> Male
             </label>
             <label>
-              <input
-                type="radio"
-                name="gender"
-                value="Custom"
-                onChange={handleChange}
-              />{" "}
-              Custom
+              <input type="radio" name="gender" value="Custom" onChange={handleChange} /> Custom
             </label>
           </div>
 
@@ -157,16 +126,29 @@ export default function SignUp() {
             required
           />
 
-          <br />
+          <input
+            type="password"
+            name="confirmPassword"
+            placeholder="Confirm password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            required
+          />
+
+          <label className={styles["label"]}>Will you be using Drago at school or at home?</label>
+          <select name="usage" value={form.usage} onChange={handleChange} required>
+            <option value="">-- Please choose --</option>
+            <option value="school">At School</option>
+            <option value="home">At Home</option>
+            <option value="both">Both</option>
+          </select>
 
           <button type="submit" className={styles["signup-btn"]}>
             Sign Up
           </button>
         </form>
 
-        <p className={styles["already"]}>
-          Already have an account? Go to login
-        </p>
+        <p className={styles["already"]}>Already have an account? Go to login</p>
       </div>
     </div>
   );
