@@ -1,9 +1,6 @@
+// import wave from "src/";
 function LogIn() {
-    return (
-        <div>
-            
-        </div>
-    )
+  return <div></div>;
 }
 
-export default LogIn
+export default LogIn;
