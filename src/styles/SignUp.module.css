@@ -1,8 +1,29 @@
+.signup-page {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+  padding: 5%;
+}
+
+.signup-left {
+  flex: 1; /* ياخد مساحة */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.signup-left img {
+  height: 80vh; /* يخلي الصورة طويلة */
+  /* object-fit: contain; */
+}
+
 /* الصندوق الأساسي */
 .signup-container {
+  flex: 2;
   width: 50%; /* ياخد نص الشاشة */
-  max-width: 600px; /* أقصى عرض عشان مايبقاش ضخم أوي */
-  margin: 120px auto 40px; /* يبعد تحت شوية عشان الnavbar يبان */
+  /* max-width: 600px; أقصى عرض عشان مايبقاش ضخم أوي */
+  margin: 50px 0; /* يبعد تحت شوية عشان الnavbar يبان */
   padding: 30px;
   background: #fff;
   border: 1px solid #ddd;
@@ -13,9 +34,7 @@
 
 /* الصورة فوق الفورم */
 .signup-container img {
-  display: block;
-  margin: 0 auto 20px auto; /* تبقى في النص وفوق */
-  height: 120px;
+  display: none;
 }
 
 /* العنوان */
@@ -107,6 +126,14 @@
 
 /* 📱 موبايل */
 @media (max-width: 768px) {
+  .signup-left {
+    display: none;
+  }
+  .signup-container img {
+    display: block;
+    margin: 0 auto 20px auto; /* تبقى في النص وفوق */
+    height: 120px;
+  }
   .signup-container {
     width: 90%; /* في الموبايل ياخد معظم الشاشة */
     margin: 100px auto 20px;
