@@ -1,20 +1,13 @@
-body {
-  background-color: #f0f2f5;
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-}
-
 /* الصندوق الأساسي */
 .signup-container {
-  width: 50%;              /* ياخد نص الشاشة */
-  max-width: 600px;        /* أقصى عرض عشان مايبقاش ضخم أوي */
+  width: 50%; /* ياخد نص الشاشة */
+  max-width: 600px; /* أقصى عرض عشان مايبقاش ضخم أوي */
   margin: 120px auto 40px; /* يبعد تحت شوية عشان الnavbar يبان */
   padding: 30px;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -115,7 +108,7 @@ body {
 /* 📱 موبايل */
 @media (max-width: 768px) {
   .signup-container {
-    width: 90%;   /* في الموبايل ياخد معظم الشاشة */
+    width: 90%; /* في الموبايل ياخد معظم الشاشة */
     margin: 100px auto 20px;
     padding: 20px;
   }
@@ -136,24 +129,27 @@ body {
   }
 }
 /* input و select */
-input, select {
-  width: 100%;              /* ياخد العرض كله */
-  padding: 14px;            /* أكبر من الأول */
+input,
+select {
+  width: 100%; /* ياخد العرض كله */
+  padding: 14px; /* أكبر من الأول */
   border: 1px solid #ccc;
-  border-radius: 8px;       /* يخلي الشكل ناعم أكتر */
+  border-radius: 8px; /* يخلي الشكل ناعم أكتر */
   transition: 0.3s ease;
-  font-size: 16px;          /* خط أوضح */
+  font-size: 16px; /* خط أوضح */
   background-color: #fff;
-  box-shadow: 0px 2px 4px rgba(0,0,0,0.05); /* ظل خفيف زي البوكس */
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05); /* ظل خفيف زي البوكس */
 }
 
 /* hover + focus */
-input:hover, select:hover {
+input:hover,
+select:hover {
   border-color: #1877f2;
-  box-shadow: 0px 0px 6px rgba(24,119,242,0.25);
+  box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.25);
 }
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #1877f2;
   outline: none;
-  box-shadow: 0px 0px 6px rgba(24,119,242,0.4);
+  box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.4);
 }

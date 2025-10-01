@@ -79,7 +79,7 @@ html {
 }
 
 body {
-  font-family: "OpenDyslexic", "Lexend", Arial, sans-serif;
+  font-family: "OpenDyslexic", monospace, Arial, sans-serif;
   line-height: var(--line-height-normal);
   color: var(--text-primary);
   background-color: var(--bg-light);

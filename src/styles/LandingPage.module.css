@@ -36,7 +36,9 @@
   line-height: var(--line-height-tight);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-
+[dir = "rtl"] .heroTitle {
+   line-height: var(--line-height-relaxed);
+}
 .heroSubtitle {
   font-size: var(--font-size-xl);
   color: rgba(255, 255, 255, 0.9);
