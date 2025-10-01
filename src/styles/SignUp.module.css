@@ -262,8 +262,28 @@ select:focus {
 }
 .already:hover {
   text-decoration: underline;
-}
 
+}
+/* gender */
+.gender {
+  display: flex;
+  justify-content: space-between;
+}
+.gender label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.gender label:hover {
+  border-color: #1877f2;
+  background: #f0f6ff;
+}
 
 @media (max-width: 768px) {
   .signup-left {
