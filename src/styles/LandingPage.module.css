@@ -32,7 +32,7 @@
 .heroTitle {
   font-size: clamp(2.5rem, 5vw, 4rem);
   color: var(--text-light);
-  margin-bottom: var(--spacing-lg);
+  margin: var(--spacing-lg) 0;
   line-height: var(--line-height-tight);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
