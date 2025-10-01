@@ -5,16 +5,19 @@
     <link rel="icon" type="image/svg+xml" href="/app-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Drago</title>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Lexend&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/antijingo/Opendyslexic@0.0.1/OpenDyslexic.css"
-    />
+ 
 
     <style>
+      @font-face {
+        font-family: "OpenDyslexic";
+        src: url("public/fonts/open-dyslexic-font/OpendyslexicRegular-nRLZ0.otf")
+          format("opentype");
+      }
+      @font-face {
+        font-family: "Maqroo";
+        src: url("public/fonts/maqroo-font/Maqroo-Regular.ttf")
+          format("truetype");
+      }
       /* Dyslexia-friendly base styles */
       * {
         margin: 0;
@@ -23,7 +26,7 @@
       }
 
       body {
-        font-family: "OpenDyslexic", "Lexend", Arial, sans-serif;
+        font-family: "OpenDyslexic", monospace, Arial, sans-serif;
         line-height: 1.6;
         transition: direction 0.3s ease;
       }
