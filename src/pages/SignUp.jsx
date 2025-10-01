@@ -103,9 +103,9 @@ export default function SignUp() {
             <label>
               <input type="radio" name="gender" value="Male" onChange={handleChange} /> Male
             </label>
-            <label>
+            {/* <label>
               <input type="radio" name="gender" value="Custom" onChange={handleChange} /> Custom
-            </label>
+            </label> */}
           </div>
 
           <input
