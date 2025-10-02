@@ -1,0 +1,13 @@
+.footerSection {
+  background: linear-gradient(135deg, var(--color-avatar) 0%, var(--color-accent) 100%);
+  padding: var(--spacing-lg) var(--spacing-md);
+  text-align: center;
+}
+
+.footerContainer {
+  max-width: 800px;
+  margin: 0 auto;
+}
+ .footerContainer p{
+    margin: var(--spacing-sm);
+ }

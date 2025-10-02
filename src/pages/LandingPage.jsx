@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import Footer from "../components/footer";
 import styles from "../styles/LandingPage.module.css";
 import wave from "../assets/emotions/drago(wave).svg";
 
@@ -87,31 +88,29 @@ function LandingPage() {
       </section>
 
       {/* Call to Action Section */}
-      <section className={styles.ctaSection}>
-        <div className={styles.ctaContainer}>
-          <h2 className={styles.ctaTitle}>
+
+      <Footer>
+        <h2 className={styles.ctaTitle}>
+          {i18n.language === "ar"
+            ? "ابدأ رحلة التعلم اليوم"
+            : "Start the Learning Journey Today"}
+        </h2>
+        <p className={styles.ctaSubtitle}>
+          {i18n.language === "ar"
+            ? "انضم إلى آلاف الأطفال الذين يتعلمون القراءة مع دراجو"
+            : "Join thousands of children learning to read with Drago"}
+        </p>
+        <div className={styles.ctaActions}>
+          <Link to="/signup" className="btn btn-primary">
             {i18n.language === "ar"
-              ? "ابدأ رحلة التعلم اليوم"
-              : "Start the Learning Journey Today"}
-          </h2>
-          <p className={styles.ctaSubtitle}>
-            {i18n.language === "ar"
-              ? "انضم إلى آلاف الأطفال الذين يتعلمون القراءة مع دراجو"
-              : "Join thousands of children learning to read with Drago"}
-          </p>
-          <div className={styles.ctaActions}>
-            <Link to="/signup" className="btn btn-primary">
-              {i18n.language === "ar"
-                ? "إنشاء حساب مجاني"
-                : "Create Free Account"}
-            </Link>
-            <Link to="#" className="btn btn-outline">
-              {i18n.language === "ar" ? "معرفة المزيد" : "Learn More"}
-            </Link>
-          </div>
+              ? "إنشاء حساب مجاني"
+              : "Create Free Account"}
+          </Link>
+          <Link to="#" className="btn btn-outline">
+            {i18n.language === "ar" ? "معرفة المزيد" : "Learn More"}
+          </Link>
         </div>
-          <p>copyright © 2026 Drago</p>
-      </section>
+      </Footer>
     </div>
   );
 }

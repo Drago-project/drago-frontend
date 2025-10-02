@@ -82,7 +82,7 @@ body {
   font-family: "OpenDyslexic", monospace, Arial, sans-serif;
   line-height: var(--line-height-normal);
   color: var(--text-primary);
-  background-image: url("../assets/backgrunds/sky.jpg");
+  background-image: url("../assets/backgrunds/sky-blur.png");
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center; 

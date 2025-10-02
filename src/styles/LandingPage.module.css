@@ -145,16 +145,6 @@
 }
 
 /* CTA Section */
-.ctaSection {
-  background: linear-gradient(135deg, var(--color-avatar) 0%, var(--color-accent) 100%);
-  padding: var(--spacing-2xl) var(--spacing-md);
-  text-align: center;
-}
-
-.ctaContainer {
-  max-width: 800px;
-  margin: 0 auto;
-}
 
 .ctaTitle {
   color: var(--text-light);
