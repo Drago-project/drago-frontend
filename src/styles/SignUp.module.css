@@ -1,23 +1,27 @@
 /* SignUp.module.css */
-/* 
+
 .signup-page {
+  background-image: url("../assets/backgrunds/sky-wtf-blur.png");
+  background-size: cover;       
+  background-repeat: no-repeat; 
+  background-position: center;  
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 40px;
   padding: 5%;
-} */
-/* 
+}
+
 .signup-left {
   flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-} */
+}
 
-/* .signup-left img {
+.signup-left img {
   height: 80vh;
-} */
+}
 
 .signup-container {
   /* flex: 1; */
@@ -36,9 +40,10 @@
 }
 
 .signup-container img {
-  display: block;
+  display: none;
+  /* display: block;
   margin: 0 auto 20px auto;
-  height: 120px;
+  height: 120px; */
 }
 
 .signup-container h2 {
@@ -119,6 +124,11 @@
   .signup-btn {
     font-size: 16px;
     padding: 12px;
+  }
+  .signup-container img{
+    display: block;
+    margin: 0 auto 20px auto;
+    height: 120px;
   }
 }
 

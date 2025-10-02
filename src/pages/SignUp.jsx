@@ -32,11 +32,11 @@ export default function SignUp() {
 
   return (
     <>
-      <div>
+      <div className={styles["signup-page"]}>
         {/* الصورة الجانبية (ديسكتوب بس) */}
-        {/* <div className={styles["signup-left"]}>
+        <div className={styles["signup-left"]}>
           <img src={logo} alt="Logo" />
-        </div> */}
+        </div>
 
         {/* الفورم */}
         <div className={styles["signup-container"]}>
