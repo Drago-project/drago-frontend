@@ -25,9 +25,8 @@ export default function SignUp() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // استخدام رسالة التنبيه المناسبة للغة الحالية
     if (form.password !== form.confirmPassword) {
-      alert(t.signup.passwordsMismatch);
+      alert(t("signup.passwordsMismatch"));
       return;
     }
     console.log(form);
@@ -44,16 +43,15 @@ export default function SignUp() {
         <div className={styles["signup-container"]}>
           <img src={logo} alt="Logo" />
 
-          <h2 className={styles["title"]}>{t.title}</h2>
-          <p className={styles["subtitle"]}>{t.subtitle}</p>
+          <h2 className={styles["title"]}>{t("signup.title")}</h2>
+          <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
 
           <form onSubmit={handleSubmit} className={styles["signup-form"]}>
             <div className={styles["row"]}>
               <input
                 type="text"
                 name="firstName"
-                // استخدام النص من كائن الترجمة
-                placeholder={t.firstName}
+                placeholder={t("signup.firstName")}
                 value={form.firstName}
                 onChange={handleChange}
                 required
@@ -61,15 +59,14 @@ export default function SignUp() {
               <input
                 type="text"
                 name="lastName"
-                // استخدام النص من كائن الترجمة
-                placeholder={t.lastName}
+                placeholder={t("signup.lastName")}
                 value={form.lastName}
                 onChange={handleChange}
                 required
               />
             </div>
 
-            <label className={styles["label"]}>{t.dobLabel}</label>
+            <label className={styles["label"]}>{t("signup.dobLabel")}</label>
             <div className={styles["row"]}>
               <select
                 name="dobDay"
@@ -77,7 +74,7 @@ export default function SignUp() {
                 onChange={handleChange}
                 required
               >
-                <option value="">{t.day}</option>
+                <option value="">{t("signup.day")}</option>
                 {[...Array(31)].map((_, i) => (
                   <option key={i + 1}>{i + 1}</option>
                 ))}
@@ -88,7 +85,7 @@ export default function SignUp() {
                 onChange={handleChange}
                 required
               >
-                <option value="">{t.month}</option>
+                <option value="">{t("signup.month")}</option>
                 <option>Jan</option>
                 <option>Feb</option>
                 <option>Mar</option>
@@ -108,14 +105,14 @@ export default function SignUp() {
                 onChange={handleChange}
                 required
               >
-                <option value="">{t.year}</option>
+                <option value="">{t("signup.year")}</option>
                 {Array.from({ length: 100 }, (_, i) => 2025 - i).map((year) => (
                   <option key={year}>{year}</option>
                 ))}
               </select>
             </div>
 
-            <label className={styles["label"]}>{t.genderLabel}</label>
+            <label className={styles["label"]}>{t("signup.genderLabel")}</label>
             <div className={`${styles["row"]} ${styles["gender"]}`}>
               <label>
                 <input
@@ -125,7 +122,7 @@ export default function SignUp() {
                   onChange={handleChange}
                   required
                 />{" "}
-                {t.female}
+                {t("signup.female")}
               </label>
               <label>
                 <input
@@ -134,17 +131,14 @@ export default function SignUp() {
                   value="Male"
                   onChange={handleChange}
                 />{" "}
-                {t.male}
+                {t("signup.male")}
               </label>
-              {/* <label>
-                <input type="radio" name="gender" value="Custom" onChange={handleChange} /> {t.custom}
-                </label> */}
             </div>
 
             <input
               type="text"
               name="email"
-              placeholder={t.emailPlaceholder}
+              placeholder={t("signup.emailPlaceholder")}
               value={form.email}
               onChange={handleChange}
               required
@@ -153,7 +147,7 @@ export default function SignUp() {
             <input
               type="password"
               name="password"
-              placeholder={t.passwordPlaceholder}
+              placeholder={t("signup.passwordPlaceholder")}
               value={form.password}
               onChange={handleChange}
               required
@@ -162,31 +156,31 @@ export default function SignUp() {
             <input
               type="password"
               name="confirmPassword"
-              placeholder={t.confirmPasswordPlaceholder}
+              placeholder={t("signup.confirmPasswordPlaceholder")}
               value={form.confirmPassword}
               onChange={handleChange}
               required
             />
 
-            <label className={styles["label"]}>{t.usageLabel}</label>
+            <label className={styles["label"]}>{t("signup.usageLabel")}</label>
             <select
               name="usage"
               value={form.usage}
               onChange={handleChange}
               required
             >
-              <option value="">{t.choose}</option>
-              <option value="school">{t.school}</option>
-              <option value="home">{t.home}</option>
-              <option value="both">{t.both}</option>
+              <option value="">{t("signup.choose")}</option>
+              <option value="school">{t("signup.school")}</option>
+              <option value="home">{t("signup.home")}</option>
+              <option value="both">{t("signup.both")}</option>
             </select>
 
             <button type="submit" className={styles["signup-btn"]}>
-              {t.signUpButton}
+              {t("signup.signUpButton")}
             </button>
           </form>
 
-          <p className={styles["already"]}>{t.alreadyAccount}</p>
+          <p className={styles["already"]}>{t("signup.alreadyAccount")}</p>
         </div>
       </div>
       <Footer />
