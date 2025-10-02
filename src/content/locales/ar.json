@@ -1,4 +1,28 @@
 {
   "welcome": "مرحبًا بك في Drago",
-  "lesson": "ابدأ الدرس"
+  "lesson": "ابدأ الدرس",
+  "signup": {
+    "title": "إنشاء حساب جديد",
+    "subtitle": "الأمر سريع وسهل.",
+    "firstName": "الاسم الأول",
+    "lastName": "اسم العائلة",
+    "dobLabel": "تاريخ الميلاد",
+    "day": "يوم",
+    "month": "شهر",
+    "year": "سنة",
+    "genderLabel": "النوع",
+    "female": "أنثى",
+    "male": "ذكر",
+    "emailPlaceholder": "رقم الهاتف المحمول أو البريد الإلكتروني",
+    "passwordPlaceholder": "كلمة مرور جديدة",
+    "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
+    "usageLabel": "هل ستستخدم Drago في المدرسة أم في المنزل؟",
+    "choose": "-- يرجى الاختيار --",
+    "school": "في المدرسة",
+    "home": "في المنزل",
+    "both": "كلاهما",
+    "signUpButton": "تسجيل",
+    "alreadyAccount": "هل لديك حساب بالفعل؟ اذهب لتسجيل الدخول",
+    "passwordsMismatch": "كلمات المرور غير متطابقة!"
+  }
 }

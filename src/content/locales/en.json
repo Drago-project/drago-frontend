@@ -1,4 +1,29 @@
 {
   "welcome": "Meet Drago, your reading buddy",
-  "lesson": "Start Lesson"
+  "lesson": "Start Lesson",
+
+  "signup": {
+    "title": "Create a new account",
+    "subtitle": "It's quick and easy.",
+    "firstName": "First name",
+    "lastName": "Surname",
+    "dobLabel": "Date of birth",
+    "day": "Day",
+    "month": "Month",
+    "year": "Year",
+    "genderLabel": "Gender",
+    "female": "Female",
+    "male": "Male",
+    "emailPlaceholder": "Mobile number or email address",
+    "passwordPlaceholder": "New password",
+    "confirmPasswordPlaceholder": "Confirm password",
+    "usageLabel": "Will you be using Drago at school or at home?",
+    "choose": "-- Please choose --",
+    "school": "At School",
+    "home": "At Home",
+    "both": "Both",
+    "signUpButton": "Sign Up",
+    "alreadyAccount": "Already have an account? Go to login",
+    "passwordsMismatch": "Passwords do not match!"
+  }
 }

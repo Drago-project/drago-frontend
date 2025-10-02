@@ -1,71 +1,11 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "../styles/SignUp.module.css";
 import logo from "../assets/emotions/drago(writing).svg";
 import Footer from "../components/footer";
 
-// ----------------------------------------------------
-// 1. كائن النصوص لدعم اللغتين
-// ----------------------------------------------------
-const texts = {
-  en: {
-    title: "Create a new account",
-    subtitle: "It's quick and easy.",
-    firstName: "First name",
-    lastName: "Surname",
-    dobLabel: "Date of birth",
-    day: "Day",
-    month: "Month",
-    year: "Year",
-    genderLabel: "Gender",
-    female: "Female",
-    male: "Male",
-    emailPlaceholder: "Mobile number or email address",
-    passwordPlaceholder: "New password",
-    confirmPasswordPlaceholder: "Confirm password",
-    usageLabel: "Will you be using Drago at school or at home?",
-    choose: "-- Please choose --",
-    school: "At School",
-    home: "At Home",
-    both: "Both",
-    signUpButton: "Sign Up",
-    alreadyAccount: "Already have an account? Go to login",
-    passwordsMismatch: "Passwords do not match!",
-    languageSwitch: "العربية", // زر التبديل للغة الأخرى
-  },
-  ar: {
-    title: "إنشاء حساب جديد",
-    subtitle: "الأمر سريع وسهل.",
-    firstName: "الاسم الأول",
-    lastName: "اسم العائلة",
-    dobLabel: "تاريخ الميلاد",
-    day: "يوم",
-    month: "شهر",
-    year: "سنة",
-    genderLabel: "النوع",
-    female: "أنثى",
-    male: "ذكر",
-    emailPlaceholder: "رقم الهاتف المحمول أو البريد الإلكتروني",
-    passwordPlaceholder: "كلمة مرور جديدة",
-    confirmPasswordPlaceholder: "تأكيد كلمة المرور",
-    usageLabel: "هل ستستخدم Drago في المدرسة أم في المنزل؟",
-    choose: "-- يرجى الاختيار --",
-    school: "في المدرسة",
-    home: "في المنزل",
-    both: "كلاهما",
-    signUpButton: "تسجيل",
-    alreadyAccount: "هل لديك حساب بالفعل؟ اذهب لتسجيل الدخول",
-    passwordsMismatch: "كلمات المرور غير متطابقة!",
-    languageSwitch: "English", // زر التبديل للغة الأخرى
-  },
-};
-
 export default function SignUp() {
-  // ----------------------------------------------------
-  // 2. حالة اللغة
-  // ----------------------------------------------------
-  const [language, setLanguage] = useState("en"); // يمكن تغيير القيمة الافتراضية
-  const t = texts[language]; // 't' هو اختصار لـ texts، وهو يحتوي على النصوص الحالية
-
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -83,50 +23,21 @@ export default function SignUp() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ----------------------------------------------------
-  // 3. دالة التبديل بين اللغات
-  // ----------------------------------------------------
-  const toggleLanguage = () => {
-    setLanguage(language === "en" ? "ar" : "en");
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     // استخدام رسالة التنبيه المناسبة للغة الحالية
     if (form.password !== form.confirmPassword) {
-      alert(t.passwordsMismatch);
+      alert(t.signup.passwordsMismatch);
       return;
     }
     console.log(form);
   };
 
-  // ----------------------------------------------------
-  // 4. الريندر (Render) - تطبيق النصوص والاتجاه
-  // ----------------------------------------------------
   return (
     <>
-
       <div className={styles["signup-page"]}>
         {/* الصورة الجانبية (ديسكتوب بس) */}
         <div className={styles["signup-left"]}>
-          <img src={logo} alt="Logo" />
-        </div>
-
-        <div className={styles["signup-container"]}>
-          <img src={logo} alt="Logo" />
-
-        </div>
-      </div>
-
-      {/* تطبيق اتجاه النص (Right-to-Left) إذا كانت اللغة عربية */}
-      <div dir={language === "ar" ? "rtl" : "ltr"}>
-        {/* زر تغيير اللغة */}
-        <button onClick={toggleLanguage} className={styles["lang-btn"]}>
-          {t.languageSwitch}
-        </button>
-
-        <div className={styles["signup-left"]}>
-
           <img src={logo} alt="Logo" />
         </div>
 
@@ -227,7 +138,7 @@ export default function SignUp() {
               </label>
               {/* <label>
                 <input type="radio" name="gender" value="Custom" onChange={handleChange} /> {t.custom}
-              </label> */}
+                </label> */}
             </div>
 
             <input
