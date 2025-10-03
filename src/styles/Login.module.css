@@ -32,26 +32,3 @@
   cursor: pointer;
 }
 
-/* ------------------------------------------------ */
-/* تنسيق زر اللغة (ضروري لعمل الترجمة والـ RTL) */
-/* ------------------------------------------------ */
-
-.lang-btn {
-  position: absolute; /* لتثبيته في مكان محدد */
-  top: 20px;
-  /* يظهر في الزاوية اليمين في LTR/ الإنجليزية */
-  right: 20px;
-  padding: 8px 15px;
-  background-color: #f0f2f5;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  z-index: 10;
-}
-
-/* تعديل موقع الزر للغة العربية (RTL) */
-[dir="rtl"] .lang-btn {
-  right: auto;
-  left: 20px;
-}
