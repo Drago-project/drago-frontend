@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
-import Footer from "../components/footer";
+import Footer from "../components/Footer";
 import styles from "../styles/LandingPage.module.css";
 import wave from "../assets/emotions/drago(wave).svg";
 
