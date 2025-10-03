@@ -24,5 +24,15 @@
     "signUpButton": "تسجيل",
     "alreadyAccount": "هل لديك حساب بالفعل؟ اذهب لتسجيل الدخول",
     "passwordsMismatch": "كلمات المرور غير متطابقة!"
+  },
+  "login": {
+    "title": "مرحباً بعودتك",
+    "subtitle": "سجل الدخول إلى حسابك.",
+    "emailPlaceholder": "رقم الهاتف المحمول أو البريد الإلكتروني",
+    "passwordPlaceholder": "كلمة المرور",
+    "loginButton": "تسجيل الدخول",
+    "forgotPassword": "هل نسيت كلمة المرور؟",
+    "createAccount": "إنشاء حساب جديد",
+    "missingFields": "الرجاء إدخال بريدك الإلكتروني وكلمة المرور."
   }
 }

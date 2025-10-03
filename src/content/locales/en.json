@@ -25,5 +25,15 @@
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
     "passwordsMismatch": "Passwords do not match!"
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Log in to your account.",
+    "emailPlaceholder": "Mobile number or email address",
+    "passwordPlaceholder": "Password",
+    "loginButton": "Log In",
+    "forgotPassword": "Forgot password?",
+    "createAccount": "Create a new account",
+    "missingFields": "Please enter your email and password."
   }
 }
