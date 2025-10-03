@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import LanguageToggle from "./LanguageToggle";
 import styles from "../styles/NavBar.module.css";
+import logo from "../assets/backgrunds/web-logo.png";
 
 function NavBar() {
     const { i18n } = useTranslation();
@@ -34,7 +35,7 @@ function NavBar() {
             <div className={styles.navContainer}>
                 <NavLink to="/" onClick={closeMobileMenu}>
                     <img 
-                        src="web-logo.png" 
+                        src={logo}
                         alt="Drago Logo" 
                         className={styles.logo}
                     />
