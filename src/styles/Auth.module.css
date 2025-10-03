@@ -8,7 +8,7 @@
   background-position: center;  
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 40px;
   padding: 5%;
 }
@@ -18,10 +18,15 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  position: sticky;
+  top: 0;
+  height: 100vh;
 }
 
 .auth-left img {
-  height: 80vh;
+  height: 100%;
+  width: auto;
+  object-fit: contain;
 }
 
 .auth-container {
@@ -129,6 +134,13 @@ input:focus, select:focus {
   border-radius: 6px;
   transition: 0.3s ease;
   font-size: 14px;
+}
+
+/* Make date selects (day, month, year) sit side-by-side */
+.row select {
+  flex: 1;
+  min-width: 0;
+  width: auto; /* override global 100% */
 }
 
 /* Label styling */
