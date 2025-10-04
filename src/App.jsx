@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
 import Dashboard from "./pages/DashBoard";
+import About from "./pages/About";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 
@@ -24,9 +25,7 @@ function Layout() {
       {!shouldHideNav ? <NavBar /> : <NavInside />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/reading" element={<ReadingPage />} />
-        
+        <Route path="/about" element={<About />} />
         {/* Auth routes */}
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
@@ -37,7 +36,10 @@ function Layout() {
         {/* Redirect old routes to new auth routes */}
         <Route path="/signup" element={<Navigate to="/auth/signup" replace />} />
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/reading" element={<ReadingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        
         <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>
     </>

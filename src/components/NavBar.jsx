@@ -58,10 +58,10 @@ function NavBar() {
                     </li>
                     <li className={styles.navItem}>
                         <NavLink 
-                            to="#" 
+                            to="/about" 
                             className={styles.navLink}
                         >
-                            {i18n.language === 'ar' ? 'حول' : 'About'}
+                            {i18n.language === 'ar' ? "عن عسر القراءة" : 'About dyslexia'}
                         </NavLink>
                     </li>
                     <li className={styles.navItem}>
