@@ -71,46 +71,61 @@ function HeroSection({ t, i18n }) {
   );
 }
 
-const cards =[
-  {title:{
-  en:"Dyslexia-Friendly",
-  ar:"مخصص لعسر القراءة"},
-  description:{
-  en:"Specifically designed for children with dyslexia using appropriate fonts and visual aids",
-  ar:"مصمم خصيصاً للأطفال المصابين بعسر القراءة مع خطوط ومساعدات بصرية مناسبة"},
-  icon:"🎯"},
-  {title:{
-    en:"Interactive Learning",
-  ar: "تعلم تفاعلي"},
-description:{
-  en: "Engaging games and interactive activities that make learning fun and exciting",
-  ar: "العاب وأنشطة تفاعلية تجعل التعلم ممتعاً ومشوقاً"
-},
-icon:"🎮"},
-  {title:{
-    en:"Progress Tracking",
-    ar:"تتبع التقدم"},
-  description:{
-    en:"Track your child's progress and get detailed reports on their performance",
-    ar:"تتبع تقدم طفلك وحصل على تقارير مفصلة عن أدائه"
+const cards = [
+  {
+    title: {
+      en: "Dyslexia-Friendly",
+      ar: "مخصص لعسر القراءة",
+    },
+    description: {
+      en: "Specifically designed for children with dyslexia using appropriate fonts and visual aids",
+      ar: "مصمم خصيصاً للأطفال المصابين بعسر القراءة مع خطوط ومساعدات بصرية مناسبة",
+    },
+    icon: "🎯",
   },
-  icon:"📈"
-}
-]
+  {
+    title: {
+      en: "Interactive Learning",
+      ar: "تعلم تفاعلي",
+    },
+    description: {
+      en: "Engaging games and interactive activities that make learning fun and exciting",
+      ar: "العاب وأنشطة تفاعلية تجعل التعلم ممتعاً ومشوقاً",
+    },
+    icon: "🎮",
+  },
+  {
+    title: {
+      en: "Progress Tracking",
+      ar: "تتبع التقدم",
+    },
+    description: {
+      en: "Track your child's progress and get detailed reports on their performance",
+      ar: "تتبع تقدم طفلك وحصل على تقارير مفصلة عن أدائه",
+    },
+    icon: "📈",
+  },
+];
 
 function FeatureCards({ i18n }) {
   return (
     <section className={styles.featuresSection}>
-      <div className={styles.featuresGrid}>
-      {cards.map((card, index) => (
-        <Card
-          key={index}
-          title={i18n.language === "ar" ? card.title.ar : card.title.en}
-          description={i18n.language === "ar" ? card.description.ar : card.description.en}
-          icon={card.icon}
-        />
-      ))}
-    </div>
+      <div className={styles.featuresContainer}>
+        <div className={styles.featuresGrid}>
+          {cards.map((card, index) => (
+            <Card
+              key={index}
+              title={i18n.language === "ar" ? card.title.ar : card.title.en}
+              description={
+                i18n.language === "ar"
+                  ? card.description.ar
+                  : card.description.en
+              }
+              icon={card.icon}
+            />
+          ))}
+        </div>
+      </div>
     </section>
   );
 }
