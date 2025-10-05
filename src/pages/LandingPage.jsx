@@ -14,7 +14,6 @@ function LandingPage() {
       <FeatureCards i18n={i18n} />
 
       {/* Call to Action Section */}
-
       <Footer>
         <h2 className={styles.ctaTitle}>
           {i18n.language === "ar"
