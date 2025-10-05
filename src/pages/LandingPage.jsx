@@ -32,7 +32,7 @@ function LandingPage() {
               ? "إنشاء حساب مجاني"
               : "Create Free Account"}
           </Link>
-          <Link to="#" className="btn btn-outline">
+          <Link to="/about" className="btn btn-secondary">
             {i18n.language === "ar"
               ? " معرفة المزيد عن الديسليكسيا"
               : "Learn More about dyslexia"}
