@@ -120,11 +120,11 @@ function NavBar() {
                         </li>
                         <li className={styles.mobileNavItem}>
                             <NavLink 
-                                to="#" 
+                                to="/about" 
                                 className={styles.mobileNavLink}
                                 onClick={closeMobileMenu}
                             >
-                                {i18n.language === 'ar' ? 'حول' : 'About'}
+                                {i18n.language === 'ar' ? 'عن عسر القراءة' : 'About dyslexia'}
                             </NavLink>
                         </li>
                         <li className={styles.mobileNavItem}>
