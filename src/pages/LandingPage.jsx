@@ -47,11 +47,11 @@ function HeroSection({ t, i18n }) {
     <section className={styles.heroSection}>
       <div className={styles.heroContent}>
         <div className={styles.heroText}>
-          <h1 className={styles.heroTitle}>{t("welcome")}</h1>
+          <h1 className={styles.heroTitle}>{t("welcome")} <span className={styles.dragoHighlight}>{t("drago")}</span></h1>
           <p className={styles.heroSubtitle}>
             {i18n.language === "ar"
-              ? "تطبيق تعليمي مخصص للأطفال المصابين بعسر القراءة، يساعدهم على تعلم القراءة بطريقة ممتعة وتفاعلية مع دراجو الصديق المفضل"
-              : "An educational app designed for children with dyslexia, helping them learn to read in a fun and interactive way with their favorite buddy Drago"}
+              ? "تعلم بطريقة ممتعة وتفاعلية للأطفال ذوي عسر القراءة."
+              : "Fun, interactive learning for dyslexic children."}
           </p>
           <div className={styles.heroActions}>
             <Link to="/signup" className="btn btn-primary">

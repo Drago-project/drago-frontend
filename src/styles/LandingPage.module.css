@@ -39,6 +39,9 @@
 [dir = "rtl"] .heroTitle {
    line-height: var(--line-height-relaxed);
 }
+.dragoHighlight {
+  color: var(--color-avatar);
+}
 .heroSubtitle {
   font-size: var(--font-size-xl);
   color: rgba(255, 255, 255, 0.9);
