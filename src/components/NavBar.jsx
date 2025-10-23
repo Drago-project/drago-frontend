@@ -107,7 +107,7 @@ function NavBar() {
                 <div className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ''}`}>
                     <ul className={styles.mobileNavList}>
                         <li className={styles.mobileNavItem}>
-                            <LanguageToggle />
+                            <LanguageToggle onLanguageChange={closeMobileMenu} />
                         </li>
                         <li className={styles.mobileNavItem}>
                             <NavLink 
