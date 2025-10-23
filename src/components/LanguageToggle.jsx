@@ -1,11 +1,15 @@
 import { useTranslation } from "react-i18next";
 
-function LanguageToggle() {
+function LanguageToggle({ onLanguageChange }) {
   const { i18n } = useTranslation();
 
   const toggleLanguage = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
     i18n.changeLanguage(newLang);
+    // Call the callback function if provided (to close mobile menu)
+    if (onLanguageChange) {
+      onLanguageChange();
+    }
   };
 
   const isArabic = i18n.language === "ar";
