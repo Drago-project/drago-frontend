@@ -1,6 +1,6 @@
 .footerSection {
   background: linear-gradient(135deg, var(--color-avatar) 0%, var(--color-accent) 100%);
-  padding: var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-sm);
   text-align: center;
 }
 
@@ -8,6 +8,14 @@
   max-width: 800px;
   margin: 0 auto;
 }
- .footerContainer p{
-    margin: var(--spacing-sm);
- }
+
+.footerContainer p {
+  margin: var(--spacing-sm);
+}
+
+/* Tablet and Desktop - Mobile First Approach */
+@media (min-width: 768px) {
+  .footerSection {
+    padding: var(--spacing-lg) var(--spacing-md);
+  }
+}

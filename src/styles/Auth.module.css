@@ -1,4 +1,4 @@
-/* Auth.module.css - Shared styling for authentication pages */
+/* Auth.module.css - Shared styling for authentication pages - Mobile First */
 
 /* Main auth page layout */
 .auth-page {
@@ -7,20 +7,14 @@
   background-repeat: no-repeat; 
   background-position: center;  
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
-  gap: 40px;
+  gap: 0;
   padding: 5%;
 }
 
 .auth-left {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  display: none;
 }
 
 .auth-left img {
@@ -34,7 +28,7 @@
   margin: 100px auto 20px;
   padding: 20px;
   max-width: 600px;
-  min-width: 400px;
+  min-width: unset;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -43,7 +37,9 @@
 }
 
 .auth-container img {
-  display: none;
+  display: block;
+  margin: 0 auto 20px auto;
+  height: 120px;
 }
 
 .auth-container h2 {
@@ -122,8 +118,9 @@ input:focus, select:focus {
 /* Row layout for multiple inputs */
 .row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .row input {
@@ -189,7 +186,7 @@ input:focus, select:focus {
   font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
   text-align: right;
   max-width: 600px;
-  min-width: 400px;
+  min-width: unset;
 }
 
 [dir="rtl"] .auth-container h2 {
@@ -221,36 +218,45 @@ input:focus, select:focus {
   flex-direction: row-reverse;
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
+/* Tablet and Desktop - Mobile First Approach */
+@media (min-width: 768px) {
+  .auth-page {
+    justify-content: space-between;
+    gap: 40px;
+  }
+  
   .auth-left {
-    display: none;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    height: 100vh;
   }
 
   .auth-container {
     width: 90%;
     margin: 100px auto 20px;
     padding: 20px;
-    min-width: unset;
+    min-width: 400px;
   }
   
   [dir="rtl"] .auth-container {
-    min-width: unset;
+    min-width: 400px;
   }
   
   .row {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 10px;
   }
   
   .auth-btn {
-    font-size: 16px;
-    padding: 12px;
+    font-size: 18px;
+    padding: 14px;
   }
   
   .auth-container img {
-    display: block;
-    margin: 0 auto 20px auto;
-    height: 120px;
+    display: none;
   }
 }
