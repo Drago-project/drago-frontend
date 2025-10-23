@@ -42,7 +42,7 @@
 
 .navItem {
   position: relative;
-    text-align: center;
+  text-align: center;
 }
 
 .navLink {
@@ -68,7 +68,7 @@
 }
 
 .navLink::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -167,16 +167,14 @@
     display: flex;
   }
 
-  .navItem{}
-  
   .logo {
     height: 70px;
   }
-  
+
   .mobileMenuButton {
     display: none;
   }
-  
+
   .navContainer {
     padding: 0 var(--spacing-md);
   }
