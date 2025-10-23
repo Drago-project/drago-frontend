@@ -219,10 +219,9 @@ input:focus, select:focus {
 }
 
 /* Tablet and Desktop - Mobile First Approach */
-@media (min-width: 768px) {
+@media (min-width: 968px) {
   .auth-page {
     justify-content: space-between;
-    gap: 40px;
   }
   
   .auth-left {
@@ -236,8 +235,8 @@ input:focus, select:focus {
   }
 
   .auth-container {
-    width: 90%;
-    margin: 100px auto 20px;
+    /* width: 90%; */
+    margin: auto;
     padding: 20px;
     min-width: 400px;
   }

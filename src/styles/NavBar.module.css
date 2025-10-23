@@ -42,6 +42,7 @@
 
 .navItem {
   position: relative;
+    text-align: center;
 }
 
 .navLink {
@@ -161,10 +162,12 @@
 }
 
 /* Tablet and Desktop - Mobile First Approach */
-@media (min-width: 768px) {
+@media (min-width: 968px) {
   .navList {
     display: flex;
   }
+
+  .navItem{}
   
   .logo {
     height: 70px;
@@ -251,7 +254,7 @@
 }
 
 .navbarInside .navLink {
-  font-weight: 600;
+  font-size: var(--font-size-sm);
 }
 
 .navbarInside .authButton {

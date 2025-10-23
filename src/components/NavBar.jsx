@@ -89,7 +89,7 @@ function NavBar() {
                                 `${styles.navLink} ${styles.authButton} ${isActive ? styles.active : ''}`
                             }
                         >
-                            {i18n.language === 'ar' ? 'اشتراك' : 'Sign Up'}
+                            {i18n.language === 'ar' ? 'اشتراك' : 'SignUp'}
                         </NavLink>
                     </li>
                 </ul>
