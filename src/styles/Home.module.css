@@ -3,10 +3,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* gap: 20px;
-  padding: 20px; */
-  /* padding-top: 100px; */
-   /* Add space for navbar */
+  gap: 20px;
+  padding: 20px;
+  padding-top: 100px; /* Add space for fixed navbar */
   min-height: 100vh;
 }
 
