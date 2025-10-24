@@ -4,7 +4,7 @@ import writing from "../assets/islands/Writing Workshop Island.svg";
 import books from "../assets/islands/Reading Quest Island.svg";
 import styles from "../styles/Home.module.css";
 import Lottie from "lottie-react";
-import animate2 from "../assets/animation/drago(holding map 2).svg";
+// import animate2 from "../assets/animation/drago(holding map 2).svg";
 import { useState, useEffect } from "react";
 
 
