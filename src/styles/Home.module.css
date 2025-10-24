@@ -28,7 +28,7 @@
   display: flex;
   justify-content: center;
   gap: 40%;
-  padding: 20px;
+  /* padding: 20px; */
 }
 
 .islandRow img {
@@ -54,6 +54,6 @@
 .animationRow {
   position: absolute;
   top: 0;
-  left: 30%;
+  left: 40%;
   z-index: 3;
 }

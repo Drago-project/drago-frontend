@@ -7,52 +7,53 @@ import Lottie from "lottie-react";
 // import animate2 from "../assets/animation/drago(holding map 2).svg";
 import { useState, useEffect } from "react";
 
-
 function Home() {
   const [animationData, setAnimationData] = useState(null);
 
   useEffect(() => {
     // Load the animation data
-    fetch('/map.json')
-      .then(response => response.json())
-      .then(data => setAnimationData(data))
-      .catch(error => {
-        console.error('Error loading animation:', error);
+    fetch("/map.json")
+      .then((response) => response.json())
+      .then((data) => setAnimationData(data))
+      .catch((error) => {
+        console.error("Error loading animation:", error);
         setAnimationData(null);
       });
   }, []);
 
   return (
     <div className={styles.homePage}>
+      {/* <p>help drago find his way to the treasure!</p> */}
       <div className={styles.islandRow}>
-      <img
-        src={writing}
-        alt="Writing Workshop Island"
-        style={{ marginTop: "10%" }}
-      />
+        <img src={writing} alt="Writing Workshop Island" />
         <img src={pyramids} alt="Pyramids Island" />
       </div>
       <div className={styles.animationRow}>
-        <p>help drago find his way to the treasure!</p>
-        {/* Try Lottie animation */}
+        {/* try Lottie animation */}
         {animationData ? (
-          <Lottie 
+          <Lottie
             animationData={animationData}
             loop={true}
             autoplay={true}
-            style={{ width:"130%"}}
-            />
-          ) : (
-            <div style={{ width: 250, height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            style={{ width: "130%" }}
+          />
+        ) : (
+          <div
+            style={{
+              width: 250,
+              height: 250,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
             Loading animation...
           </div>
         )}
-       
-        
       </div>
       <div className={styles.islandRow}>
-        <img src={volcano} alt="Volcano Island" style={{ marginTop: "10%" }} />
-        <img src={books} alt="Books Island" style={{ marginTop: "5%" }} />
+        <img src={volcano} alt="Volcano Island" />
+        <img src={books} alt="Books Island" />
       </div>
     </div>
   );
