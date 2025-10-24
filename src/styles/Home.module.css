@@ -1,0 +1,51 @@
+.homePage {
+  background-image: url(../assets/backgrunds/orange-sky.png);
+  background-size: cover;
+  background-repeat: no-repeat;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+}
+
+.islandRow {
+  display: flex;
+  justify-content: center;
+  gap: 30%;
+  padding: 20px;
+}
+
+.islandRow img {
+  width: 30%;
+  height: 30%;
+  animation: float 3s ease-in-out infinite; 
+  &:hover {
+    transform: scale(1.5);
+    transition: transform 0.3s;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+.animationRow {
+
+  position: absolute;
+  top: 60%;
+  z-index: 3;
+}
+
+.animationRow img {
+  /* animation: bounce 1s ease-in-out infinite alternate-reverse; */
+  /* max-width: 80%; */
+}
+
+
