@@ -12,13 +12,13 @@
 .islandRow {
   display: flex;
   justify-content: center;
-  gap: 30%;
+  gap: 40%;
   padding: 20px;
 }
 
 .islandRow img {
-  width: 30%;
-  height: 30%;
+  width: 25%;
+  height: 25%;
   animation: float 3s ease-in-out infinite; 
   &:hover {
     transform: scale(1.5);
@@ -39,7 +39,8 @@
 .animationRow {
 
   position: absolute;
-  top: 60%;
+  top: 40%;
+  left: 30%;
   z-index: 3;
 }
 
