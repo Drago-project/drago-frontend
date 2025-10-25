@@ -24,7 +24,19 @@
     "both": "كلاهما",
     "signUpButton": "تسجيل",
     "alreadyAccount": "هل لديك حساب بالفعل؟ اذهب لتسجيل الدخول",
-    "passwordsMismatch": "كلمات المرور غير متطابقة!"
+    "passwordsMismatch": "كلمات المرور غير متطابقة!",
+
+    "whoAreYou": "من أنت؟",
+    "selectUserType": "من فضلك اختر نوع حسابك للمتابعة.",
+    "iamStudent": "أنا طالب",
+    "iamDoctor": "أنا دكتور / معالج",
+
+    "doctorTitle": "إنشاء حساب دكتور / معالج",
+    "doctorSubtitle": "مرحباً بك، يرجى ملء البيانات التالية للتحقق.",
+    "licenseNumberPlaceholder": "رقم رخصة مزاولة المهنة",
+    "specializationPlaceholder": "التخصص (مثال: أخصائي تخاطب)",
+
+    "backButton": "رجوع"
   },
   "login": {
     "title": "مرحباً بعودتك",

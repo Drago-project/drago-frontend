@@ -1,261 +1,166 @@
-/* Auth.module.css - Shared styling for authentication pages - Mobile First */
-
-/* Main auth page layout */
+/* --- تنسيقات صفحة Auth.jsx --- */
 .auth-page {
-  background-image: url("../assets/backgrunds/sky-wtf-blur.png");
-  background-size: cover;       
-  background-repeat: no-repeat; 
-  background-position: center;  
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 0;
-  padding: 5%;
+  min-height: 90vh; /* غيرنا الارتفاع عشان الفوتر */
+  width: 100%;
 }
 
 .auth-left {
-  display: none;
-}
-
-.auth-left img {
-  height: 100%;
-  width: auto;
-  object-fit: contain;
-}
-
-.auth-container {
-  width: 90%;
-  margin: 100px auto 20px;
-  padding: 20px;
-  max-width: 600px;
-  min-width: unset;
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.auth-container img {
-  display: block;
-  margin: 0 auto 20px auto;
-  height: 120px;
-}
-
-.auth-container h2 {
-  margin-bottom: 5px;
-  font-size: 22px;
-}
-
-.auth-container p {
-  margin-bottom: 15px;
-  color: #555;
-}
-
-/* Form styling */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  text-align: left;
-}
-
-/* Input and select styling */
-input, select {
-  width: 100%;
-  padding: 14px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  transition: 0.3s ease;
-  font-size: 16px;
-  background-color: #fff;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
-  font-family: inherit;
-}
-
-input:hover, select:hover {
-  border-color: #1877f2;
-  box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.25);
-}
-
-input:focus, select:focus {
-  border-color: #1877f2;
-  outline: none;
-  box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.4);
-}
-
-/* Button styling */
-.auth-btn {
-  width: 100%;
-  background-color: #42b72a;
-  color: #fff;
-  font-size: 18px;
-  font-weight: bold;
-  padding: 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-.auth-btn:hover {
-  background-color: rgb(68, 150, 142);
-  transform: scale(1.02);
-}
-
-/* Link styling */
-.auth-link {
-  margin-top: 10px;
-  text-align: center;
-  color: #1877f2;
-  cursor: pointer;
-}
-
-.auth-link:hover {
-  text-decoration: underline;
-}
-
-/* Row layout for multiple inputs */
-.row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  flex-direction: column;
-}
-
-.row input {
-  flex: 1;
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  transition: 0.3s ease;
-  font-size: 14px;
-}
-
-/* Make date selects (day, month, year) sit side-by-side */
-.row select {
-  flex: 1;
-  min-width: 0;
-  width: auto; /* override global 100% */
-}
-
-/* Label styling */
-.label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
-  color: #333;
-}
-
-/* Gender radio buttons */
-.gender {
-  display: flex;
-  justify-content: space-between;
-}
-
-.gender label {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  background-color: #f0f2f5; /* خلفية رمادي فاتح */
+}
+
+.auth-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #ffffff; /* خلفية بيضا */
+}
+
+/* --- تنسيقات اللوجوهات (الحل لمشكلة الحجم) --- */
+.authMainLogo {
+  /* ده اللوجو الكبير اللي على الشمال */
+  width: 100%;
+  max-width: 450px; /* <-- صغرناه */
+  height: auto;
+}
+
+.authFormLogo {
+  /* ده اللوجو الصغير اللي فوق الفورم */
+  width: 150px; /* <-- صغرناه جدا */
+  height: auto;
+  margin-bottom: 1.5rem;
+}
+
+/* --- التنسيقات الأساسية للفورم --- */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 450px; /* نحدد عرض الفورم */
+}
+
+.row {
+  display: flex;
+  gap: 1rem;
+}
+
+.row > * {
+  flex: 1;
+}
+
+/* تنسيق حقول الإدخال والـ select */
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"],
+.auth-form select {
+  width: 100%;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: -10px;
+}
+
+.gender {
+  gap: 2rem;
+}
+
+.gender label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: bold;
   cursor: pointer;
-  transition: 0.3s ease;
+  transition: background-color 0.2s;
 }
 
-.gender label:hover {
-  border-color: #1877f2;
-  background: #f0f6ff;
+.auth-btn:hover {
+  background-color: #0056b3;
 }
 
-/* Select dropdown styling */
-.usage-select {
-  appearance: none;
-  background: #fff
-    url("data:image/svg+xml;utf8,<svg fill='%231877f2' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
-    no-repeat right 10px center;
-  background-size: 16px;
+.auth-link {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-link a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* --- تنسيقات اختيار نوع المستخدم (الجديدة) --- */
+.user-type-selector {
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+.user-type-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* تنسيق زر الرجوع */
+.back-btn {
+  background: none;
+  border: none;
+  color: #555;
   cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  align-self: flex-start;
+  padding: 0;
 }
 
-/* RTL Support for Arabic */
-[dir="rtl"] .auth-container {
-  font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
-  text-align: right;
-  max-width: 600px;
-  min-width: unset;
+.back-btn:hover {
+  text-decoration: underline;
 }
 
-[dir="rtl"] .auth-container h2 {
-  font-size: 22px;
+/* --- تنسيقات العناوين (حل مشكلة الكلام الكبير) --- */
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 0.5rem;
+  width: 100%; /* عشان ياخد العرض كله */
+  max-width: 450px; /* نفس عرض الفورم */
 }
 
-[dir="rtl"] .auth-container p {
-  font-size: 16px;
-}
-
-[dir="rtl"] .auth-form {
-  text-align: right;
-}
-
-[dir="rtl"] .label {
-  text-align: right;
-}
-
-[dir="rtl"] input, [dir="rtl"] select {
-  text-align: right;
-  font-size: 16px;
-}
-
-[dir="rtl"] .auth-btn {
-  font-size: 18px;
-}
-
-[dir="rtl"] .gender label {
-  flex-direction: row-reverse;
-}
-
-/* Tablet and Desktop - Mobile First Approach */
-@media (min-width: 968px) {
-  .auth-page {
-    justify-content: space-between;
-  }
-  
-  .auth-left {
-    display: flex;
-    flex: 1;
-    justify-content: center;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
-
-  .auth-container {
-    /* width: 90%; */
-    margin: auto;
-    padding: 20px;
-    min-width: 400px;
-  }
-  
-  [dir="rtl"] .auth-container {
-    min-width: 400px;
-  }
-  
-  .row {
-    flex-direction: row;
-    gap: 10px;
-  }
-  
-  .auth-btn {
-    font-size: 18px;
-    padding: 14px;
-  }
-  
-  .auth-container img {
-    display: none;
-  }
+.subtitle {
+  font-size: 1rem;
+  text-align: left;
+  color: #555;
+  margin-bottom: 1.5rem;
+  width: 100%; /* عشان ياخد العرض كله */
+  max-width: 450px; /* نفس عرض الفورم */
 }
