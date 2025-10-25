@@ -9,6 +9,16 @@
   min-height: 100vh;
 }
 
+/* Mobile-first responsive design */
+@media (max-width: 768px) {
+  .homePage {
+    padding: 10px;
+    padding-top: 80px;
+    gap: 40px;
+    min-height: auto;
+  }
+}
+
 .homePage::before {
   content: '';
   position: absolute;
@@ -31,13 +41,49 @@
   /* padding: 20px; */
 }
 
+/* Mobile stairs layout */
+@media (max-width: 768px) {
+  .islandRow {
+    flex-direction: column;
+    gap: 30px;
+    width: 100%;
+    align-items: center;
+  }
+  
+  .islandRow:nth-child(2) {
+    /* First row of islands */
+    margin-top: 20px;
+  }
+  
+  .islandRow:nth-child(3) {
+    /* Second row of islands */
+    margin-bottom: 40px;
+  }
+}
+
+.islandLink {
+  display: inline-block;
+  text-decoration: none;
+  transition: transform 0.3s ease;
+}
+
+.islandLink:hover {
+  transform: scale(1.2);
+}
+
 .islandRow img {
-  width: 25%;
-  height: 25%;
+  width: 80%;
+  height: auto;
   animation: float 3s ease-in-out infinite;
-  &:hover {
-    transform: scale(1.5);
-    transition: transform 0.3s;
+  transition: transform 0.3s ease;
+}
+
+/* Mobile island sizing */
+@media (max-width: 768px) {
+  .islandRow img {
+    width: 60%;
+    max-width: 200px;
+    height: auto;
   }
 }
 
@@ -56,4 +102,23 @@
   top: 0;
   left: 40%;
   z-index: 3;
+}
+
+/* Mobile Drago positioning */
+@media (max-width: 768px) {
+  .animationRow {
+    position: relative;
+    top: auto;
+    left: auto;
+    order: -1; /* Move Drago to the top */
+    margin-bottom: 20px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .animationRow > div {
+    width: 200px !important;
+    height: 200px !important;
+  }
 }

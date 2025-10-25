@@ -6,6 +6,7 @@ import styles from "../styles/Home.module.css";
 import Lottie from "lottie-react";
 // import animate2 from "../assets/animation/drago(holding map 2).svg";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 function Home() {
   const [animationData, setAnimationData] = useState(null);
@@ -24,12 +25,9 @@ function Home() {
   return (
     <div className={styles.homePage}>
       {/* <p>help drago find his way to the treasure!</p> */}
-      <div className={styles.islandRow}>
-        <img src={writing} alt="Writing Workshop Island" />
-        <img src={pyramids} alt="Pyramids Island" />
-      </div>
+      
+      {/* Drago Animation */}
       <div className={styles.animationRow}>
-        {/* try Lottie animation */}
         {animationData ? (
           <Lottie
             animationData={animationData}
@@ -51,9 +49,25 @@ function Home() {
           </div>
         )}
       </div>
+
+      {/* First row of islands */}
       <div className={styles.islandRow}>
-        <img src={volcano} alt="Volcano Island" />
-        <img src={books} alt="Books Island" />
+        <Link to="/writing" className={styles.islandLink}>
+          <img src={writing} alt="Writing Workshop Island" />
+        </Link>
+        <Link to="/alphabets" className={styles.islandLink}>
+          <img src={pyramids} alt="Pyramids Island" />
+        </Link>
+      </div>
+      
+      {/* Second row of islands */}
+      <div className={styles.islandRow}>
+        <Link to="/spelling" className={styles.islandLink}>
+          <img src={volcano} alt="Volcano Island" />
+        </Link>
+        <Link to="/reading" className={styles.islandLink}>
+          <img src={books} alt="Books Island" />
+        </Link>
       </div>
     </div>
   );
