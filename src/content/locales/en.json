@@ -16,17 +16,29 @@
     "female": "Female",
     "male": "Male",
     "emailPlaceholder": "Mobile number or email address",
-    "passwordPlaceholder": "New password",
+    "passwordPlaceholder": "password",
     "confirmPasswordPlaceholder": "Confirm password",
-    "usageLabel": "Will you be using Drago at school or at home?",
+    "usageLabel": "Will you be using Drago at clinic or at home?",
     "choose": "-- Please choose --",
-    "school": "At School",
+    "clinic": "At clinic",
     "home": "At Home",
     "both": "Both",
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
-    "passwordsMismatch": "Passwords do not match!"
+    "passwordsMismatch": "Passwords do not match!",
+
+    "whoAreYou": "Who are you?",
+    "selectUserType": "Please choose your account type to continue.",
+    "iamStudent": "Chiled / Student",
+    "iamDoctor": "Doctor / Therapist",
+
+    
+    "licenseNumberPlaceholder": "License number",
+    "specializationPlaceholder": "Specialization (e.g., Speech Therapist)",
+
+    "backButton": "Back"
   },
+
   "login": {
     "title": "Welcome Back",
     "subtitle": "Log in to your account.",

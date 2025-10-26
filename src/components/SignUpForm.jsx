@@ -260,8 +260,8 @@ export default function SignUpForm() {
     return (
       <>
         {renderBackButton()}
-        <h2 className={styles["title"]}>{t("signup.doctorTitle")}</h2>
-        <p className={styles["subtitle"]}>{t("signup.doctorSubtitle")}</p>
+        <h2 className={styles["title"]}>{t("signup.title")}</h2>
+        <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
 
         {/* --- فورم الدكتور (الكود الجديد) --- */}
         <form onSubmit={handleDoctorSubmit} className={styles["auth-form"]}>

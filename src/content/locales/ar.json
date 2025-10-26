@@ -15,11 +15,11 @@
     "female": "أنثى",
     "male": "ذكر",
     "emailPlaceholder": "رقم الهاتف المحمول أو البريد الإلكتروني",
-    "passwordPlaceholder": "كلمة مرور جديدة",
+    "passwordPlaceholder": "كلمة المرور",
     "confirmPasswordPlaceholder": "تأكيد كلمة المرور",
-    "usageLabel": "هل ستستخدم Drago في المدرسة أم في المنزل؟",
+    "usageLabel": "هل ستستخدم Drago في العيادة أم في المنزل؟",
     "choose": "-- يرجى الاختيار --",
-    "school": "في المدرسة",
+    "clinic": "في العيادة",
     "home": "في المنزل",
     "both": "كلاهما",
     "signUpButton": "تسجيل",
@@ -28,11 +28,9 @@
 
     "whoAreYou": "من أنت؟",
     "selectUserType": "من فضلك اختر نوع حسابك للمتابعة.",
-    "iamStudent": "أنا طالب",
-    "iamDoctor": "أنا دكتور / معالج",
-
-    "doctorTitle": "إنشاء حساب دكتور / معالج",
-    "doctorSubtitle": "مرحباً بك، يرجى ملء البيانات التالية للتحقق.",
+    "iamStudent": "طفل / طالب",
+    "iamDoctor": "دكتور / معالج",
+ 
     "licenseNumberPlaceholder": "رقم رخصة مزاولة المهنة",
     "specializationPlaceholder": "التخصص (مثال: أخصائي تخاطب)",
 
