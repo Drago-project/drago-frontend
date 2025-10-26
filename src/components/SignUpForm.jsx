@@ -108,7 +108,6 @@ export default function SignUpForm() {
   if (userType === "student") {
     return (
       <>
-        {renderBackButton()}
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
 
@@ -247,6 +246,7 @@ export default function SignUpForm() {
             {t("signup.signUpButton")}
           </button>
         </form>
+        {renderBackButton()}
 
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
@@ -272,7 +272,7 @@ export default function SignUpForm() {
               value={doctorForm.firstName}
               onChange={handleDoctorChange}
               required
-              />
+            />
             <input
               type="text"
               name="lastName"
@@ -308,7 +308,7 @@ export default function SignUpForm() {
             value={doctorForm.specialization}
             onChange={handleDoctorChange}
             required
-            />
+          />
 
           <input
             type="password"
@@ -317,7 +317,7 @@ export default function SignUpForm() {
             value={doctorForm.password}
             onChange={handleDoctorChange}
             required
-            />
+          />
 
           <input
             type="password"
@@ -326,7 +326,7 @@ export default function SignUpForm() {
             value={doctorForm.confirmPassword}
             onChange={handleDoctorChange}
             required
-            />
+          />
 
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
