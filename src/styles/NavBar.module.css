@@ -1,8 +1,8 @@
-/* NavBar Styles */
+/* NavBar Styles - Mobile First */
 .navbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  padding-top: var(--spacing-xs) ;
+  padding-top: var(--spacing-xs);
   position: fixed;
   top: 0;
   left: 0;
@@ -15,14 +15,14 @@
 .navContainer {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--spacing-md);
+  padding: 0 var(--spacing-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .logo {
-  height: 70px;
+  height: 40px;
   width: auto;
   transition: transform var(--transition-normal);
 }
@@ -32,7 +32,7 @@
 }
 
 .navList {
-  display: flex;
+  display: none;
   list-style: none;
   align-items: center;
   gap: var(--spacing-md);
@@ -42,6 +42,7 @@
 
 .navItem {
   position: relative;
+  text-align: center;
 }
 
 .navLink {
@@ -67,7 +68,7 @@
 }
 
 .navLink::before {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 50%;
@@ -85,7 +86,7 @@
 
 /* Mobile Menu Styles */
 .mobileMenuButton {
-  display: none;
+  display: block;
   background: none;
   border: none;
   color: var(--text-primary);
@@ -160,21 +161,22 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* Tablet and Desktop - Mobile First Approach */
+@media (min-width: 968px) {
   .navList {
+    display: flex;
+  }
+
+  .logo {
+    height: 70px;
+  }
+
+  .mobileMenuButton {
     display: none;
   }
-  .logo{
-    height: 40px;
-  }
-  
-  .mobileMenuButton {
-    display: block;
-  }
-  
+
   .navContainer {
-    padding: 0 var(--spacing-sm);
+    padding: 0 var(--spacing-md);
   }
 }
 
@@ -250,7 +252,7 @@
 }
 
 .navbarInside .navLink {
-  font-weight: 600;
+  font-size: var(--font-size-sm);
 }
 
 .navbarInside .authButton {

@@ -1,8 +1,7 @@
-/* ملف: src/styles/Login.module.css */
+/* Login.module.css - Mobile First */
 
 .login-container {
-  /* يمكنك استخدام تنسيقات الـ Sign Up كأساس هنا */
-  width: 400px;
+  width: 90%;
   margin: 50px auto;
   padding: 20px;
   text-align: center;
@@ -10,11 +9,12 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   background-color: white;
+  max-width: 400px;
 }
 
 /* تنسيق حقول الإدخال والزر (يمكنك تعديلها حسب تصميمك) */
 .login-form input {
-  width: 90%;
+  width: 100%;
   padding: 10px;
   margin-bottom: 15px;
   border: 1px solid #ddd;
@@ -22,13 +22,29 @@
 }
 
 .login-btn {
-  width: 90%;
+  width: 100%;
   padding: 12px;
   background-color: #1877f2;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
+}
+
+/* Tablet and Desktop - Mobile First Approach */
+@media (min-width: 768px) {
+  .login-container {
+    width: 400px;
+  }
+  
+  .login-form input {
+    width: 90%;
+  }
+  
+  .login-btn {
+    width: 90%;
+    font-size: 18px;
+  }
 }
 

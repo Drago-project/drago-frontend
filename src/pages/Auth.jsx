@@ -10,13 +10,18 @@ export default function Auth() {
 
   return (
     <>
-      <div dir={i18n.language === "ar" ? "rtl" : "ltr"} className={styles["auth-page"]}>
+      <div
+        dir={i18n.language === "ar" ? "rtl" : "ltr"}
+        className={styles["auth-page"]}
+      >
         <div className={styles["auth-left"]}>
-          <img src={logo} alt="Logo" />
+          {/* ضفنا كلاس نيم هنا عشان نتحكم في حجمه */}
+          <img src={logo} alt="Logo" className={styles.authMainLogo} />
         </div>
 
         <div className={styles["auth-container"]}>
-          <img src={logo} alt="Logo" />
+          {/* ضفنا كلاس نيم هنا كمان */}
+          <img src={logo} alt="Logo" className={styles.authFormLogo} />
           <Outlet />
         </div>
       </div>
@@ -24,5 +29,3 @@ export default function Auth() {
     </>
   );
 }
-
-

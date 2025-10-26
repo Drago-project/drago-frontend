@@ -1,4 +1,4 @@
-/* Auth.module.css - Shared styling for authentication pages */
+/* Auth.module.css - Shared styling for authentication pages - Mobile First */
 
 /* Main auth page layout */
 .auth-page {
@@ -7,20 +7,15 @@
   background-repeat: no-repeat; 
   background-position: center;  
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
-  gap: 40px;
+  gap: 0;
   padding: 5%;
+  min-height: 100vh;
 }
 
 .auth-left {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+  display: none;
 }
 
 .auth-left img {
@@ -34,7 +29,7 @@
   margin: 100px auto 20px;
   padding: 20px;
   max-width: 600px;
-  min-width: 400px;
+  min-width: unset;
   background: #fff;
   border: 1px solid #ddd;
   border-radius: 10px;
@@ -42,8 +37,26 @@
   text-align: center;
 }
 
+/* Logo images */
+.authMainLogo {
+  /* Dragon image on desktop left side */
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
+.authFormLogo {
+  /* Small dragon logo above form on mobile */
+  display: block;
+  margin: 0 auto 20px auto;
+  height: 120px;
+  width: auto;
+}
+
 .auth-container img {
-  display: none;
+  display: block;
+  margin: 0 auto 20px auto;
+  height: 120px;
 }
 
 .auth-container h2 {
@@ -119,11 +132,21 @@ input:focus, select:focus {
   text-decoration: underline;
 }
 
+.auth-link a {
+  color: #1877f2;
+  text-decoration: none;
+}
+
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
 /* Row layout for multiple inputs */
 .row {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
+  flex-direction: column;
 }
 
 .row input {
@@ -184,12 +207,56 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
+/* User type selector styles */
+.user-type-selector {
+  width: 100%;
+  text-align: center;
+}
+
+.user-type-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Back button */
+.back-btn {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  align-self: flex-start;
+  padding: 0;
+  font-size: 16px;
+}
+
+.back-btn:hover {
+  text-decoration: underline;
+  color: #1877f2;
+}
+
+/* Title and subtitle classes */
+.title {
+  margin-bottom: 5px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.subtitle {
+  margin-bottom: 15px;
+  color: #555;
+  text-align: center;
+}
+
 /* RTL Support for Arabic */
 [dir="rtl"] .auth-container {
   font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
   text-align: right;
   max-width: 600px;
-  min-width: 400px;
+  min-width: unset;
 }
 
 [dir="rtl"] .auth-container h2 {
@@ -221,36 +288,56 @@ input:focus, select:focus {
   flex-direction: row-reverse;
 }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
+[dir="rtl"] .title {
+  text-align: right;
+}
+
+[dir="rtl"] .subtitle {
+  text-align: right;
+}
+
+/* Tablet and Desktop - Mobile First Approach */
+@media (min-width: 968px) {
+  .auth-page {
+    justify-content: space-between;
+  }
+  
   .auth-left {
-    display: none;
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    height: 100vh;
   }
 
   .auth-container {
-    width: 90%;
-    margin: 100px auto 20px;
+    margin: auto;
     padding: 20px;
-    min-width: unset;
+    min-width: 400px;
   }
   
   [dir="rtl"] .auth-container {
-    min-width: unset;
+    min-width: 400px;
   }
   
   .row {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 10px;
   }
   
   .auth-btn {
-    font-size: 16px;
-    padding: 12px;
+    font-size: 18px;
+    padding: 14px;
   }
   
+  /* Hide small logo on desktop, show big one on left */
   .auth-container img {
-    display: block;
-    margin: 0 auto 20px auto;
-    height: 120px;
+    display: none;
+  }
+
+  .authFormLogo {
+    display: none;
   }
 }
