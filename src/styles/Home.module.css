@@ -7,11 +7,11 @@
   padding: 50px;
   padding-top: 100px; /* Add space for fixed navbar */
   min-height: 100vh;
-  direction: ltr !important;
+  /* direction: ltr !important; */
 }
 
 /* Mobile-first responsive design */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .homePage {
     padding: 10px;
     /* padding-top: 80px; */
@@ -40,7 +40,7 @@
   justify-content: center;
   gap: 40%;
   /* padding: 20px; */
-  direction: ltr !important;
+  /* direction: ltr !important; */
 }
 .islandLink {
   text-decoration: none;
@@ -53,6 +53,39 @@
   transform: scale(1.2);
 }
 
+.islandWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10% 0;
+}
+
+.islandLabel {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  background: #f4d03f;
+  padding: 8px 16px;
+  border-radius: 4px;
+  /* font-family: "Courier New", monospace; */
+  color: #5d4037;
+  font-size: 0.9rem;
+  font-weight: bold;
+  white-space: nowrap;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+  border: 1px solid #8d6e63;
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
+}
+
 .islandRow img {
   width: 80%;
   height: auto;
@@ -61,7 +94,7 @@
 }
 
 /* Mobile stairs layout */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .homePage {
     padding-top: 0;
   }
@@ -75,11 +108,11 @@
     justify-content: center;
   }
   .islandLink:hover {
-    transform: scale(1.05);
+    transform: scale(1.2);
   }
-  .islandLink img { 
+  .islandLink img {
     display: flex;
-    flex: 2;
+    flex: 3;
   }
   .empty {
     display: flex;
@@ -104,6 +137,19 @@
     max-width: 50%;
     height: auto;
   }
+
+  .islandLabel {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    top: -30px;
+  }
+
+  .islandWrapper {
+    padding: 0 40px;
+    margin-top: 30px;
+    flex-direction: unset;
+    align-items: unset;
+  }
 }
 
 @keyframes float {
@@ -121,17 +167,24 @@
   top: 0;
   left: 30%;
   z-index: 3;
+  width: 40%; /* Desktop width */
+}
+
+.animationRow img {
+  width: 100%;
+  height: auto;
+  max-width: 400px; /* Maximum size limit */
 }
 
 /* Mobile Drago positioning */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .animationRow {
     position: relative;
     top: auto;
     left: auto;
     order: -1; /* Move Drago to the top */
     margin-bottom: 20px;
-    width: 100%;
+    width: 70%; /* Mobile width */
     display: flex;
     justify-content: center;
   }
