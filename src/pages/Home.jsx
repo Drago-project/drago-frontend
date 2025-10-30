@@ -25,7 +25,7 @@ function Home() {
   return (
     <div className={styles.homePage}>
       {/* <p>help drago find his way to the treasure!</p> */}
-      
+
       {/* Drago Animation */}
       <div className={styles.animationRow}>
         {animationData ? (
@@ -53,20 +53,24 @@ function Home() {
       {/* First row of islands */}
       <div className={styles.islandRow}>
         <Link to="/writing" className={styles.islandLink}>
+          <div className={styles.empty}></div>
           <img src={writing} alt="Writing Workshop Island" />
         </Link>
         <Link to="/alphabets" className={styles.islandLink}>
           <img src={pyramids} alt="Pyramids Island" />
+          <div className={styles.empty}></div>
         </Link>
       </div>
-      
+
       {/* Second row of islands */}
       <div className={styles.islandRow}>
         <Link to="/spelling" className={styles.islandLink}>
+          <div className={styles.empty}></div>
           <img src={volcano} alt="Volcano Island" />
         </Link>
         <Link to="/reading" className={styles.islandLink}>
           <img src={books} alt="Books Island" />
+          <div className={styles.empty}></div>
         </Link>
       </div>
     </div>
