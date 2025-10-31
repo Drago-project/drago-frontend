@@ -48,5 +48,21 @@
     "forgotPassword": "Forgot password?",
     "createAccount": "Create a new account",
     "missingFields": "Please enter your email and password."
+  },
+
+  "about": {
+    "title": "About Drago",
+    "section1": {
+      "title": "What is Dyslexia?",
+      "content": "Dyslexia is a learning difference that affects how the brain processes written language. It makes reading, writing, and spelling more challenging, but it doesn't mean a child isn't smart. Many people with dyslexia are very creative and have great problem-solving skills."
+    },
+    "section2": {
+      "title": "How Does Dyslexia Affect Learning?",
+      "content": "Children with dyslexia may confuse letters that look similar, read slowly, or have trouble spelling. They might need more time to understand written words, but with encouragement, patience, and the right techniques, they can learn and grow successfully."
+    },
+    "section3": {
+      "title": "How Our Games Help",
+      "content": "Our educational games use sound, color, and motion to make reading and memory exercises more fun. They help children strengthen their focus, recognize words, and build confidence step by step. Learning through play helps children enjoy the process instead of feeling stressed or judged."
+    }
   }
 }
