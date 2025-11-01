@@ -15,8 +15,8 @@
     "genderLabel": "Gender",
     "female": "Female",
     "male": "Male",
-    "emailPlaceholder": "Mobile number or email address",
-    "passwordPlaceholder": "password",
+    "emailPlaceholder": "Email Address",
+    "passwordPlaceholder": "Password",
     "confirmPasswordPlaceholder": "Confirm password",
     "usageLabel": "Will you be using Drago at clinic or at home?",
     "choose": "-- Please choose --",
@@ -26,17 +26,17 @@
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
     "passwordsMismatch": "Passwords do not match!",
-
     "whoAreYou": "Who are you?",
     "selectUserType": "Please choose your account type to continue.",
-    "iamStudent": "Chiled / Student",
+    "iamStudent": "Child / Student",
     "iamDoctor": "Doctor / Therapist",
-
-    
-    "licenseNumberPlaceholder": "License number",
+    "licenseNumberPlaceholder": "License Number",
     "specializationPlaceholder": "Specialization (e.g., Speech Therapist)",
-
-    "backButton": "Back"
+    "backButton": "Back",
+    "doctorPhonePlaceholder": "Your Mobile Number",
+    "clinicNamePlaceholder": "Clinic Name",
+    "clinicPhonePlaceholder": "Clinic Phone Number",
+    "clinicWebsitePlaceholder": "Clinic Website (Optional)"
   },
 
   "login": {
