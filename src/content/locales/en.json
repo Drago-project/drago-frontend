@@ -23,6 +23,7 @@
     "clinic": "At clinic",
     "home": "At Home",
     "both": "Both",
+    "doctorNamePlaceholder" :"Enter the doctor's neme",
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
     "passwordsMismatch": "Passwords do not match!",

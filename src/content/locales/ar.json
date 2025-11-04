@@ -23,6 +23,7 @@
     "clinic": "في العيادة",
     "home": "في المنزل",
     "both": "كلاهما",
+    "doctorNamePlaceholder" : "ادخل اسم الطبيب المالج",
     "signUpButton": "تسجيل",
     "alreadyAccount": "هل لديك حساب بالفعل؟ اذهب لتسجيل الدخول",
     "passwordsMismatch": "كلمات المرور غير متطابقة!",
