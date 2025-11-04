@@ -3,9 +3,9 @@
 /* Main auth page layout */
 .auth-page {
   background-image: url("../assets/backgrunds/sky-wtf-blur.png");
-  background-size: cover;       
-  background-repeat: no-repeat; 
-  background-position: center;  
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -78,7 +78,8 @@
 }
 
 /* Input and select styling */
-input, select {
+input,
+select {
   width: 100%;
   padding: 14px;
   border: 1px solid #ccc;
@@ -90,12 +91,14 @@ input, select {
   font-family: inherit;
 }
 
-input:hover, select:hover {
+input:hover,
+select:hover {
   border-color: #1877f2;
   box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.25);
 }
 
-input:focus, select:focus {
+input:focus,
+select:focus {
   border-color: #1877f2;
   outline: none;
   box-shadow: 0px 0px 6px rgba(24, 119, 242, 0.4);
@@ -250,6 +253,12 @@ input:focus, select:focus {
   color: #555;
   text-align: center;
 }
+.error-text {
+  color: #e63946 !important;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  text-align: center;
+}
 
 /* RTL Support for Arabic */
 [dir="rtl"] .auth-container {
@@ -264,7 +273,7 @@ input:focus, select:focus {
 }
 
 [dir="rtl"] .auth-container p {
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 [dir="rtl"] .auth-form {
@@ -275,9 +284,10 @@ input:focus, select:focus {
   text-align: right;
 }
 
-[dir="rtl"] input, [dir="rtl"] select {
+[dir="rtl"] input,
+[dir="rtl"] select {
   text-align: right;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 [dir="rtl"] .auth-btn {
@@ -301,7 +311,7 @@ input:focus, select:focus {
   .auth-page {
     justify-content: space-between;
   }
-  
+
   .auth-left {
     display: flex;
     flex: 1;
@@ -317,21 +327,21 @@ input:focus, select:focus {
     padding: 20px;
     min-width: 400px;
   }
-  
+
   [dir="rtl"] .auth-container {
     min-width: 400px;
   }
-  
+
   .row {
     flex-direction: row;
     gap: 10px;
   }
-  
+
   .auth-btn {
     font-size: 18px;
     padding: 14px;
   }
-  
+
   /* Hide small logo on desktop, show big one on left */
   .auth-container img {
     display: none;
