@@ -4,13 +4,10 @@ import styles from "../styles/Auth.module.css";
 import { Link } from "react-router-dom";
 
 export default function SignUpForm() {
-  const { t } = useTranslation();
+  const { t } = useTranslation(); // --- الحالة الرئيسية ---
 
-  // --- الحالة الرئيسية ---
-  // null = لم يختر بعد, 'student' = اختار طالب, 'doctor' = اختار دكتور
-  const [userType, setUserType] = useState(null);
-
-  // --- حالة فورم الطالب ---
+  const [userType, setUserType] = useState(null); // --- حالة فورم الطالب ---
+  const [error, setError] = useState("");
   const [studentForm, setStudentForm] = useState({
     firstName: "",
     lastName: "",
@@ -22,50 +19,87 @@ export default function SignUpForm() {
     password: "",
     confirmPassword: "",
     usage: "",
-  });
+    clinicName: "",
+    doctorName: "",
+  }); // --- حالة فورم الدكتور ---
 
-  // --- حالة فورم الدكتور ---
   const [doctorForm, setDoctorForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
+    phoneNumber: "", // --- مضاف --- (رقم تليفون الدكتور)
+    licenseNumber: "",
+    specialization: "",
+    clinicName: "", // --- مضاف ---
+    clinicPhone: "", // --- مضاف ---
+    clinicWebsite: "", // --- مضاف --- (اختياري)
     password: "",
     confirmPassword: "",
-    licenseNumber: "", // رقم رخصة مزاولة المهنة
-    specialization: "", // التخصص (مثل: تخاطب، نفسي، إلخ)
-  });
-
-  // --- دوال خاصة بالطالب ---
+  }); // --- دوال خاصة بالطالب ---
+  const [inClinic, setInClinic] = useState(false);
+  // --- student handlers ---
   const handleStudentChange = (e) => {
     setStudentForm({ ...studentForm, [e.target.name]: e.target.value });
   };
 
   const handleStudentSubmit = (e) => {
     e.preventDefault();
-    if (studentForm.password !== studentForm.confirmPassword) {
-      alert(t("signup.passwordsMismatch"));
+    setError(""); //delete previous errors
+
+    //----------- Validation---------------------
+
+    //check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(studentForm.email)) {
+      setError(t("signup.invalidEmail"));
       return;
     }
-    console.log("بيانات الطالب:", studentForm);
-    // هنا ترسل بيانات الطالب إلى السيرفر
+    //check password length
+    if (studentForm.password.length < 8) {
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+    //check password match
+    if (studentForm.password !== studentForm.confirmPassword) {
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    console.log("✅ بيانات الطالب:", studentForm);
+    setError(""); // نجاح التسجيل
   };
 
-  // --- دوال خاصة بالدكتور ---
+  // --- doctor handlers ---
   const handleDoctorChange = (e) => {
     setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
   };
 
   const handleDoctorSubmit = (e) => {
     e.preventDefault();
-    if (doctorForm.password !== doctorForm.confirmPassword) {
-      alert(t("signup.passwordsMismatch"));
+    setError(""); //delete previous errors
+    //----------- Validation---------------------
+    //check email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(doctorForm.email)) {
+      setError(t("signup.invalidEmail"));
       return;
     }
-    console.log("بيانات الدكتور:", doctorForm);
-    // هنا ترسل بيانات الدكتور إلى السيرفر
+    //check password length
+    if (doctorForm.password.length < 8) {
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+    //check password match
+    if (doctorForm.password !== doctorForm.confirmPassword) {
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    console.log("✅ بيانات الدكتور:", doctorForm);
+    setError(""); // نجاح التسجيل
   };
 
-  // --- دالة لرسم زر "الرجوع" ---
   const renderBackButton = () => (
     <button
       type="button"
@@ -74,17 +108,13 @@ export default function SignUpForm() {
     >
       {t("signup.backButton")}
     </button>
-  );
+  ); // --- العرض (Render) --- // 1. إذا لم يتم اختيار النوع بعد (userType هو null)
 
-  // --- العرض (Render) ---
-
-  // 1. إذا لم يتم اختيار النوع بعد (userType هو null)
   if (userType === null) {
     return (
       <div className={styles["user-type-selector"]}>
         <h2 className={styles["title"]}>{t("signup.whoAreYou")}</h2>
         <p className={styles["subtitle"]}>{t("signup.selectUserType")}</p>
-
         <div className={styles["user-type-buttons"]}>
           <button
             className={styles["auth-btn"]}
@@ -92,7 +122,6 @@ export default function SignUpForm() {
           >
             {t("signup.iamStudent")}
           </button>
-
           <button
             className={styles["auth-btn"]}
             onClick={() => setUserType("doctor")}
@@ -102,17 +131,16 @@ export default function SignUpForm() {
         </div>
       </div>
     );
-  }
+  } // 2. إذا اختار "طالب"
 
-  // 2. إذا اختار "طالب"
   if (userType === "student") {
     return (
       <>
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
-
-        {/* --- فورم الطالب (الكود الخاص بك) --- */}
+        {/* --- فورم الطالب (كما هو) --- */}
         <form onSubmit={handleStudentSubmit} className={styles["auth-form"]}>
+          {/* ... كود فورم الطالب يظل كما هو ... */}
           <div className={styles["row"]}>
             <input
               type="text"
@@ -131,7 +159,6 @@ export default function SignUpForm() {
               required
             />
           </div>
-
           <label className={styles["label"]}>{t("signup.dobLabel")}</label>
           <div className={styles["row"]}>
             <select
@@ -152,17 +179,11 @@ export default function SignUpForm() {
               required
             >
               <option value="">{t("signup.month")}</option>
-              <option>Jan</option>
-              <option>Feb</option>
-              <option>Mar</option>
-              <option>Apr</option>
-              <option>May</option>
-              <option>Jun</option>
-              <option>Jul</option>
-              <option>Aug</option>
-              <option>Sep</option>
-              <option>Oct</option>
-              <option>Nov</option>
+              <option>Jan</option> <option>Feb</option>
+              <option>Mar</option> <option>Apr</option>
+              <option>May</option> <option>Jun</option>
+              <option>Jul</option> <option>Aug</option>
+              <option>Sep</option> <option>Oct</option> <option>Nov</option>
               <option>Dec</option>
             </select>
             <select
@@ -177,7 +198,6 @@ export default function SignUpForm() {
               ))}
             </select>
           </div>
-
           <label className={styles["label"]}>{t("signup.genderLabel")}</label>
           <div className={`${styles["row"]} ${styles["gender"]}`}>
             <label>
@@ -187,7 +207,7 @@ export default function SignUpForm() {
                 value="Female"
                 onChange={handleStudentChange}
                 required
-              />{" "}
+              />
               {t("signup.female")}
             </label>
             <label>
@@ -196,11 +216,10 @@ export default function SignUpForm() {
                 name="gender"
                 value="Male"
                 onChange={handleStudentChange}
-              />{" "}
+              />
               {t("signup.male")}
             </label>
           </div>
-
           <input
             type="email"
             name="email"
@@ -209,7 +228,6 @@ export default function SignUpForm() {
             onChange={handleStudentChange}
             required
           />
-
           <input
             type="password"
             name="password"
@@ -218,7 +236,6 @@ export default function SignUpForm() {
             onChange={handleStudentChange}
             required
           />
-
           <input
             type="password"
             name="confirmPassword"
@@ -227,42 +244,65 @@ export default function SignUpForm() {
             onChange={handleStudentChange}
             required
           />
-
           <label className={styles["label"]}>{t("signup.usageLabel")}</label>
           <select
             name="usage"
             value={studentForm.usage}
-            onChange={handleStudentChange}
+            onChange={(e) => {
+              handleStudentChange(e);
+              setInClinic(
+                e.target.value === "clinic" || e.target.value === "both"
+              );
+            }}
             required
             className={styles["usage-select"]}
           >
             <option value="">{t("signup.choose")}</option>
-            <option value="school">{t("signup.school")}</option>
+            <option value="clinic">{t("signup.clinic")}</option>
             <option value="home">{t("signup.home")}</option>
             <option value="both">{t("signup.both")}</option>
           </select>
-
+          {inClinic && (
+            <div>
+              <input
+                type="text"
+                name="clinicName"
+                placeholder={t("signup.clinicNamePlaceholder")}
+                value={studentForm.clinicName}
+                onChange={handleStudentChange}
+                required
+              />
+              <input
+                type="text"
+                name="doctorName"
+                placeholder={t("signup.doctorNamePlaceholder")}
+                value={studentForm.doctorName}
+                onChange={handleStudentChange}
+                required
+              />
+            </div>
+          )}
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
+          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
-        {renderBackButton()}
 
+        {renderBackButton()}
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
         </p>
       </>
     );
-  }
+  } // 3. إذا اختار "دكتور" (هنا التعديلات)
 
-  // 3. إذا اختار "دكتور"
   if (userType === "doctor") {
     return (
       <>
+        {renderBackButton()} {/* --- تم نقل زر الرجوع هنا ليكون ظاهراً --- */}
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
-
-        {/* --- فورم الدكتور (الكود الجديد) --- */}
+        {/* --- فورم الدكتور (المعدل) --- */}
         <form onSubmit={handleDoctorSubmit} className={styles["auth-form"]}>
           <div className={styles["row"]}>
             <input
@@ -282,7 +322,6 @@ export default function SignUpForm() {
               required
             />
           </div>
-
           <input
             type="email"
             name="email"
@@ -291,7 +330,16 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             required
           />
-
+          {/* --- الحقول المضافة --- */}
+          <input
+            type="tel"
+            name="phoneNumber"
+            placeholder={t("signup.doctorPhonePlaceholder")}
+            value={doctorForm.phoneNumber}
+            onChange={handleDoctorChange}
+            required
+          />
+          {/* --- نهاية الحقول المضافة --- */}
           <input
             type="text"
             name="licenseNumber"
@@ -300,7 +348,6 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             required
           />
-
           <input
             type="text"
             name="specialization"
@@ -309,6 +356,32 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             required
           />
+
+          {/* --- الحقول المضافة --- */}
+          <input
+            type="text"
+            name="clinicName"
+            placeholder={t("signup.clinicNamePlaceholder")}
+            value={doctorForm.clinicName}
+            onChange={handleDoctorChange}
+            required
+          />
+          <input
+            type="tel"
+            name="clinicPhone"
+            placeholder={t("signup.clinicPhonePlaceholder")}
+            value={doctorForm.clinicPhone}
+            onChange={handleDoctorChange}
+            required
+          />
+          <input
+            type="url"
+            name="clinicWebsite"
+            placeholder={t("signup.clinicWebsitePlaceholder")}
+            value={doctorForm.clinicWebsite}
+            onChange={handleDoctorChange} // اختياري - لا يوجد required
+          />
+          {/* --- نهاية الحقول المضافة --- */}
 
           <input
             type="password"
@@ -327,13 +400,11 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             required
           />
-
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
+          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
-
-        {renderBackButton()}
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
         </p>

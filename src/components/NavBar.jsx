@@ -74,7 +74,7 @@ function NavBar() {
                     </li>
                     <li className={styles.navItem}>
                         <NavLink 
-                            to="/login" 
+                            to="/auth/login" 
                             className={({ isActive }) => 
                                 `${styles.navLink} ${isActive ? styles.active : ''}`
                             }
@@ -84,7 +84,7 @@ function NavBar() {
                     </li>
                     <li className={styles.navItem}>
                         <NavLink 
-                            to="/signup" 
+                            to="/auth/signup" 
                             className={({ isActive }) => 
                                 `${styles.navLink} ${styles.authButton} ${isActive ? styles.active : ''}`
                             }
@@ -138,7 +138,7 @@ function NavBar() {
                         </li>
                         <li className={styles.mobileNavItem}>
                             <NavLink 
-                                to="/login" 
+                                to="/auth/login" 
                                 className={styles.mobileNavLink}
                                 onClick={closeMobileMenu}
                             >
@@ -147,7 +147,7 @@ function NavBar() {
                         </li>
                         <li className={styles.mobileNavItem}>
                             <NavLink 
-                                to="/signup" 
+                                to="/auth/signup" 
                                 className={`${styles.mobileNavLink} ${styles.authButton}`}
                                 onClick={closeMobileMenu}
                             >

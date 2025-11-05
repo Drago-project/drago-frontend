@@ -243,12 +243,16 @@
 
 /* Inside nav (NavInside) specific styles */
 .navbarInside {
-  background: var(--bg-white);
-  padding: var(--spacing-md) 0;
-  box-shadow: var(--shadow-sm);
-  position: sticky;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding-top: var(--spacing-xs);
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
 }
 
 .navbarInside .navLink {
