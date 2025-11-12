@@ -15,7 +15,7 @@ import Auth from "./pages/Auth";
 import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
 import Dashboard from "./pages/DashBoard";
-import About from "./pages/about/About";
+import About from "./pages/About";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 

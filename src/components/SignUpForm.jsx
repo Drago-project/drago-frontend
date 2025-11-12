@@ -396,9 +396,9 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             required
           />
-          <button type="submit" className={styles["auth-btn"]}>
+          <b utton type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
-          </button>
+          </b>
           {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
         <p className={styles["auth-link"]}>
