@@ -9,11 +9,13 @@ import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
+import VolcanoWords from "../games/VolcanoWords";
+
 function Home() {
   const [animationData, setAnimationData] = useState(null);
   const { i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
- 
+
   useEffect(() => {
     // Load the animation data
     fetch("/map.json")
@@ -52,39 +54,45 @@ function Home() {
       <div className={styles.islandRow}>
         <Link to="#" className={styles.islandLink}>
           <div className={styles.islandWrapper}>
-          <div className={styles.empty}></div>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة الكتابة" : "Writing Workshop Island"}</div>
+            <div className={styles.empty}></div>
+            <div className={styles.islandLabel}>
+              {isRTL ? "جزيرة الكتابة" : "Writing Workshop Island"}
+            </div>
             <img src={writing} alt="Writing Workshop Island" />
           </div>
         </Link>
         <Link to="#" className={styles.islandLink}>
           <div className={styles.islandWrapper}>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة التاريخ" : "History Stories Island"}</div>
+            <div className={styles.islandLabel}>
+              {isRTL ? "جزيرة التاريخ" : "History Stories Island"}
+            </div>
             <img src={pyramids} alt="History Stories Island" />
-          <div className={styles.empty}></div>
+            <div className={styles.empty}></div>
           </div>
         </Link>
       </div>
 
       {/* Second row of islands */}
       <div className={styles.islandRow}>
-        <Link to="#" className={styles.islandLink}>
+        <Link to="/games/volcano-words" className={styles.islandLink}>
           <div className={styles.islandWrapper}>
-          <div className={styles.empty}></div>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة البركان" : "Adventure Games Island"}</div>
+            <div className={styles.empty}></div>
+            <div className={styles.islandLabel}>
+              {isRTL ? "جزيرة البركان" : "Adventure Games Island"}
+            </div>
             <img src={volcano} alt="Adventure Games Island" />
           </div>
         </Link>
         <Link to="#" className={styles.islandLink}>
           <div className={styles.islandWrapper}>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة القراءة" : "Reading Quest Island"}</div>
+            <div className={styles.islandLabel}>
+              {isRTL ? "جزيرة القراءة" : "Reading Quest Island"}
+            </div>
             <img src={books} alt="Reading Quest Island" />
-          <div className={styles.empty}></div>
+            <div className={styles.empty}></div>
           </div>
         </Link>
       </div>
-
-      
     </div>
   );
 }

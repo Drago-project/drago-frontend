@@ -1,4 +1,3 @@
-// import { useTranslation } from "react-i18next"
 import {
   BrowserRouter,
   Route,
@@ -8,30 +7,41 @@ import {
 } from "react-router-dom";
 import "./styles/App.css";
 
+// Pages
 import Home from "./pages/Home";
 import ReadingPage from "./pages/ReadingPage";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
-import SignUpForm from "./components/SignUpForm";
-import LoginForm from "./components/LoginForm";
 import Dashboard from "./pages/DashBoard";
 import About from "./pages/About";
+
+// Components
+import SignUpForm from "./components/SignUpForm";
+import LoginForm from "./components/LoginForm";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 
-// component wrapper for conditional NavBar
+// Games
+import VolcanoWords from "./games/VolcanoWords";
+
+// Layout component (handles navbar visibility)
 function Layout() {
   const location = useLocation();
 
-  const hideNavBarOn = ["/home", "/reading", "/dashboard"];
-  const shouldHideNav = hideNavBarOn.includes(location.pathname);
+  // paths where internal Nav (NavInside) should appear
+  const pathsWithInsideNav = ["/home", "/reading", "/dashboard", "/games"];
+  const isInsideApp = pathsWithInsideNav.some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
-      {!shouldHideNav ? <NavBar /> : <NavInside />}
+      {isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
+        {/* Landing & Info pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
+
         {/* Auth routes */}
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
@@ -39,17 +49,27 @@ function Layout() {
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        {/* Redirect old routes to new auth routes */}
+        {/* Home */}
+        <Route path="/home" element={<Home />} />
+
+        {/* Games routes */}
+        <Route path="/games">
+          <Route path="volcano-words" element={<VolcanoWords />} />
+        </Route>
+
+        {/* Other app pages */}
+        <Route path="/reading" element={<ReadingPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        {/* Redirect old routes to new ones */}
         <Route
           path="/signup"
           element={<Navigate to="/auth/signup" replace />}
         />
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/reading" element={<ReadingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route path="*" element={<h1>404 Not Found</h1>} />
+        {/* 404 fallback */}
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </>
   );
