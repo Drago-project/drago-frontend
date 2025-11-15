@@ -1,0 +1,548 @@
+.volcanoGame {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #8f0707 0%, #530505 50%, #000000 100%);
+}
+
+.volcanoGame::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url(../assets/backgrunds/landscape.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: blur(7px);
+  z-index: -1;
+}
+
+/* Header Section */
+.header {
+  text-align: center;
+  margin-bottom: 40px;
+  z-index: 1;
+}
+
+.headerTitle {
+  font-size: 48px;
+  font-weight: 900;
+  color: #d84315;
+  margin: 0 0 10px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.headerSubtitle {
+  font-size: 18px;
+  color: #d84315;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Main Container */
+.mainContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  z-index: 1;
+}
+
+/* Left Side - Game Area */
+.gameArea {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Scoreboard */
+.scoreboard {
+  background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.scoreCard {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.scoreLabel {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.scoreValue {
+  font-size: 36px;
+  font-weight: 900;
+  color: #ff5722;
+}
+
+.livesValue {
+  color: #e63946;
+}
+
+/* Progress Bar */
+.progressContainer {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.progressLabel {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.progressBar {
+  width: 100%;
+  height: 16px;
+  background: #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4caf50 0%, #45a049 100%);
+  width: 0%;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+}
+
+.progressText {
+  font-size: 11px;
+  color: #999;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Word Display */
+.wordDisplay {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 15px;
+  padding: 40px 30px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(156, 39, 176, 0.2);
+}
+
+.wordCounter {
+  font-size: 12px;
+  color: #666;
+  font-weight: 600;
+  margin-bottom: 15px;
+  text-transform: uppercase;
+}
+
+.wordText {
+  font-size: 60px;
+  font-weight: 900;
+  color: #7b1fa2;
+  letter-spacing: 4px;
+  margin: 0 0 15px 0;
+  text-transform: uppercase;
+}
+
+.wordHint {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Buttons Container */
+.buttonsContainer {
+  display: flex;
+  gap: 15px;
+}
+
+.recordBtn {
+  flex: 1;
+  padding: 18px 25px;
+  background: linear-gradient(135deg, #f4511e 0%, #d84315 100%);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(212, 67, 21, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.recordBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(212, 67, 21, 0.4);
+}
+
+.recordBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: linear-gradient(135deg, #ff6f45 0%, #f4511e 100%);
+}
+
+.hintBtn {
+  padding: 18px 25px;
+  background: linear-gradient(135deg, #fdd835 0%, #f9a825 100%);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(249, 168, 37, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.hintBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 168, 37, 0.4);
+}
+
+/* Right Side - Volcano */
+.volcanoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.dragoCharacter {
+  position: absolute;
+  top: 20px;
+  z-index: 20;
+  animation: dragoFloat 3s ease-in-out infinite;
+}
+
+.dragoCharacter img {
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes dragoFloat {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.volcanoBg {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 380px;
+  margin-top: 60px;
+  border-radius: 30px;
+  background: linear-gradient(to bottom, #757575 0%, #616161 50%, #424242 100%);
+  border: 8px solid #424242;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.volcanoBg::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  background: linear-gradient(to bottom, #757575, #616161);
+  border-radius: 15px;
+  z-index: 5;
+}
+
+/* Lava Level */
+.lavaLevel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: linear-gradient(to top, #d32f2f 0%, #f57c00 50%, #ff9800 100%);
+  transition: height 0.5s ease;
+  z-index: 2;
+  overflow: hidden;
+}
+
+/* Lava Bubbles */
+.lavaBubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 152, 0, 0.6);
+  filter: blur(1px);
+}
+
+.bubbleAnimation {
+  animation: bubbleRise 2s infinite ease-in-out;
+}
+
+@keyframes bubbleRise {
+  0% {
+    opacity: 0.3;
+    transform: translateY(0px);
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateY(-30px);
+  }
+}
+
+/* Fire/Smoke Effect */
+.fireEffect {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.7);
+  filter: blur(2px);
+}
+
+.fireAnimation {
+  animation: fireRise 1.5s infinite ease-in;
+}
+
+@keyframes fireRise {
+  0% {
+    opacity: 0.8;
+    transform: translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+}
+
+/* Safety Zone */
+.safetyZone {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #66bb6a;
+  opacity: 0.7;
+  z-index: 3;
+  box-shadow: 0 0 8px rgba(102, 187, 106, 0.6);
+}
+
+.lavaStatus {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  font-weight: 600;
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.winModal {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.loseModal {
+  background: linear-gradient(135deg, #f4511e 0%, #d84315 100%);
+  border-radius: 20px;
+  padding: 40px 30px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+}
+
+.modalEmoji {
+  font-size: 60px;
+  margin-bottom: 20px;
+}
+
+.modalTitle {
+  font-size: 32px;
+  font-weight: 900;
+  color: white;
+  margin: 0 0 10px 0;
+}
+
+.modalSubtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 15px 0;
+}
+
+.modalScore {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  margin-bottom: 25px;
+}
+
+.playAgainBtn {
+  background: white;
+  border: none;
+  border-radius: 10px;
+  padding: 15px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.winModal .playAgainBtn {
+  color: #4caf50;
+}
+
+.loseModal .playAgainBtn {
+  color: #d84315;
+}
+
+.playAgainBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .mainContainer {
+    grid-template-columns: 1fr;
+    gap: 30px;
+    padding: 0 15px;
+  }
+
+  .headerTitle {
+    font-size: 36px;
+  }
+
+  .wordText {
+    font-size: 45px;
+    letter-spacing: 2px;
+  }
+
+  .buttonsContainer {
+    flex-direction: column;
+  }
+
+  .volcanoBg {
+    max-width: 280px;
+    height: 340px;
+  }
+
+  .dragoCharacter img {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .volcanoGame {
+    padding: 20px 10px;
+  }
+
+  .headerTitle {
+    font-size: 28px;
+  }
+
+  .headerSubtitle {
+    font-size: 14px;
+  }
+
+  .scoreboard {
+    padding: 15px;
+    gap: 10px;
+  }
+
+  .scoreValue {
+    font-size: 28px;
+  }
+
+  .wordDisplay {
+    padding: 25px 15px;
+  }
+
+  .wordText {
+    font-size: 36px;
+    letter-spacing: 1px;
+  }
+
+  .wordHint {
+    font-size: 12px;
+  }
+
+  .recordBtn,
+  .hintBtn {
+    padding: 14px 15px;
+    font-size: 14px;
+  }
+
+  .volcanoBg {
+    max-width: 220px;
+    height: 280px;
+  }
+
+  .dragoCharacter img {
+    width: 80px;
+    height: 80px;
+  }
+
+  .winModal,
+  .loseModal {
+    padding: 30px 20px;
+  }
+
+  .modalTitle {
+    font-size: 24px;
+  }
+}

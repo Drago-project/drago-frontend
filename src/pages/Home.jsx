@@ -88,7 +88,7 @@ function Home() {
       {/* First row of islands */}
       <div className={styles.islandRow}>
         <Island
-          to="#"
+          to="/games/volcano-words"
           label={labels.adventure}
           img={volcano}
           alt={labels.adventure}
