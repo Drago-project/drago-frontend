@@ -1,63 +1,41 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* VolcanoWords.module.css */
 
-.game-container {
+/* Base Container */
+.gameContainer {
+  margin-top: 80px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #1a2332 0%, #0d1117 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  /* background: linear-gradient(180deg, #1a2332 0%, #0d1117 100%); */
+  background-image: url("../assets/backgrunds/x5ng_lpkv_201030.jpg");
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
 }
 
 /* Header Navigation */
-.header-nav {
-  background: #1a2332;
+.headerNav {
+  background: transparent;
   padding: 15px 40px;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
-.logo-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #44968e 0%, #2d7a73 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-}
-
-.logo-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.game-title {
+/* 
+.gameTitle {
   font-size: 24px;
   font-weight: 600;
   color: #fff;
-}
+} 
+*/
 
-.header-right {
+/* .headerRight {
   display: flex;
   align-items: center;
   gap: 20px;
-}
+} */
 
-.hearts-container {
+.heartsContainer {
   display: flex;
   gap: 8px;
 }
@@ -67,9 +45,9 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-.exit-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.exitBtn {
+  background: var(--color-primary);
+  border: var(--color-secondary);
   color: #fff;
   padding: 10px 24px;
   border-radius: 8px;
@@ -79,12 +57,12 @@
   transition: all 0.3s ease;
 }
 
-.exit-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+.exitBtn:hover {
+  background: var(--color-secondary);
 }
 
 /* Main Game Area */
-.game-content {
+.gameContent {
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -94,7 +72,7 @@
 }
 
 /* Left Panel - Word Card */
-.word-panel {
+.wordPanel {
   display: flex;
   flex-direction: column;
   gap: 30px;
@@ -102,7 +80,7 @@
   margin: 0 auto;
 }
 
-.word-card {
+.wordCard {
   background: #f5f3e8;
   border-radius: 20px;
   padding: 60px 40px;
@@ -114,7 +92,7 @@
   justify-content: center;
 }
 
-.word-display {
+.wordDisplay {
   font-size: 72px;
   font-weight: 900;
   color: #1a2332;
@@ -123,7 +101,7 @@
   text-transform: uppercase;
 }
 
-.feedback-message {
+.feedbackMessage {
   margin-top: 20px;
   font-size: 18px;
   font-weight: 600;
@@ -132,17 +110,17 @@
   animation: fadeIn 0.3s ease;
 }
 
-.feedback-correct {
+.feedbackCorrect {
   color: #4caf50;
   background: rgba(76, 175, 80, 0.1);
 }
 
-.feedback-wrong {
+.feedbackWrong {
   color: #f44336;
   background: rgba(244, 67, 54, 0.1);
 }
 
-.transcript-text {
+.transcriptText {
   margin-top: 15px;
   font-size: 16px;
   color: #666;
@@ -150,13 +128,13 @@
 }
 
 /* Action Buttons */
-.action-buttons {
+.actionButtons {
   display: flex;
   gap: 20px;
   justify-content: center;
 }
 
-.action-btn {
+.actionBtn {
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -170,29 +148,29 @@
   font-size: 28px;
 }
 
-.action-btn.primary {
+.actionBtn.primary {
   width: 80px;
   height: 80px;
   background: #1a2332;
   border-color: #44968e;
 }
 
-.action-btn.primary:hover:not(:disabled) {
+.actionBtn.primary:hover:not(:disabled) {
   background: #2d3a4d;
   transform: scale(1.05);
 }
 
-.action-btn:hover:not(:disabled) {
+.actionBtn:hover:not(:disabled) {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.action-btn:disabled {
+.actionBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-.word-counter {
+.wordCounter {
   text-align: center;
   font-size: 20px;
   font-weight: 600;
@@ -201,27 +179,27 @@
 }
 
 /* Right Panel - Volcano */
-.volcano-panel {
+.volcanoPanel {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
 }
-
-.dragon-container {
+/* 
+.dragonContainer {
   position: relative;
   margin-bottom: 20px;
   animation: float 3s ease-in-out infinite;
 }
 
-.dragon-image {
+.dragonImage {
   width: 180px;
   height: auto;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
-.dragon-scroll {
+.dragonScroll {
   position: absolute;
   top: 50%;
   right: -40px;
@@ -234,15 +212,20 @@
   color: #8b4513;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
-}
+} */
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-15px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
 }
 
 /* Volcano Container */
-.volcano-container {
+.volcanoContainer {
   position: relative;
   width: 320px;
   height: 500px;
@@ -254,7 +237,7 @@
 }
 
 /* Top Platform */
-.volcano-top {
+.volcanoTop {
   position: absolute;
   top: 0;
   left: 0;
@@ -268,8 +251,8 @@
   justify-content: center;
 }
 
-.volcano-top::before {
-  content: '';
+.volcanoTop::before {
+  content: "";
   position: absolute;
   bottom: -10px;
   left: 50%;
@@ -281,7 +264,7 @@
 }
 
 /* Lava Level */
-.lava-container {
+.lavaContainer {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -289,7 +272,7 @@
   top: 60px;
 }
 
-.lava-level {
+.lavaLevel {
   position: absolute;
   bottom: 0;
   left: 0;
@@ -299,7 +282,7 @@
   box-shadow: 0 -10px 30px rgba(255, 69, 0, 0.6);
 }
 
-.lava-surface {
+.lavaSurface {
   position: absolute;
   top: 0;
   left: 0;
@@ -310,12 +293,17 @@
 }
 
 @keyframes lavaSurface {
-  0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(1.1); }
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.1);
+  }
 }
 
 /* Lava Bubbles */
-.lava-bubble {
+.lavaBubble {
   position: absolute;
   border-radius: 50%;
   background: radial-gradient(circle at 30% 30%, #ffcc00, #ff8800);
@@ -338,7 +326,7 @@
 }
 
 /* Percentage Markers */
-.percentage-markers {
+.percentageMarkers {
   position: absolute;
   right: -50px;
   top: 60px;
@@ -359,14 +347,14 @@
 }
 
 .marker::before {
-  content: '';
+  content: "";
   width: 15px;
   height: 2px;
   background: rgba(255, 255, 255, 0.5);
 }
 
 /* Feedback Indicators */
-.feedback-indicator {
+.feedbackIndicator {
   position: absolute;
   font-size: 24px;
   font-weight: 700;
@@ -376,14 +364,14 @@
   z-index: 20;
 }
 
-.feedback-indicator.correct {
+.feedbackIndicator.correct {
   background: #4caf50;
   color: #fff;
   left: -80px;
   top: 30%;
 }
 
-.feedback-indicator.wrong {
+.feedbackIndicator.wrong {
   background: #f44336;
   color: #fff;
   left: -80px;
@@ -391,14 +379,26 @@
 }
 
 @keyframes slideInOut {
-  0% { transform: translateX(-20px); opacity: 0; }
-  20% { transform: translateX(0); opacity: 1; }
-  80% { transform: translateX(0); opacity: 1; }
-  100% { transform: translateX(-20px); opacity: 0; }
+  0% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  20% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
 }
 
 /* Modal Styles */
-.modal-overlay {
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -413,8 +413,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
@@ -429,8 +433,14 @@
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .modal.win {
@@ -443,30 +453,30 @@
   color: #fff;
 }
 
-.modal-emoji {
+.modalEmoji {
   font-size: 80px;
   margin-bottom: 20px;
 }
 
-.modal-title {
+.modalTitle {
   font-size: 42px;
   font-weight: 900;
   margin-bottom: 15px;
 }
 
-.modal-subtitle {
+.modalSubtitle {
   font-size: 20px;
   margin-bottom: 10px;
   opacity: 0.95;
 }
 
-.modal-score {
+.modalScore {
   font-size: 18px;
   margin-bottom: 30px;
   opacity: 0.9;
 }
 
-.modal-btn {
+.modalBtn {
   background: #fff;
   color: #1a2332;
   border: none;
@@ -478,51 +488,51 @@
   transition: all 0.3s ease;
 }
 
-.modal-btn:hover {
+.modalBtn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
-  .game-content {
+  .gameContent {
     grid-template-columns: 1fr;
     gap: 40px;
     padding: 30px;
   }
-  
-  .percentage-markers {
+
+  .percentageMarkers {
     right: -45px;
   }
 }
 
 @media (max-width: 768px) {
-  .header-nav {
+  .headerNav {
     padding: 12px 20px;
   }
-  
-  .logo-text {
+
+  .logoText {
     font-size: 22px;
   }
-  
-  .game-title {
+
+  .gameTitle {
     font-size: 18px;
   }
-  
+
   .heart {
     font-size: 24px;
   }
-  
-  .word-display {
+
+  .wordDisplay {
     font-size: 56px;
   }
-  
-  .volcano-container {
+
+  .volcanoContainer {
     width: 280px;
     height: 450px;
   }
-  
-  .dragon-image {
+
+  .dragonImage {
     width: 140px;
   }
 }
