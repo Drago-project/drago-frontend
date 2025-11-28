@@ -5,15 +5,9 @@ import books from "../assets/islands/Reading Quest Island.svg";
 import styles from "../styles/Home.module.css";
 import Lottie from "lottie-react";
 import { useTranslation } from "react-i18next";
-// import animate2 from "../assets/animation/drago(holding map 2).svg";
-
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 
-import VolcanoWords from "../games/VolcanoWords";
-
-// Small presentational Island component. Wrapped with React.memo to avoid
-// re-renders when props are unchanged.
 const Island = React.memo(function Island({ to, label, img, alt, children }) {
   return (
     <Link to={to} className={styles.islandLink}>
@@ -33,7 +27,6 @@ function Home() {
   const isRTL = i18n.language === "ar";
 
   useEffect(() => {
-    // Load the animation data
     fetch("/map.json")
       .then((response) => response.json())
       .then((data) => setAnimationData(data))
@@ -43,7 +36,6 @@ function Home() {
       });
   }, []);
 
-  // Memoize labels so they don't get recomputed on every render
   const labels = useMemo(
     () => ({
       adventure: isRTL ? "جزيرة البركان" : "Adventure Games Island",
@@ -54,15 +46,12 @@ function Home() {
     [isRTL]
   );
 
-  // Memoize the animation node to avoid rebuilding the element tree when
-  // the Home component re-renders for unrelated reasons.
   const animationNode = useMemo(() => {
     if (animationData) {
       return (
         <Lottie animationData={animationData} loop={true} autoplay={true} />
       );
     }
-
     return (
       <div
         style={{
@@ -80,12 +69,8 @@ function Home() {
 
   return (
     <div className={styles.homePage}>
-      {/* <p>help drago find his way to the treasure!</p> */}
-
-      {/* Drago Animation */}
       <div className={styles.animationRow}>{animationNode}</div>
 
-      {/* First row of islands */}
       <div className={styles.islandRow}>
         <Island
           to="/games/volcano-words"
@@ -103,7 +88,6 @@ function Home() {
         </Island>
       </div>
 
-      {/* Second row of islands */}
       <div className={styles.islandRow}>
         <Island
           to="/games/volcano-words"
@@ -111,7 +95,14 @@ function Home() {
           img={writing}
           alt={labels.writing}
         />
-        <Island to="#" label={labels.reading} img={books} alt={labels.reading}>
+
+        {/* ✅ هنا غيرنا الرابط عشان يشاور على اللعبة */}
+        <Island
+          to="/games/reading-quest"
+          label={labels.reading}
+          img={books}
+          alt={labels.reading}
+        >
           <div className={styles.empty}></div>
         </Island>
       </div>
