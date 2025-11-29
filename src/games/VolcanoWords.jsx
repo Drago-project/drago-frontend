@@ -1,5 +1,10 @@
-import React from "react";
+// import { useState } from "react";
 import styles from "../styles/VolcanoWords.module.css";
+import sad from "../assets/emotions/drago(crying).svg";
+// import reading from "../assets/emotions/drago(reading).svg";
+// import sitting from "../assets/poses/drago(sitting).svg";
+import celebrationAnimation from "../assets/animation/celebration drago.json";
+import Lottie from "lottie-react";
 
 const WORDS = ["read", "book", "fire", "apple", "water", "dragon", "castle"];
 
@@ -9,7 +14,7 @@ function VolcanoWords({
   hints = 3,
   score = 100,
   isRecording = false,
-  transcript = "Say the word...",
+  transcript = "red",
   feedback = null, // "correct" | "wrong" | null
   showWinModal = false,
   showLoseModal = false,
@@ -86,13 +91,11 @@ function VolcanoWords({
 
             {/* recording */}
             {isRecording && (
-              <div
-                className={styles.feedbackMessage}
-                style={{ backgroundColor: "#ffcc00", color: "#1a2332" }}
-              >
-                ...Listening...
-              </div>
+              <div className={styles.feedbackMessage}>...Listening...</div>
             )}
+          <div className={styles.wordCounter}>
+            {wordIndex >= 0 ? `${wordIndex + 1}/${numWords}` : `1/${numWords}`}
+          </div>
           </div>
 
           <div className={styles.actionButtons}>
@@ -117,19 +120,20 @@ function VolcanoWords({
               className={styles.actionBtn}
               onClick={() => console.log("Skip Word clicked")}
             >
-              ↻
+              ➡️
             </button>
           </div>
 
-          <div className={styles.wordCounter}>
-            {wordIndex >= 0 ? `${wordIndex + 1}/${numWords}` : `1/${numWords}`}
-          </div>
         </div>
 
         {/* Right Panel - Volcano */}
         <div className={styles.volcanoPanel}>
           {/* <div className={styles.dragonContainer}>
-            <div className={styles.dragonImage}>🐉</div>
+            <img
+              src={sitting}
+              alt="Sitting Drago"
+              className={styles.dragonImage}
+            />
             <div className={styles.dragonScroll}>ancient spell #103</div>
           </div> */}
 
@@ -179,7 +183,13 @@ function VolcanoWords({
       {showWinModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modal} ${styles.win}`}>
-            <div className={styles.modalEmoji}>🎉</div>
+            <div className={styles.modalEmoji}>
+              <Lottie
+                animationData={celebrationAnimation}
+                loop={true}
+                autoplay={true}
+              />
+            </div>
             <h2 className={styles.modalTitle}>You Won!</h2>
             <p className={styles.modalSubtitle}>Drago escaped the volcano!</p>
             <p className={styles.modalScore}>Final Score: {score}</p>
@@ -192,7 +202,9 @@ function VolcanoWords({
       {showLoseModal && (
         <div className={styles.modalOverlay}>
           <div className={`${styles.modal} ${styles.lose}`}>
-            <div className={styles.modalEmoji}>😢</div>
+            <div className={styles.modalEmoji}>
+              <img src={sad} alt="Sad Drago" className={styles.sadAnimation} />
+            </div>
             <h2 className={styles.modalTitle}>Game Over!</h2>
             <p className={styles.modalSubtitle}>The lava got too high!</p>
             <p className={styles.modalScore}>Final Score: {score}</p>
