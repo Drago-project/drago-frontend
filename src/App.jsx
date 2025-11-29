@@ -23,12 +23,12 @@ import NavInside from "./components/NavInside";
 
 // Games
 import VolcanoWords from "./games/VolcanoWords";
+import ReadingQuest from "./games/ReadingQuest"; // ✅ دي اللعبة الجديدة
 
-// Layout component (handles navbar visibility)
+// Layout component
 function Layout() {
   const location = useLocation();
 
-  // paths where internal Nav (NavInside) should appear
   const pathsWithInsideNav = ["/home", "/reading", "/dashboard", "/games"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
     location.pathname.startsWith(path)
@@ -38,37 +38,32 @@ function Layout() {
     <>
       {isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
-        {/* Landing & Info pages */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
 
-        {/* Auth routes */}
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
           <Route path="signup" element={<SignUpForm />} />
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        {/* Home */}
         <Route path="/home" element={<Home />} />
 
-        {/* Games routes */}
         <Route path="/games">
           <Route path="volcano-words" element={<VolcanoWords />} />
+          {/* ✅ ده المسار الجديد اللي ضفناه */}
+          <Route path="reading-quest" element={<ReadingQuest />} />
         </Route>
 
-        {/* Other app pages */}
         <Route path="/reading" element={<ReadingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
 
-        {/* Redirect old routes to new ones */}
         <Route
           path="/signup"
           element={<Navigate to="/auth/signup" replace />}
         />
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
 
-        {/* 404 fallback */}
         <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </>
