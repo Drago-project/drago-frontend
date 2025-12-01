@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import LanguageToggle from "./LanguageToggle";
@@ -9,6 +9,7 @@ function NavInside() {
   const { i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const navigate = useNavigate();
 
   // Handle scroll effect
   useEffect(() => {
@@ -27,11 +28,12 @@ function NavInside() {
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
   };
-
   const handleLogout = () => {
-    // Add logout logic here
-    console.log("Logout clicked");
+    localStorage.removeItem("authToken"); 
+    localStorage.removeItem("userData");
+
     closeMobileMenu();
+    navigate("/"); 
   };
 
   const isRTL = i18n.language === "ar";

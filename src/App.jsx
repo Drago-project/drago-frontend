@@ -9,7 +9,6 @@ import "./styles/App.css";
 
 // Pages
 import Home from "./pages/Home";
-import ReadingPage from "./pages/ReadingPage";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/DashBoard";
@@ -20,10 +19,11 @@ import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // Games
 import VolcanoWords from "./games/VolcanoWords";
-import ReadingQuest from "./games/ReadingQuest"; // ✅ دي اللعبة الجديدة
+import ReadingQuest from "./games/ReadingQuest"; //  دي اللعبة الجديدة
 
 // Layout component
 function Layout() {
@@ -47,16 +47,14 @@ function Layout() {
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={ <ProtectedRoute><Home /></ProtectedRoute>} />
 
         <Route path="/games">
-          <Route path="volcano-words" element={<VolcanoWords />} />
-          {/* ✅ ده المسار الجديد اللي ضفناه */}
-          <Route path="reading-quest" element={<ReadingQuest />} />
+          <Route path="volcano-words" element={ <ProtectedRoute><VolcanoWords /></ProtectedRoute>} />
+          <Route path="reading-quest" element={<ProtectedRoute><ReadingQuest /></ProtectedRoute>} />
         </Route>
 
-        <Route path="/reading" element={<ReadingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
         <Route
           path="/signup"
