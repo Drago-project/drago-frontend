@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -14,13 +15,31 @@ export default function LoginForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.email || !form.password) {
       alert(t("login.missingFields"));
       return;
     }
-    console.log("Logging in with:", form);
+
+    try {
+      const res = await fetch("http://drago.runasp.net/api/Auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+
+      if (res.ok) {
+        // Login succeeded -> go to Home
+        navigate("/home", { replace: true });
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(err.message || t("login.failed") || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert(t("login.networkError") || "Network error");
+    }
   };
 
   return (
@@ -58,5 +77,3 @@ export default function LoginForm() {
     </>
   );
 }
-
-

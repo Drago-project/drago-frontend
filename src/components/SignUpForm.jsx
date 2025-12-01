@@ -125,7 +125,7 @@ export default function SignUpForm() {
       if (response.ok) {
         console.log("✅ Student Registered Successfully");
         alert(t("signup.successMessage") || "تم إنشاء حساب الطالب بنجاح!");
-        navigate("/auth/login");
+        navigate("/home", { replace: true });
       } else {
         const errorData = await response.json();
         console.error("Error details:", errorData);
@@ -189,7 +189,7 @@ export default function SignUpForm() {
       if (response.ok) {
         console.log("✅ Doctor Registered Successfully");
         alert(t("signup.successMessage") || "تم إنشاء حساب الدكتور بنجاح!");
-        navigate("/auth/login");
+        navigate("/home", { replace: true });
       } else {
         const errorData = await response.json();
         console.error("Error details:", errorData);
