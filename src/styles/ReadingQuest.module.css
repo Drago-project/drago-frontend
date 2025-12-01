@@ -1,7 +1,7 @@
 /* Base Container */
 .gameContainer {
   min-height: 100vh;
-  margin-top: 60px;
+  /* margin-top: 60px; */
   /* لون احتياطي لو الصورة مش موجودة */
   background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
 

@@ -172,7 +172,7 @@ export default function SignUpForm() {
 
       const response = await api.post("/api/Doctors/register", payload);
 
-      console.log("✅ Doctor Registered Successfully", response.data);
+      console.log("Doctor Registered Successfully", response.data);
       alert(t("signup.successMessage") || "تم إنشاء حساب الدكتور بنجاح!");
       navigate("/dashboard", { replace: true });
     } catch (err) {
@@ -189,7 +189,7 @@ export default function SignUpForm() {
   const renderBackButton = () => (
     <button
       type="button"
-      onClick={() => setUserType(null)}
+      onClick={() => setUserType(null)} 
       className={styles["back-btn"]}
     >
       {t("signup.backButton")}

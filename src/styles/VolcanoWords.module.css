@@ -1,8 +1,10 @@
 /* VolcanoWords.module.css */
-
+body{
+  margin: 0;
+}
 /* Base Container */
 .gameContainer {
-  margin-top: 80px;
+  /* margin-top: 80px; */
   min-height: 100vh;
   /* background: linear-gradient(180deg, #1a2332 0%, #0d1117 100%); */
   background-image: url("../assets/backgrunds/x5ng_lpkv_201030.jpg");
@@ -20,6 +22,7 @@
   justify-content: space-around;
   align-items: center;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 /* 
 .gameTitle {

@@ -28,15 +28,16 @@ import ReadingQuest from "./games/ReadingQuest"; //  دي اللعبة الجد�
 // Layout component
 function Layout() {
   const location = useLocation();
+  const hideAllNav = location.pathname.startsWith("/games");
 
-  const pathsWithInsideNav = ["/home", "/reading", "/dashboard", "/games"];
+  const pathsWithInsideNav = ["/home", "/reading", "/dashboard"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
     location.pathname.startsWith(path)
   );
 
   return (
     <>
-      {isInsideApp ? <NavInside /> : <NavBar />}
+      {hideAllNav ? null : isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
@@ -47,14 +48,42 @@ function Layout() {
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        <Route path="/home" element={ <ProtectedRoute><Home /></ProtectedRoute>} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/games">
-          <Route path="volcano-words" element={ <ProtectedRoute><VolcanoWords /></ProtectedRoute>} />
-          <Route path="reading-quest" element={<ProtectedRoute><ReadingQuest /></ProtectedRoute>} />
+          <Route
+            path="volcano-words"
+            element={
+              <ProtectedRoute>
+                <VolcanoWords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reading-quest"
+            element={
+              <ProtectedRoute>
+                <ReadingQuest />
+              </ProtectedRoute>
+            }
+          />
         </Route>
 
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/signup"
