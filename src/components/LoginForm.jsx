@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../server/api";
 
 export default function LoginForm() {
   const { t } = useTranslation();
@@ -23,22 +24,76 @@ export default function LoginForm() {
     }
 
     try {
-      const res = await fetch("http://drago.runasp.net/api/Auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email, password: form.password }),
+      const response = await api.post("/api/Auth/login", {
+        email: form.email,
+        password: form.password,
       });
 
-      if (res.ok) {
-        // Login succeeded -> go to Home
-        navigate("/home", { replace: true });
-      } else {
-        const err = await res.json().catch(() => ({}));
-        alert(err.message || t("login.failed") || "Login failed");
+      const data = response.data || {};
+
+      // try to extract token from common locations
+      const token =
+        data.token || data.accessToken || data.jwt || data?.data?.token || null;
+
+      if (token) {
+        try {
+          localStorage.setItem("authToken", token);
+        } catch (e) {
+          console.warn("Could not persist token:", e);
+        }
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      alert(t("login.networkError") || "Network error");
+
+      // decode JWT payload if possible
+      const decodeJwt = (jwt) => {
+        try {
+          const parts = jwt.split(".");
+          if (parts.length !== 3) return null;
+          const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+          const padded = payload.padEnd(
+            payload.length + ((4 - (payload.length % 4)) % 4),
+            "="
+          );
+          const json = atob(padded);
+          return JSON.parse(json);
+        } catch (e) {
+          console.error("JWT decode error:", e);
+          return null;
+        }
+      };
+
+      let role = null;
+      if (token) {
+        const decoded = decodeJwt(token);
+        if (decoded) {
+          role =
+            decoded.role ||
+            decoded.roles ||
+            decoded.roleName ||
+            decoded.userRole ||
+            null;
+          if (Array.isArray(role) && role.length > 0) role = role[0];
+        }
+      }
+
+      if (!role) {
+        role = data.role || data.user?.role || data?.result?.role || null;
+        if (Array.isArray(role) && role.length > 0) role = role[0];
+      }
+
+      const roleStr = (role || "").toString().toLowerCase();
+      if (roleStr.includes("doctor") || roleStr.includes("dr")) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      if (err.response) {
+        const d = err.response.data;
+        alert(d?.message || t("login.failed") || "Login failed");
+      } else {
+        alert(t("login.networkError") || "Network error");
+      }
     }
   };
 

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link, useNavigate } from "react-router-dom";
+import api from "../server/api";
 
 export default function SignUpForm() {
   const { t } = useTranslation();
@@ -97,43 +98,35 @@ export default function SignUpForm() {
     // تكوين التاريخ بصيغة ISO
     const finalBirthDate = new Date(`${year}-${month}-${day}`).toISOString();
 
-    // 3. API Call للطلاب
+    // 3. API Call للطلاب — use shared `api` axios instance
     try {
-      const response = await fetch(
-        "http://drago.runasp.net/api/Users/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName: studentForm.firstName,
-            lastName: studentForm.lastName,
-            birthDate: finalBirthDate, // التاريخ المجمع
-            gender: studentForm.gender,
-            email: studentForm.email,
-            password: studentForm.password,
-            confirmPassword: studentForm.confirmPassword,
-            usageType: studentForm.usage, // تعديل الاسم ليطابق Swagger
-            role: "Student", // إضافة الدور يدوياً
-            clinicName: studentForm.clinicName || "N/A", // لو فاضية نبعت قيمة افتراضية
-            doctorName: studentForm.doctorName || "N/A",
-          }),
-        }
-      );
+      const payload = {
+        firstName: studentForm.firstName,
+        lastName: studentForm.lastName,
+        birthDate: finalBirthDate, // التاريخ المجمع
+        gender: studentForm.gender,
+        email: studentForm.email,
+        password: studentForm.password,
+        confirmPassword: studentForm.confirmPassword,
+        usageType: studentForm.usage, // تعديل الاسم ليطابق Swagger
+        role: "Student", // إضافة الدور يدوياً
+        clinicName: studentForm.clinicName || "N/A", // لو فاضية نبعت قيمة افتراضية
+        doctorName: studentForm.doctorName || "N/A",
+      };
 
-      if (response.ok) {
-        console.log("✅ Student Registered Successfully");
-        alert(t("signup.successMessage") || "تم إنشاء حساب الطالب بنجاح!");
-        navigate("/home", { replace: true });
-      } else {
-        const errorData = await response.json();
-        console.error("Error details:", errorData);
-        setError(errorData.message || "حدث خطأ أثناء تسجيل الطالب.");
-      }
+      const response = await api.post("/api/Users/register", payload);
+
+      console.log("✅ Student Registered Successfully", response.data);
+      alert(t("signup.successMessage") || "تم إنشاء حساب الطالب بنجاح!");
+      navigate("/home", { replace: true });
     } catch (err) {
-      console.error("Network Error:", err);
-      setError("تعذر الاتصال بالخادم (Connection Error).");
+      console.error("Signup (student) error:", err);
+      if (err.response) {
+        const data = err.response.data;
+        setError(data?.message || JSON.stringify(data));
+      } else {
+        setError("تعذر الاتصال بالخادم (Connection Error).");
+      }
     }
   };
 
@@ -161,43 +154,35 @@ export default function SignUpForm() {
       return;
     }
 
-    // 2. API Call للدكاترة
+    // 2. API Call للدكاترة — use shared `api` axios instance
     try {
-      const response = await fetch(
-        "http://drago.runasp.net/api/Doctors/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName: doctorForm.firstName,
-            lastName: doctorForm.lastName,
-            email: doctorForm.email,
-            phoneNumber: doctorForm.phoneNumber,
-            licenseNumber: doctorForm.licenseNumber,
-            specialization: doctorForm.specialization,
-            clinicName: doctorForm.clinicName,
-            clinicPhone: doctorForm.clinicPhone,
-            clinicLink: doctorForm.clinicWebsite,
-            password: doctorForm.password,
-            confirmPassword: doctorForm.confirmPassword,
-          }),
-        }
-      );
+      const payload = {
+        firstName: doctorForm.firstName,
+        lastName: doctorForm.lastName,
+        email: doctorForm.email,
+        phoneNumber: doctorForm.phoneNumber,
+        licenseNumber: doctorForm.licenseNumber,
+        specialization: doctorForm.specialization,
+        clinicName: doctorForm.clinicName,
+        clinicPhone: doctorForm.clinicPhone,
+        clinicLink: doctorForm.clinicWebsite,
+        password: doctorForm.password,
+        confirmPassword: doctorForm.confirmPassword,
+      };
 
-      if (response.ok) {
-        console.log("✅ Doctor Registered Successfully");
-        alert(t("signup.successMessage") || "تم إنشاء حساب الدكتور بنجاح!");
-        navigate("/home", { replace: true });
-      } else {
-        const errorData = await response.json();
-        console.error("Error details:", errorData);
-        setError(errorData.message || "حدث خطأ أثناء تسجيل الدكتور.");
-      }
+      const response = await api.post("/api/Doctors/register", payload);
+
+      console.log("✅ Doctor Registered Successfully", response.data);
+      alert(t("signup.successMessage") || "تم إنشاء حساب الدكتور بنجاح!");
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      console.error("Network Error:", err);
-      setError("تعذر الاتصال بالخادم (Connection Error).");
+      console.error("Signup (doctor) error:", err);
+      if (err.response) {
+        const data = err.response.data;
+        setError(data?.message || JSON.stringify(data));
+      } else {
+        setError("تعذر الاتصال بالخادم (Connection Error).");
+      }
     }
   };
 
