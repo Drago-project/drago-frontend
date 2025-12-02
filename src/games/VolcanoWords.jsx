@@ -1,27 +1,141 @@
-// import { useState } from "react";
+import React, { useState } from "react";
 import styles from "../styles/VolcanoWords.module.css";
 import sad from "../assets/emotions/drago(crying).svg";
-// import reading from "../assets/emotions/drago(reading).svg";
-// import sitting from "../assets/poses/drago(sitting).svg";
+import sitting from "../assets/poses/drago(sitting).svg";
 import celebrationAnimation from "../assets/animation/celebration drago.json";
 import Lottie from "lottie-react";
 
 const WORDS = ["read", "book", "fire", "apple", "water", "dragon", "castle"];
+const INITIAL_LAVA_LEVEL = 40; // Starting lava level (percentage)
+const INITIAL_HINTS = 5; // Starting number of hints (lives)
 
-function VolcanoWords({
-  word = WORDS[0],
-  lavaLevel = 50,
-  hints = 3,
-  score = 100,
-  isRecording = false,
-  transcript = "red",
-  feedback = null, // "correct" | "wrong" | null
-  showWinModal = false,
-  showLoseModal = false,
-  showFeedbackIndicator = false,
-}) {
+function VolcanoWords() {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [lavaLevel, setLavaLevel] = useState(INITIAL_LAVA_LEVEL);
+  const [hints, setHints] = useState(INITIAL_HINTS);
+  const [score, setScore] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [transcript, setTranscript] = useState("");
+  const [feedback, setFeedback] = useState(null); // "correct" | "wrong" | null
+  const [showFeedbackIndicator, setShowFeedbackIndicator] = useState(false);
+  const [gameStatus, setGameStatus] = useState("playing"); // "playing" | "won" | "lost"
+
+  const activeWord = WORDS[currentWordIndex];
+  const isGameOver = gameStatus !== "playing";
   const numWords = WORDS.length;
-  const wordIndex = WORDS.indexOf(word);
+
+  // --- Utility Functions ---
+
+  const speakText = (text) => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel(); // Stop any current speaking
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.8;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert("Browser does not support text-to-speech");
+    }
+  };
+
+  // --- Game Logic Functions ---
+
+  const handleCorrectAnswer = () => {
+    setFeedback("correct");
+    setShowFeedbackIndicator(true);
+    setScore((prevScore) => prevScore + 10);
+    // Decrease lava level on correct answer
+    setLavaLevel((prev) => Math.max(0, prev - 10));
+
+    // Move to the next word after a delay
+    setTimeout(() => {
+      if (currentWordIndex < WORDS.length - 1) {
+        setCurrentWordIndex((prevIndex) => prevIndex + 1);
+        setTranscript("");
+        setFeedback(null);
+        setShowFeedbackIndicator(false);
+      } else {
+        setGameStatus("won"); // User completed all words
+      }
+    }, 1500);
+  };
+
+  const handleWrongAnswer = () => {
+    setFeedback("wrong");
+    setShowFeedbackIndicator(true);
+    // Increase lava level on wrong answer
+    setLavaLevel((prev) => {
+      const newLevel = Math.min(100, prev + 15);
+      if (newLevel >= 100) {
+        setGameStatus("lost"); // Lava level reached 100%
+      }
+      return newLevel;
+    });
+
+    // Allow user to try again after a delay
+    setTimeout(() => {
+      if (gameStatus === "playing") {
+        setFeedback(null);
+        setShowFeedbackIndicator(false);
+      }
+    }, 1500);
+  };
+
+ const handleStartRecording = () => {
+    // Placeholder for actual Speech Recognition logic
+    if (isGameOver) return;
+    setIsRecording(true);
+    setTranscript("");
+
+    // Simulate recognition after 2 seconds
+    setTimeout(() => {
+      setIsRecording(false);
+      
+      const isSimulatedCorrect = Math.random() < 0.5; // Now only 50% chance of being correct
+      
+      const simulatedTranscript = isSimulatedCorrect ? activeWord : "mismatched";
+      setTranscript(simulatedTranscript);
+
+      if (isSimulatedCorrect) {
+        handleCorrectAnswer();
+      } else {
+        handleWrongAnswer();
+      }
+    }, 2000);
+  };
+  const handleUseHint = () => {
+    if (hints > 0) {
+      setHints((prev) => prev - 1);
+      speakText(activeWord);
+    }
+  };
+
+  const handleSkipWord = () => {
+    // Skip word, potentially with a penalty (e.g., increased lava)
+    setLavaLevel((prev) => Math.min(100, prev + 5));
+    if (currentWordIndex < WORDS.length - 1) {
+      setCurrentWordIndex((prevIndex) => prevIndex + 1);
+      setTranscript("");
+      setFeedback(null);
+      setShowFeedbackIndicator(false);
+    } else {
+      setGameStatus("won"); // Treat skipping the last word as finishing
+    }
+  };
+
+  const restartGame = () => {
+    setCurrentWordIndex(0);
+    setLavaLevel(INITIAL_LAVA_LEVEL);
+    setHints(INITIAL_HINTS);
+    setScore(0);
+    setIsRecording(false);
+    setTranscript("");
+    setFeedback(null);
+    setShowFeedbackIndicator(false);
+    setGameStatus("playing");
+  };
+
+  // --- Visuals ---
 
   const lavaBubbles = [...Array(8)].map((_, i) => ({
     key: i,
@@ -37,12 +151,15 @@ function VolcanoWords({
     <div className={styles.gameContainer}>
       {/* Header Navigation */}
       <nav className={styles.headerNav}>
-        {/* <h1 className={styles.gameTitle}>Lava Challenge</h1> */}
-
+        <div className={styles.scoreBoard}>Score: {score}</div>
         <div className={styles.heartsContainer}>
-          {/*remaining hints */}
-          {[...Array(hints)].map((_, i) => (
-            <span key={i} className={styles.heart}>
+          {/* Remaining hints (lives) */}
+          {[...Array(INITIAL_HINTS)].map((_, i) => (
+            <span
+              key={i}
+              className={styles.heart}
+              style={{ opacity: i < hints ? 1 : 0.3 }}
+            >
               💛
             </span>
           ))}
@@ -53,165 +170,218 @@ function VolcanoWords({
       {/* Main Game Content */}
       <div className={styles.gameContent}>
         {/* Left Panel - Word Card */}
-        <div className={styles.wordPanel}>
-          <div className={styles.wordCard}>
-            <div className={styles.wordDisplay}>{word.toUpperCase()}</div>
+        <WordPanal
+          word={activeWord}
+          isRecording={isRecording}
+          transcript={transcript}
+          feedback={feedback}
+          hints={hints}
+          wordIndex={currentWordIndex}
+          numWords={numWords}
+          speakText={() => speakText(activeWord)}
+          handleStartRecording={handleStartRecording}
+          handleUseHint={handleUseHint}
+          handleSkipWord={handleSkipWord}
+          isGameOver={isGameOver}
+        />
+        {/* Right Panel - Volcano */}
+        <VolcanoPanel
+          lavaLevel={lavaLevel}
+          lavaBubbles={lavaBubbles}
+          feedback={feedback}
+          showFeedbackIndicator={showFeedbackIndicator}
+        />
+      </div>
 
-            {feedback && (
-              <div
-                className={`${styles.feedbackMessage} ${
-                  feedback === "correct"
-                    ? styles.feedbackCorrect
-                    : styles.feedbackWrong
-                }`}
-              >
-                {feedback === "correct"
-                  ? "✓ Correct! Well done!"
-                  : "✗ Try again!"}
-              </div>
-            )}
+      {gameStatus === "won" && <WinModel score={score} restartGame={restartGame} />}
+      {gameStatus === "lost" && <LoseModal score={score} restartGame={restartGame} />}
+    </div>
+  );
+}
 
-            {/* النص المسموع (transcript) */}
-            {transcript && (
-              <div className={styles.transcriptText}>
-                You said: "{transcript}"
-                {feedback && feedback === "wrong" && (
-                  <div
-                    style={{
-                      marginTop: "8px",
-                      fontSize: "14px",
-                      color: "#f44336",
-                    }}
-                  >
-                    Expected: "{word}"
-                  </div>
-                )}
-              </div>
-            )}
+// --- Sub-Components (Unchanged structure, now uses dynamic props) ---
 
-            {/* recording */}
-            {isRecording && (
-              <div className={styles.feedbackMessage}>...Listening...</div>
-            )}
-          <div className={styles.wordCounter}>
-            {wordIndex >= 0 ? `${wordIndex + 1}/${numWords}` : `1/${numWords}`}
-          </div>
-          </div>
+function VolcanoPanel({
+  lavaLevel,
+  lavaBubbles,
+  feedback,
+  showFeedbackIndicator,
+}) {
+  return (
+    <div className={styles.volcanoPanel}>
+      <div className={styles.dragonContainer}>
+        <img src={sitting} alt="Sitting Drago" className={styles.dragonImage} />
+      </div>
 
-          <div className={styles.actionButtons}>
-            {/* microphone */}
-            <button
-              className={`${styles.actionBtn} ${styles.primary}`}
-              disabled={isRecording}
-              onClick={() => console.log("Start Recording clicked")}
+      <div style={{ position: "relative" }}>
+        <div className={styles.volcanoContainer}>
+          <div className={styles.volcanoTop}></div>
+
+          <div className={styles.lavaContainer}>
+            {/* مستوى اللافا */}
+            <div
+              className={styles.lavaLevel}
+              style={{ height: `${lavaLevel}%` }}
             >
-              🎤
-            </button>
-            {/* hint */}
-            <button
-              className={styles.actionBtn}
-              disabled={hints <= 0}
-              onClick={() => console.log("Play Hint clicked")}
-            >
-              💡
-            </button>
-            {/* next */}
-            <button
-              className={styles.actionBtn}
-              onClick={() => console.log("Skip Word clicked")}
-            >
-              ➡️
-            </button>
+              <div className={styles.lavaSurface}></div>
+              {/* فقاعات اللافا */}
+              {lavaBubbles.map((bubble) => (
+                <div
+                  key={bubble.key}
+                  className={styles.lavaBubble}
+                  style={bubble}
+                />
+              ))}
+            </div>
           </div>
 
+          {/* feedback indicator */}
+          {showFeedbackIndicator && (
+            <div className={`${styles.feedbackIndicator} ${styles[feedback]}`}>
+              {feedback === "correct" ? "✓ +10" : "✗ +15% Lava"}
+            </div>
+          )}
         </div>
 
-        {/* Right Panel - Volcano */}
-        <div className={styles.volcanoPanel}>
-          {/* <div className={styles.dragonContainer}>
-            <img
-              src={sitting}
-              alt="Sitting Drago"
-              className={styles.dragonImage}
-            />
-            <div className={styles.dragonScroll}>ancient spell #103</div>
-          </div> */}
+        <div className={styles.percentageMarkers}>
+          <div className={`${styles.marker} ${lavaLevel >= 100 ? styles.critical : ''}`}>100%</div>
+          <div className={styles.marker}>75%</div>
+          <div className={styles.marker}>50%</div>
+          <div className={styles.marker}>25%</div>
+          <div className={styles.marker}>0%</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-          <div style={{ position: "relative" }}>
-            <div className={styles.volcanoContainer}>
-              <div className={styles.volcanoTop}></div>
+function WordPanal({
+  word,
+  isRecording,
+  transcript,
+  feedback,
+  hints,
+  wordIndex,
+  numWords,
+  handleStartRecording,
+  handleUseHint,
+  handleSkipWord,
+  isGameOver
+}) {
+  return (
+    <div className={styles.wordPanel}>
+      <div className={styles.wordCard}>
+        <div className={styles.wordDisplay}>{word.toUpperCase()}</div>
 
-              <div className={styles.lavaContainer}>
-                {/* مستوى اللافا */}
-                <div
-                  className={styles.lavaLevel}
-                  style={{ height: `${lavaLevel}%` }}
-                >
-                  <div className={styles.lavaSurface}></div>
-                  {/* فقاعات اللافا */}
-                  {lavaBubbles.map((bubble) => (
-                    <div
-                      key={bubble.key}
-                      className={styles.lavaBubble}
-                      style={bubble}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* feedback indicator */}
-              {showFeedbackIndicator && (
-                <div className={`${styles.feedbackIndicator} ${feedback}`}>
-                  {feedback === "correct" ? "✓ +1" : "✗ -1"}
-                </div>
-              )}
-            </div>
-
-            <div className={styles.percentageMarkers}>
-              <div className={styles.marker}>100%</div>
-              {/* Markers for visual representation */}
-              <div className={styles.marker}>75%</div>
-              <div className={styles.marker}>50%</div>
-              <div className={styles.marker}>25%</div>
-              <div className={styles.marker}>0%</div>
-            </div>
+        {feedback && (
+          <div
+            className={`${styles.feedbackMessage} ${
+              feedback === "correct"
+                ? styles.feedbackCorrect
+                : styles.feedbackWrong
+            }`}
+          >
+            {feedback === "correct" ? "✓ Correct! Well done!" : "✗ Try again!"}
           </div>
+        )}
+
+        {/* النص المسموع (transcript) */}
+        {transcript && (
+          <div className={styles.transcriptText}>
+            You said: "<strong>{transcript}</strong>"
+            {feedback === "wrong" && (
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "14px",
+                  color: "#f44336",
+                }}
+              >
+                Expected: "<strong>{word}</strong>"
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* recording */}
+        {isRecording && (
+          <div className={styles.feedbackMessage}>...Listening...</div>
+        )}
+        <div className={styles.wordCounter}>
+          Word {wordIndex + 1} of {numWords}
         </div>
       </div>
 
-      {/* Win Modal */}
-      {showWinModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`${styles.modal} ${styles.win}`}>
-            <div className={styles.modalEmoji}>
-              <Lottie
-                animationData={celebrationAnimation}
-                loop={true}
-                autoplay={true}
-              />
-            </div>
-            <h2 className={styles.modalTitle}>You Won!</h2>
-            <p className={styles.modalSubtitle}>Drago escaped the volcano!</p>
-            <p className={styles.modalScore}>Final Score: {score}</p>
-            <button className={styles.modalBtn}>Play Again</button>
-          </div>
-        </div>
-      )}
+      <div className={styles.actionButtons}>
+        {/* microphone */}
+        <ActionBtn
+          icon="🎤"
+          primary={true}
+          disabled={isRecording || isGameOver}
+          onClick={handleStartRecording}
+        />
+        {/* hint */}
+        <ActionBtn
+          icon="💡"
+          disabled={hints <= 0 || isRecording || isGameOver}
+          onClick={handleUseHint}
+        />
 
-      {/* Lose Modal */}
-      {showLoseModal && (
-        <div className={styles.modalOverlay}>
-          <div className={`${styles.modal} ${styles.lose}`}>
-            <div className={styles.modalEmoji}>
-              <img src={sad} alt="Sad Drago" className={styles.sadAnimation} />
-            </div>
-            <h2 className={styles.modalTitle}>Game Over!</h2>
-            <p className={styles.modalSubtitle}>The lava got too high!</p>
-            <p className={styles.modalScore}>Final Score: {score}</p>
-            <button className={styles.modalBtn}>Try Again</button>
-          </div>
+        {/* next */}
+        <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+      </div>
+    </div>
+  );
+}
+
+function ActionBtn({ icon, onClick, disabled = false, primary = false }) {
+  return (
+    <button
+      className={`${styles.actionBtn} ${primary ? styles.primary : ""}`}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {icon}
+    </button>
+  );
+}
+
+function WinModel({ score, restartGame }) {
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={`${styles.modal} ${styles.win}`}>
+        <div className={styles.modalEmoji}>
+          <Lottie
+            animationData={celebrationAnimation}
+            loop={true}
+            autoplay={true}
+          />
         </div>
-      )}
+        <h2 className={styles.modalTitle}>You Won!</h2>
+        <p className={styles.modalSubtitle}>Drago escaped the volcano!</p>
+        <p className={styles.modalScore}>Final Score: {score}</p>
+        <button className={styles.modalBtn} onClick={restartGame}>
+          Play Again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LoseModal({ score, restartGame }) {
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={`${styles.modal} ${styles.lose}`}>
+        <div className={styles.modalEmoji}>
+          <img src={sad} alt="Sad Drago" className={styles.sadAnimation} />
+        </div>
+        <h2 className={styles.modalTitle}>Game Over!</h2>
+        <p className={styles.modalSubtitle}>The lava got too high!</p>
+        <p className={styles.modalScore}>Final Score: {score}</p>
+        <button className={styles.modalBtn} onClick={restartGame}>
+          Try Again
+        </button>
+      </div>
     </div>
   );
 }

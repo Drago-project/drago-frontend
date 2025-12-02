@@ -70,7 +70,7 @@ function ReadingQuest() {
     setFeedback(null);
   };
 
-  // ✅ الدالة بعد التصليح: بتسمح بالمحاولة تاني لو الإجابة غلط
+  //  الدالة بعد التصليح: بتسمح بالمحاولة تاني لو الإجابة غلط
   const handleOptionClick = (isCorrect) => {
     if (feedback) return;
 
@@ -95,7 +95,7 @@ function ReadingQuest() {
       if (waterLevel + 20 >= 100) {
         setGameStatus("lost");
       } else {
-        // ✅ الحل: استنى ثانية ونص وشيل الرسالة عشان يقدر يجاوب تاني
+        //  الحل: استنى ثانية ونص وشيل الرسالة عشان يقدر يجاوب تاني
         setTimeout(() => {
           setFeedback(null);
         }, 1500);
