@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "../styles/VolcanoWords.module.css";
 import sad from "../assets/emotions/drago(crying).svg";
+import reading from "../assets/emotions/drago(reading).svg"; // Assuming this asset exists
 import sitting from "../assets/poses/drago(sitting).svg";
 import celebrationAnimation from "../assets/animation/celebration drago.json";
 import Lottie from "lottie-react";
@@ -19,10 +20,17 @@ function VolcanoWords() {
   const [feedback, setFeedback] = useState(null); // "correct" | "wrong" | null
   const [showFeedbackIndicator, setShowFeedbackIndicator] = useState(false);
   const [gameStatus, setGameStatus] = useState("playing"); // "playing" | "won" | "lost"
+  const [dragoPose, setDragoPose] = useState(reading); // Default pose is reading
 
   const activeWord = WORDS[currentWordIndex];
   const isGameOver = gameStatus !== "playing";
   const numWords = WORDS.length;
+
+  // ➡️ EFFECT: Switch Drago's pose based on recording state
+  useEffect(() => {
+    // If recording (listening), show 'sitting' pose, otherwise show 'reading' pose
+    setDragoPose(isRecording ? sitting : reading);
+  }, [isRecording]);
 
   // --- Utility Functions ---
 
@@ -81,19 +89,21 @@ function VolcanoWords() {
     }, 1500);
   };
 
- const handleStartRecording = () => {
+  const handleStartRecording = () => {
     // Placeholder for actual Speech Recognition logic
     if (isGameOver) return;
     setIsRecording(true);
     setTranscript("");
 
-    // Simulate recognition after 2 seconds
+    // Simulate recognition after 2 seconds (50% chance of correct)
     setTimeout(() => {
       setIsRecording(false);
-      
-      const isSimulatedCorrect = Math.random() < 0.5; // Now only 50% chance of being correct
-      
-      const simulatedTranscript = isSimulatedCorrect ? activeWord : "mismatched";
+
+      const isSimulatedCorrect = Math.random() < 0.5;
+
+      const simulatedTranscript = isSimulatedCorrect
+        ? activeWord
+        : "mismatched";
       setTranscript(simulatedTranscript);
 
       if (isSimulatedCorrect) {
@@ -103,6 +113,7 @@ function VolcanoWords() {
       }
     }, 2000);
   };
+
   const handleUseHint = () => {
     if (hints > 0) {
       setHints((prev) => prev - 1);
@@ -112,14 +123,14 @@ function VolcanoWords() {
 
   const handleSkipWord = () => {
     // Skip word, potentially with a penalty (e.g., increased lava)
-    setLavaLevel((prev) => Math.min(100, prev + 5));
+    // setLavaLevel((prev) => Math.min(100, prev + 5));
     if (currentWordIndex < WORDS.length - 1) {
       setCurrentWordIndex((prevIndex) => prevIndex + 1);
       setTranscript("");
       setFeedback(null);
       setShowFeedbackIndicator(false);
     } else {
-      setGameStatus("won"); // Treat skipping the last word as finishing
+      setGameStatus(score > (WORDS.length/2 * 10 ) ? "won" : "lost"); // Treat skipping the last word as finishing
     }
   };
 
@@ -133,6 +144,7 @@ function VolcanoWords() {
     setFeedback(null);
     setShowFeedbackIndicator(false);
     setGameStatus("playing");
+    setDragoPose(reading);
   };
 
   // --- Visuals ---
@@ -178,41 +190,45 @@ function VolcanoWords() {
           hints={hints}
           wordIndex={currentWordIndex}
           numWords={numWords}
-          speakText={() => speakText(activeWord)}
           handleStartRecording={handleStartRecording}
           handleUseHint={handleUseHint}
           handleSkipWord={handleSkipWord}
           isGameOver={isGameOver}
         />
+        <div className={styles.dragonContainer}>
+          <img src={dragoPose} alt="Drago" className={styles.dragonImage} />
+        </div>
         {/* Right Panel - Volcano */}
         <VolcanoPanel
           lavaLevel={lavaLevel}
           lavaBubbles={lavaBubbles}
           feedback={feedback}
           showFeedbackIndicator={showFeedbackIndicator}
+          dragoPose={dragoPose}
         />
       </div>
 
-      {gameStatus === "won" && <WinModel score={score} restartGame={restartGame} />}
-      {gameStatus === "lost" && <LoseModal score={score} restartGame={restartGame} />}
+      {gameStatus === "won" && (
+        <WinModel score={score} restartGame={restartGame} />
+      )}
+      {gameStatus === "lost" && (
+        <LoseModal score={score} restartGame={restartGame} />
+      )}
     </div>
   );
 }
 
-// --- Sub-Components (Unchanged structure, now uses dynamic props) ---
+// --- Sub-Components ---
 
 function VolcanoPanel({
   lavaLevel,
   lavaBubbles,
   feedback,
   showFeedbackIndicator,
+  // dragoPose,
 }) {
   return (
     <div className={styles.volcanoPanel}>
-      <div className={styles.dragonContainer}>
-        <img src={sitting} alt="Sitting Drago" className={styles.dragonImage} />
-      </div>
-
       <div style={{ position: "relative" }}>
         <div className={styles.volcanoContainer}>
           <div className={styles.volcanoTop}></div>
@@ -244,7 +260,13 @@ function VolcanoPanel({
         </div>
 
         <div className={styles.percentageMarkers}>
-          <div className={`${styles.marker} ${lavaLevel >= 100 ? styles.critical : ''}`}>100%</div>
+          <div
+            className={`${styles.marker} ${
+              lavaLevel >= 100 ? styles.critical : ""
+            }`}
+          >
+            100%
+          </div>
           <div className={styles.marker}>75%</div>
           <div className={styles.marker}>50%</div>
           <div className={styles.marker}>25%</div>
@@ -266,7 +288,7 @@ function WordPanal({
   handleStartRecording,
   handleUseHint,
   handleSkipWord,
-  isGameOver
+  isGameOver,
 }) {
   return (
     <div className={styles.wordPanel}>
@@ -328,7 +350,11 @@ function WordPanal({
         />
 
         {/* next */}
-        <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+        <ActionBtn
+          icon="➡️"
+          disabled={isRecording || isGameOver}
+          onClick={handleSkipWord}
+        />
       </div>
     </div>
   );
