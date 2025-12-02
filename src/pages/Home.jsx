@@ -95,8 +95,6 @@ function Home() {
           img={writing}
           alt={labels.writing}
         />
-
-        {/* ✅ هنا غيرنا الرابط عشان يشاور على اللعبة */}
         <Island
           to="/games/reading-quest"
           label={labels.reading}
