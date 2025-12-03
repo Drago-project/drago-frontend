@@ -41,6 +41,7 @@ function Layout() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
+ 
 
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
