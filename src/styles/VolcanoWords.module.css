@@ -203,7 +203,6 @@ body{
   transition: width 0.3s ease; /* Smooth transition for size if needed */
 }
 
-
 /* Volcano Container */
 .volcanoContainer {
   position: relative;
@@ -335,7 +334,7 @@ body{
 .feedbackIndicator {
   position: absolute;
   font-size: 24px;
-  font-weight: 700;
+  /* font-weight: 700; */
   padding: 8px 16px;
   border-radius: 20px;
   animation: slideInOut 1.5s ease;
@@ -345,14 +344,14 @@ body{
 .feedbackIndicator.correct {
   background: #4caf50;
   color: #fff;
-  left: -80px;
+  left: 30px;
   top: 30%;
 }
 
 .feedbackIndicator.wrong {
   background: #f44336;
   color: #fff;
-  left: -80px;
+  left: -100px;
   top: 40%;
 }
 
