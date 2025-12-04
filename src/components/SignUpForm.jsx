@@ -11,6 +11,7 @@ export default function SignUpForm() {
   // --- الحالة الرئيسية ---
   const [userType, setUserType] = useState(null);
   const [error, setError] = useState("");
+  const [invalidFields, setInvalidFields] = useState([]);
 
   // --- حالة فورم الطالب ---
   const [studentForm, setStudentForm] = useState({
@@ -53,19 +54,21 @@ export default function SignUpForm() {
   const handleStudentSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setInvalidFields([]);
 
-    // 1. Validation
+    // 1. Validation - collect all invalid fields
+    const errors = [];
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(studentForm.email)) {
-      setError(t("signup.invalidEmail"));
-      return;
-    }
-    if (!(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(studentForm.password))) {
-      setError(t("signup.passwordTooShort"));
-      return;
-    }
-    if (studentForm.password !== studentForm.confirmPassword) {
-      setError(t("signup.passwordsMismatch"));
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (!emailRegex.test(studentForm.email.trim())) errors.push("email");
+    if (!passwordRegex.test(studentForm.password)) errors.push("password");
+    if (studentForm.password !== studentForm.confirmPassword)
+      errors.push("confirmPassword");
+
+    if (errors.length > 0) {
+      setInvalidFields(errors);
+      setError(t("signup.fixErrors"));
       return;
     }
 
@@ -138,38 +141,36 @@ export default function SignUpForm() {
   const handleDoctorSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setInvalidFields([]);
 
-    // 1. Validation
+    // 1. Validation - collect all invalid fields
+    const errors = [];
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(doctorForm.email)) {
-      setError(t("signup.invalidEmail"));
-      return;
-    }
-    if (doctorForm.password && !(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(doctorForm.password))  ) {
-      setError(t("signup.passwordTooShort"));
-      return;
-    }
-    if (doctorForm.password !== doctorForm.confirmPassword) {
-      setError(t("signup.passwordsMismatch"));
-      return;
-    }
-    if (!/^(010|011|012|015)\d{8}$/.test(doctorForm.phoneNumber)) {
-      setError(t("signup.invalidPhoneNumber"));
-      return;
-    }
-    // the format of licenseNumber is MTI-QNI-XXX where X is a digit
-    // if user enters MTI-QNI-XXX or mti-qni-xxx or MTIQNIXXX or mtiqnixxx it should be accepted
+    const mobileRegex = /^(010|011|012|015)\d{8}$/;
+    const landlineRegex = /^0\d{2,3}\d{7}$/;
     const licenseRegex = /^mti-?qni-?\d{3}$/i;
-    if (!licenseRegex.test(doctorForm.licenseNumber)) {
-      setError(t("signup.invalidLicenseNumber"));
-      return;
-    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-   //0xx-xxxxxxx كود الخط الأرضي ا, 0x-xxxxxxx
-    if (!(/^(010|011|012|015)\d{8}$/.test(doctorForm.clinicPhone) || !/^0\d{2,3}\d{7}$/.test(doctorForm.clinicPhone))) {
-      setError(t("signup.invalidPhoneNumber"));
+    if (!emailRegex.test(doctorForm.email.trim())) errors.push("email");
+    if (!passwordRegex.test(doctorForm.password)) errors.push("password");
+    if (doctorForm.password !== doctorForm.confirmPassword)
+      errors.push("confirmPassword");
+    if (!mobileRegex.test(doctorForm.phoneNumber.trim()))
+      errors.push("phoneNumber");
+    if (!licenseRegex.test(doctorForm.licenseNumber.trim()))
+      errors.push("licenseNumber");
+    if (
+      !mobileRegex.test(doctorForm.clinicPhone.trim()) &&
+      !landlineRegex.test(doctorForm.clinicPhone.trim())
+    )
+      errors.push("clinicPhone");
+
+    if (errors.length > 0) {
+      setInvalidFields(errors);
+      setError(t("signup.fixErrors"));
       return;
     }
+    setInvalidFields([]);
     // 2. API Call للدكاترة — use shared `api` axios instance
     try {
       const payload = {
@@ -334,6 +335,7 @@ export default function SignUpForm() {
             placeholder={t("signup.emailPlaceholder")}
             value={studentForm.email}
             onChange={handleStudentChange}
+            className={invalidFields.includes("email") ? styles.invalid : ""}
             required
           />
           <input
@@ -342,6 +344,7 @@ export default function SignUpForm() {
             placeholder={t("signup.passwordPlaceholder")}
             value={studentForm.password}
             onChange={handleStudentChange}
+            className={invalidFields.includes("password") ? styles.invalid : ""}
             required
           />
           <input
@@ -350,6 +353,9 @@ export default function SignUpForm() {
             placeholder={t("signup.confirmPasswordPlaceholder")}
             value={studentForm.confirmPassword}
             onChange={handleStudentChange}
+            className={
+              invalidFields.includes("confirmPassword") ? styles.invalid : ""
+            }
             required
           />
 
@@ -438,6 +444,7 @@ export default function SignUpForm() {
             placeholder={t("signup.emailPlaceholder")}
             value={doctorForm.email}
             onChange={handleDoctorChange}
+            className={invalidFields.includes("email") ? styles.invalid : ""}
             required
           />
 
@@ -447,6 +454,9 @@ export default function SignUpForm() {
             placeholder={t("signup.doctorPhonePlaceholder")}
             value={doctorForm.phoneNumber}
             onChange={handleDoctorChange}
+            className={
+              invalidFields.includes("phoneNumber") ? styles.invalid : ""
+            }
             required
           />
 
@@ -456,6 +466,9 @@ export default function SignUpForm() {
             placeholder={t("signup.licenseNumberPlaceholder")}
             value={doctorForm.licenseNumber}
             onChange={handleDoctorChange}
+            className={
+              invalidFields.includes("licenseNumber") ? styles.invalid : ""
+            }
             required
           />
 
@@ -513,6 +526,9 @@ export default function SignUpForm() {
             placeholder={t("signup.clinicPhonePlaceholder")}
             value={doctorForm.clinicPhone}
             onChange={handleDoctorChange}
+            className={
+              invalidFields.includes("clinicPhone") ? styles.invalid : ""
+            }
             required
           />
 
@@ -530,6 +546,7 @@ export default function SignUpForm() {
             placeholder={t("signup.passwordPlaceholder")}
             value={doctorForm.password}
             onChange={handleDoctorChange}
+            className={invalidFields.includes("password") ? styles.invalid : ""}
             required
           />
 
@@ -539,6 +556,9 @@ export default function SignUpForm() {
             placeholder={t("signup.confirmPasswordPlaceholder")}
             value={doctorForm.confirmPassword}
             onChange={handleDoctorChange}
+            className={
+              invalidFields.includes("confirmPassword") ? styles.invalid : ""
+            }
             required
           />
 
