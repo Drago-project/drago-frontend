@@ -60,7 +60,7 @@ export default function SignUpForm() {
       setError(t("signup.invalidEmail"));
       return;
     }
-    if (studentForm.password.length < 8) {
+    if (!(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(studentForm.password))) {
       setError(t("signup.passwordTooShort"));
       return;
     }
@@ -145,7 +145,7 @@ export default function SignUpForm() {
       setError(t("signup.invalidEmail"));
       return;
     }
-    if (doctorForm.password.length < 8) {
+    if (doctorForm.password && !(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(doctorForm.password))  ) {
       setError(t("signup.passwordTooShort"));
       return;
     }
