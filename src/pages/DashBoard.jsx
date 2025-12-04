@@ -5,56 +5,56 @@ import styles from "../styles/Dashboard.module.css";
 const initialStudents = [
   {
     id: 1,
-    name: "Leo Johnson",
+    name: "Habiba Mohamed",
     age: 9,
     level: "Level 3",
     diagnosis: "Dyslexia, ADHD",
     progress: 70,
-    avatar: "LJ",
+    avatar: "HM",
   },
   {
     id: 2,
-    name: "Mia Chen",
+    name: "Sara Medhat",
     age: 10,
     level: "Level 2",
     diagnosis: "Dyslexia",
     progress: 65,
-    avatar: "MC",
+    avatar: "SM",
   },
   {
     id: 3,
-    name: "Ethan Williams",
+    name: "Mazen Ali",
     age: 8,
     level: "Level 4",
     diagnosis: "Dyslexia, Dysgraphia",
     progress: 85,
-    avatar: "EW",
+    avatar: "MA",
   },
   {
     id: 4,
-    name: "Chloe Patel",
+    name: "Youssef Gamal",
     age: 11,
     level: "Level 3",
     diagnosis: "Dyslexia",
     progress: 75,
-    avatar: "CP",
+    avatar: "YG",
   },
   {
     id: 5,
-    name: "Noah Davis",
+    name: "Nourhan Salah",
     age: 9,
     level: "Level 2",
     diagnosis: "Dyslexia",
     progress: 60,
-    avatar: "ND",
+    avatar: "NS",
   },
 ];
 
 // Mock data for upcoming sessions
 const upcomingSessions = [
-  { time: "10:00 AM", student: "Leo Johnson", duration: "45 min" },
-  { time: "11:00 AM", student: "Mia Chen", duration: "60 min" },
-  { time: "2:00 PM", student: "Ethan Williams", duration: "30 min" },
+  { time: "10:00 AM", student: "Habiba Mohamed", duration: "45 min" },
+  { time: "11:00 AM", student: "Sara Medhat", duration: "60 min" },
+  { time: "2:00 PM", student: "Mazen Ali", duration: "30 min" },
 ];
 
 // Mock data for recent activity
