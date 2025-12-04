@@ -1,151 +1,178 @@
-import React, { useState } from 'react';
-import styles from '../styles/Dashboard.module.css';
+import React, { useState } from "react";
+import styles from "../styles/Dashboard.module.css";
 
 // Mock data for students
 const initialStudents = [
   {
     id: 1,
-    name: 'Leo Johnson',
+    name: "Leo Johnson",
     age: 9,
-    level: 'Level 3',
-    diagnosis: 'Dyslexia, ADHD',
+    level: "Level 3",
+    diagnosis: "Dyslexia, ADHD",
     progress: 70,
-    avatar: 'LJ'
+    avatar: "LJ",
   },
   {
     id: 2,
-    name: 'Mia Chen',
+    name: "Mia Chen",
     age: 10,
-    level: 'Level 2',
-    diagnosis: 'Dyslexia',
+    level: "Level 2",
+    diagnosis: "Dyslexia",
     progress: 65,
-    avatar: 'MC'
+    avatar: "MC",
   },
   {
     id: 3,
-    name: 'Ethan Williams',
+    name: "Ethan Williams",
     age: 8,
-    level: 'Level 4',
-    diagnosis: 'Dyslexia, Dysgraphia',
+    level: "Level 4",
+    diagnosis: "Dyslexia, Dysgraphia",
     progress: 85,
-    avatar: 'EW'
+    avatar: "EW",
   },
   {
     id: 4,
-    name: 'Chloe Patel',
+    name: "Chloe Patel",
     age: 11,
-    level: 'Level 3',
-    diagnosis: 'Dyslexia',
+    level: "Level 3",
+    diagnosis: "Dyslexia",
     progress: 75,
-    avatar: 'CP'
+    avatar: "CP",
   },
   {
     id: 5,
-    name: 'Noah Davis',
+    name: "Noah Davis",
     age: 9,
-    level: 'Level 2',
-    diagnosis: 'Dyslexia',
+    level: "Level 2",
+    diagnosis: "Dyslexia",
     progress: 60,
-    avatar: 'ND'
-  }
+    avatar: "ND",
+  },
 ];
 
 // Mock data for upcoming sessions
 const upcomingSessions = [
-  { time: '10:00 AM', student: 'Leo Johnson', duration: '45 min' },
-  { time: '11:00 AM', student: 'Mia Chen', duration: '60 min' },
-  { time: '2:00 PM', student: 'Ethan Williams', duration: '30 min' }
+  { time: "10:00 AM", student: "Leo Johnson", duration: "45 min" },
+  { time: "11:00 AM", student: "Mia Chen", duration: "60 min" },
+  { time: "2:00 PM", student: "Ethan Williams", duration: "30 min" },
 ];
 
 // Mock data for recent activity
 const recentActivity = [
   {
-    icon: '📄',
-    text: 'New assignment submitted by Chloe Patel',
-    time: 'Today, 9:15 AM'
+    icon: "📄",
+    text: "New assignment submitted by Chloe Patel",
+    time: "Today, 9:15 AM",
   },
   {
-    icon: '✓',
-    text: 'Session completed with Leo Johnson',
-    time: 'Yesterday, 3:30 PM'
+    icon: "✓",
+    text: "Session completed with Leo Johnson",
+    time: "Yesterday, 3:30 PM",
   },
   {
-    icon: '📊',
-    text: 'Report generated for Noah Davis',
-    time: 'Yesterday, 11:00 AM'
-  }
+    icon: "📊",
+    text: "Report generated for Noah Davis",
+    time: "Yesterday, 11:00 AM",
+  },
 ];
 
 function Dashboard() {
   const [students] = useState(initialStudents);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.id.toString().includes(searchTerm)
+  const filteredStudents = students.filter(
+    (student) =>
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.id.toString().includes(searchTerm)
   );
 
   const getProgressColor = (progress) => {
-    if (progress >= 80) return 'var(--color-primary)';
-    if (progress >= 60) return 'var(--color-secondary)';
-    return '#FF9800';
+    if (progress >= 80) return "var(--color-primary)";
+    if (progress >= 60) return "var(--color-secondary)";
+    return "#FF9800";
   };
 
   return (
     <div className={styles.dashboardContainer}>
-      
+      <Header />
+<div className={styles.dashboardContent}>
+      {/* Overview Cards */}
+      <section className={styles.overviewSection}>
+        <h2 className={styles.sectionTitle}>
+          <span className={styles.titleIcon}>📊</span>
+          Dashboard Overview
+        </h2>
+        <div className={styles.statsGrid}>
+          <div
+            className={styles.statCard}
+            style={{ borderTopColor: "var(--color-primary)" }}
+          >
+            <div
+              className={styles.statIcon}
+              style={{ backgroundColor: "var(--color-primary)" }}
+            >
+              🎒
+            </div>
+            <div className={styles.statContent}>
+              <h3 className={styles.statNumber}>24</h3>
+              <p className={styles.statLabel}>Students</p>
+            </div>
+          </div>
+
+          <div
+            className={styles.statCard}
+            style={{ borderTopColor: "var(--color-secondary)" }}
+          >
+            <div
+              className={styles.statIcon}
+              style={{ backgroundColor: "var(--color-secondary)" }}
+            >
+              📅
+            </div>
+            <div className={styles.statContent}>
+              <h3 className={styles.statNumber}>8</h3>
+              <p className={styles.statLabel}>Upcoming Sessions</p>
+            </div>
+          </div>
+
+          <div
+            className={styles.statCard}
+            style={{ borderTopColor: "var(--color-avatar)" }}
+          >
+            <div
+              className={styles.statIcon}
+              style={{ backgroundColor: "var(--color-avatar)" }}
+            >
+              <span className={styles.warningBadge}>
+                ⚠️<span className={styles.badgeCount}>3</span>
+              </span>
+            </div>
+            <div className={styles.statContent}>
+              <h3 className={styles.statNumber}>3</h3>
+              <p className={styles.statLabel}>Unreviewed Assignments</p>
+            </div>
+          </div>
+
+          <div
+            className={styles.statCard}
+            style={{ borderTopColor: "var(--color-accent)" }}
+          >
+            <div
+              className={styles.statIcon}
+              style={{ backgroundColor: "var(--color-accent)" }}
+            >
+              📈
+            </div>
+            <div className={styles.statContent}>
+              <h3 className={styles.statNumber}>78%</h3>
+              <p className={styles.statLabel}>Overall Progress</p>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* Main Content */}
       <main className={styles.dashboardMain}>
         <div className={styles.mainContent}>
-          {/* Overview Cards */}
-          <section className={styles.overviewSection}>
-            <h2 className={styles.sectionTitle}>
-              <span className={styles.titleIcon}>📊</span>
-              Dashboard Overview
-            </h2>
-            <div className={styles.statsGrid}>
-              <div className={styles.statCard} style={{ borderTopColor: 'var(--color-primary)' }}>
-                <div className={styles.statIcon} style={{ backgroundColor: 'var(--color-primary)' }}>
-                  🎒
-                </div>
-                <div className={styles.statContent}>
-                  <h3 className={styles.statNumber}>24</h3>
-                  <p className={styles.statLabel}>Students</p>
-                </div>
-              </div>
-
-              <div className={styles.statCard} style={{ borderTopColor: 'var(--color-secondary)' }}>
-                <div className={styles.statIcon} style={{ backgroundColor: 'var(--color-secondary)' }}>
-                  📅
-                </div>
-                <div className={styles.statContent}>
-                  <h3 className={styles.statNumber}>8</h3>
-                  <p className={styles.statLabel}>Upcoming Sessions</p>
-                </div>
-              </div>
-
-              <div className={styles.statCard} style={{ borderTopColor: 'var(--color-avatar)' }}>
-                <div className={styles.statIcon} style={{ backgroundColor: 'var(--color-avatar)' }}>
-                  <span className={styles.warningBadge}>⚠️<span className={styles.badgeCount}>3</span></span>
-                </div>
-                <div className={styles.statContent}>
-                  <h3 className={styles.statNumber}>3</h3>
-                  <p className={styles.statLabel}>Unreviewed Assignments</p>
-                </div>
-              </div>
-
-              <div className={styles.statCard} style={{ borderTopColor: 'var(--color-accent)' }}>
-                <div className={styles.statIcon} style={{ backgroundColor: 'var(--color-accent)' }}>
-                  📈
-                </div>
-                <div className={styles.statContent}>
-                  <h3 className={styles.statNumber}>78%</h3>
-                  <p className={styles.statLabel}>Overall Progress</p>
-                </div>
-              </div>
-            </div>
-          </section>
-
           {/* Students Management Section */}
           <section className={styles.studentsSection}>
             <div className={styles.sectionHeader}>
@@ -203,15 +230,21 @@ function Dashboard() {
                               className={styles.progressFill}
                               style={{
                                 width: `${student.progress}%`,
-                                backgroundColor: getProgressColor(student.progress)
+                                backgroundColor: getProgressColor(
+                                  student.progress
+                                ),
                               }}
                             ></div>
                           </div>
-                          <span className={styles.progressText}>{student.progress}%</span>
+                          <span className={styles.progressText}>
+                            {student.progress}%
+                          </span>
                         </div>
                       </td>
                       <td>
-                        <button className={styles.viewButton}>View Details</button>
+                        <button className={styles.viewButton}>
+                          View Details
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -223,7 +256,7 @@ function Dashboard() {
 
         {/* Sidebar Content */}
         <aside className={styles.sidebarContent}>
-          { /* Upcoming Sessions */}
+          {/* Upcoming Sessions */}
           <div className={styles.sidebarCard}>
             <h3 className={styles.sidebarTitle}>Upcoming Sessions Preview</h3>
             <div className={styles.sessionsList}>
@@ -231,8 +264,12 @@ function Dashboard() {
                 <div key={index} className={styles.sessionItem}>
                   <div className={styles.sessionIcon}>🕐</div>
                   <div className={styles.sessionDetails}>
-                    <p className={styles.sessionTime}>{session.time} - {session.student}</p>
-                    <p className={styles.sessionDuration}>({session.duration})</p>
+                    <p className={styles.sessionTime}>
+                      {session.time} - {session.student}
+                    </p>
+                    <p className={styles.sessionDuration}>
+                      ({session.duration})
+                    </p>
                   </div>
                 </div>
               ))}
@@ -257,7 +294,28 @@ function Dashboard() {
         </aside>
       </main>
     </div>
+    </div>
   );
 }
 
+function Header() {
+  return (
+    <>
+      {/* Header */}
+      <header className={styles.dashboardHeader}>
+        <div className={styles.headerLeft}>
+          <div className={styles.logoContainer}></div>
+          <h1 className={styles.dashboardTitle}>Specialist Dashboard</h1>
+        </div>
+        <div className={styles.headerRight}>
+          <button className={styles.notificationBtn}>
+            <span className={styles.notificationIcon}>🔔</span>
+            <span className={styles.badge}>1</span>
+          </button>
+          <div className={styles.userAvatar}>D</div>
+        </div>
+      </header>
+    </>
+  );
+}
 export default Dashboard;
