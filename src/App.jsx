@@ -19,6 +19,7 @@ import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
+import SideBar from "./components/SideBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Games
@@ -30,14 +31,18 @@ function Layout() {
   const location = useLocation();
   const hideAllNav = location.pathname.startsWith("/games");
 
-  const pathsWithInsideNav = ["/home", "/reading", "/dashboard"];
+  const pathsWithInsideNav = ["/home", "/reading"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
+    location.pathname.startsWith(path)
+  );
+  const pathsWithSideBar = ["/dashboard"];
+  const isWithSideBar = pathsWithSideBar.some((path) =>
     location.pathname.startsWith(path)
   );
 
   return (
     <>
-      {hideAllNav ? null : isInsideApp ? <NavInside /> : <NavBar />}
+      {hideAllNav ? null : isWithSideBar ? <SideBar /> : isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
