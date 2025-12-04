@@ -39,7 +39,16 @@
     "doctorPhonePlaceholder": "Your Mobile Number",
     "clinicNamePlaceholder": "Clinic Name",
     "clinicPhonePlaceholder": "Clinic Phone Number",
-    "clinicWebsitePlaceholder": "Clinic Website (Optional)"
+    "clinicWebsitePlaceholder": "Clinic Website (Optional)",
+    "invalidPhoneNumber": "Invalid phone number!",
+    "invalidLicenseNumber": "Invalid license number!",
+    "specializations": {
+      "speechLanguagePathology": "Speech-Language Pathology Specialist",
+      "learningDisabilities": "Learning Disabilities Specialist",
+      "specialEducation": "Special Education Specialist",
+      "behavioralTherapy": "Behavioral Therapy Specialist",
+      "other": "Other"
+    }
   },
 
   "login": {

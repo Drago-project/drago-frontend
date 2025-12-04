@@ -153,7 +153,23 @@ export default function SignUpForm() {
       setError(t("signup.passwordsMismatch"));
       return;
     }
+    if (!/^(010|011|012|015)\d{8}$/.test(doctorForm.phoneNumber)) {
+      setError(t("signup.invalidPhoneNumber"));
+      return;
+    }
+    // the format of licenseNumber is MTI-QNI-XXX where X is a digit
+    // if user enters MTI-QNI-XXX or mti-qni-xxx or MTIQNIXXX or mtiqnixxx it should be accepted
+    const licenseRegex = /^mti-?qni-?\d{3}$/i;
+    if (!licenseRegex.test(doctorForm.licenseNumber)) {
+      setError(t("signup.invalidLicenseNumber"));
+      return;
+    }
 
+   //0xx-xxxxxxx كود الخط الأرضي ا, 0x-xxxxxxx
+    if (!(/^(010|011|012|015)\d{8}$/.test(doctorForm.clinicPhone) || !/^0\d{2,3}\d{7}$/.test(doctorForm.clinicPhone))) {
+      setError(t("signup.invalidPhoneNumber"));
+      return;
+    }
     // 2. API Call للدكاترة — use shared `api` axios instance
     try {
       const payload = {
@@ -189,7 +205,7 @@ export default function SignUpForm() {
   const renderBackButton = () => (
     <button
       type="button"
-      onClick={() => setUserType(null)} 
+      onClick={() => setUserType(null)}
       className={styles["back-btn"]}
     >
       {t("signup.backButton")}
@@ -443,14 +459,44 @@ export default function SignUpForm() {
             required
           />
 
-          <input
+          {/* <input
             type="text"
             name="specialization"
             placeholder={t("signup.specializationPlaceholder")}
             value={doctorForm.specialization}
             onChange={handleDoctorChange}
             required
-          />
+            options={[
+              t("signup.specializations.speechLanguagePathology"),
+              t("signup.specializations.learningDisabilities"),
+              t("signup.specializations.specialEducation"),
+              t("signup.specializations.behavioralTherapy"),
+              t("signup.specializations.other"),
+            ]}
+          /> */}
+          <select
+            name="specialization"
+            value={doctorForm.specialization}
+            onChange={handleDoctorChange}
+            required
+          >
+            <option value="" disabled>
+              {t("signup.specializationPlaceholder")}
+            </option>
+            <option value="speechLanguagePathology">
+              {t("signup.specializations.speechLanguagePathology")}
+            </option>
+            <option value="learningDisabilities">
+              {t("signup.specializations.learningDisabilities")}
+            </option>
+            <option value="specialEducation">
+              {t("signup.specializations.specialEducation")}
+            </option>
+            <option value="behavioralTherapy">
+              {t("signup.specializations.behavioralTherapy")}
+            </option>
+            <option value="other">{t("signup.specializations.other")}</option>
+          </select>
 
           <input
             type="text"
