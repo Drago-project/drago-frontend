@@ -1,0 +1,102 @@
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 50px;
+  text-align: center;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal.win {
+  background: linear-gradient(
+    135deg,
+    #4caf50 0%,
+    #8bc34a 100%
+  );
+  color: #fff;
+}
+
+.modal.lose {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: #fff;
+}
+
+.modalEmoji {
+  font-size: 80px;
+  margin: auto;
+  max-width: 270px;
+  width: 80%;
+}
+
+.modalTitle {
+  font-size: 32px;
+  font-weight: 900;
+  margin-bottom: 15px;
+}
+
+.modalSubtitle {
+  font-size: 20px;
+  margin-bottom: 10px;
+  opacity: 0.95;
+}
+
+.modalScore {
+  font-size: 18px;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+.modalBtn {
+  background: #fff;
+  color: #1a2332;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modalBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
