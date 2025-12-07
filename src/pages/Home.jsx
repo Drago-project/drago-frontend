@@ -89,8 +89,9 @@ function Home() {
       </div>
 
       <div className={styles.islandRow}>
+        {/* 👇 هنا التعديل: الجزيرة دي دلوقتي بتودي على لعبة كوخ الكلمات */}
         <Island
-          to="/games/volcano-words"
+          to="/games/word-hunt"
           label={labels.writing}
           img={writing}
           alt={labels.writing}
