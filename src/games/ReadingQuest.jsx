@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import Confetti from "react-confetti"; // 1. استدعاء مكتبة الاحتفالات
 import styles from "../styles/ReadingQuest.module.css";
 
+import { WinModal, LoseModal } from "../components/WinLose";
+
 // استدعاء البيانات والرسومات من ملفاتهم الخارجية
 import { STORY_DATA } from "../data/stories";
 import { BoatSVG, TornadoSVG } from "../components/GameIcons";
@@ -23,8 +25,8 @@ function ReadingQuest() {
     const sounds = {
       correct: "/sounds/correct.mp3",
       wrong: "/sounds/wrong.mp3",
-      win: "/sounds/win.mp3",
-      lose: "/sounds/lose.mp3",
+      // win: "/sounds/win.mp3",
+      // lose: "/sounds/lose.mp3",
     };
     // التأكد من وجود الصوت قبل تشغيله لتجنب الأخطاء
     const audio = new Audio(sounds[type]);
@@ -96,14 +98,14 @@ function ReadingQuest() {
 
   return (
     <div className={styles.gameContainer}>
-      {/* 2. إضافة الاحتفال لما يكسب */}
+      {/* 2. إضافة الاحتفال لما يكسب
       {gameStatus === "won" && (
         <Confetti
           width={window.innerWidth}
           height={window.innerHeight}
           recycle={true}
         />
-      )}
+      )} */}
 
       {/* منطقة القصة والأسئلة */}
       <div className={styles.mainStage}>
@@ -186,20 +188,22 @@ function ReadingQuest() {
       </div>
 
       {/* نوافذ الفوز والخسارة */}
-      {gameStatus === "won" && (
+      {/* {gameStatus === "won" && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h1>🏝️ Safe Arrival!</h1>
             <h2>Final Score: {score}</h2>
-            <button className={styles.primaryBtn} onClick={restartGame}>
-              Play Again
-            </button>
-            <button
-              className={styles.exitBtn}
-              onClick={() => navigate("/home")}
-            >
-              Exit
-            </button>
+            <div className="btn-container">
+              <button className={styles.primaryBtn} onClick={restartGame}>
+                Play Again
+              </button>
+              <button
+                className={styles.exitBtn}
+                onClick={() => navigate("/home")}
+              >
+                Exit
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -214,7 +218,16 @@ function ReadingQuest() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
+      {gameStatus === "won" ? (
+        <WinModal score={score} restartGame={restartGame}>
+          You safely navigated the river!
+        </WinModal>
+      ) : gameStatus === "lost" ? (
+        <LoseModal score={score} restartGame={restartGame}>
+          The current was too strong.
+        </LoseModal>
+      ) : null}
     </div>
   );
 }

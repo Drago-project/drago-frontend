@@ -1,4 +1,3 @@
-
 /* Modal Styles */
 .modalOverlay {
   position: fixed;
@@ -45,17 +44,19 @@
   }
 }
 
+/* Win State Styling */
 .modal.win {
   background: linear-gradient(
     135deg,
-    #4caf50 0%,
-    #8bc34a 100%
+    #4caf50 0%, /* Green start */
+    #8bc34a 100% /* Lighter green end */
   );
   color: #fff;
 }
 
+/* Lose State Styling */
 .modal.lose {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); /* Red gradients */
   color: #fff;
 }
 
@@ -64,10 +65,18 @@
   margin: auto;
   max-width: 270px;
   width: 80%;
+  /* Ensure Lottie and image take full space */
+  display: flex;
+  justify-content: center;
+}
+
+.sadAnimation {
+  max-width: 100%;
+  height: auto;
 }
 
 .modalTitle {
-  font-size: 32px;
+  font-size: 36px; /* Slightly larger title for impact */
   font-weight: 900;
   margin-bottom: 15px;
 }
@@ -79,14 +88,24 @@
 }
 
 .modalScore {
-  font-size: 18px;
+  font-size: 24px; /* Emphasized score */
+  font-weight: 700;
   margin-bottom: 30px;
-  opacity: 0.9;
+  opacity: 1;
 }
 
+/* Button Container for Layout */
+.btnContainer { /* Renamed from btn-container for camelCase convention in JS/React */
+  display: flex;
+  gap: 30px; /* Reduced gap slightly */
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* Primary Button Style (e.g., Play Again / Try Again) */
 .modalBtn {
   background: #fff;
-  color: #1a2332;
+  color: #1a2332; /* Dark text for contrast on white background */
   border: none;
   padding: 15px 40px;
   border-radius: 10px;
@@ -94,9 +113,32 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
+  flex-grow: 1; /* Allow button to grow slightly within the container */
+  max-width: 200px;
 }
 
 .modalBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px); /* Increased lift */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4); /* Stronger shadow */
+}
+
+/* Secondary Button Style (e.g., Exit) */
+.exitBtn {
+  background: #ff5722; /* Primary action color for exit/secondary */
+  border: none;
+  color: #fff;
+  padding: 15px 40px; /* Matched padding of modalBtn */
+  border-radius: 10px; /* Matched border-radius of modalBtn */
+  font-size: 18px; /* Matched font size of modalBtn */
+  font-weight: 700; /* Matched font weight of modalBtn */
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-grow: 1;
+  max-width: 200px;
+}
+
+.exitBtn:hover {
+  background: #e64a19;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }

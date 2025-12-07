@@ -155,10 +155,10 @@
 .speakBtn {
   background: #ffa726;
 }
-.exitBtn {
+/* .exitBtn {
   background: #ff7043;
   margin-top: 15px;
-}
+} */
 .primaryBtn:active,
 .speakBtn:active {
   transform: translateY(2px);

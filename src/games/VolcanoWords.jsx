@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import styles from "../styles/VolcanoWords.module.css";
+import { useNavigate } from "react-router-dom";
 
 import reading from "../assets/emotions/drago(reading).svg"; // Assuming this asset exists
 import sitting from "../assets/poses/drago(sitting).svg";
-import { WinModel, LoseModal } from "../components/WinLose.jsx";
+import { WinModal, LoseModal } from "../components/WinLose.jsx";
 
 const WORDS = ["read", "book", "fire", "apple", "water", "dragon", "castle"];
 const INITIAL_LAVA_LEVEL = 40; // Starting lava level (percentage)
@@ -21,6 +22,7 @@ function VolcanoWords() {
   const [gameStatus, setGameStatus] = useState("playing"); // "playing" | "won" | "lost"
   const [dragoPose, setDragoPose] = useState(reading); // Default pose is reading
 
+  const navigate = useNavigate();
   const activeWord = WORDS[currentWordIndex];
   const isGameOver = gameStatus !== "playing";
   const numWords = WORDS.length;
@@ -129,7 +131,7 @@ function VolcanoWords() {
       setFeedback(null);
       setShowFeedbackIndicator(false);
     } else {
-      setGameStatus(score > (WORDS.length/2 * 10 ) ? "won" : "lost"); // Treat skipping the last word as finishing
+      setGameStatus(score > (WORDS.length / 2) * 10 ? "won" : "lost"); // Treat skipping the last word as finishing
     }
   };
 
@@ -175,7 +177,7 @@ function VolcanoWords() {
             </span>
           ))}
         </div>
-        <button className={styles.exitBtn}>Exit</button>
+        <button className={styles.exitBtn} onClick={() => navigate("/home")}>Exit</button>
       </nav>
 
       {/* Main Game Content */}
@@ -207,16 +209,14 @@ function VolcanoWords() {
         />
       </div>
 
-      {/* {gameStatus === "won" && (
-        <WinModel score={score} restartGame={restartGame} />
-      )}
-      {gameStatus === "lost" && (
-        <LoseModal score={score} restartGame={restartGame} />
-      )} */}
       {gameStatus === "won" ? (
-        <WinModel score={score} restartGame={restartGame} />
+        <WinModal score={score} restartGame={restartGame}>
+          Drago escaped the volcano!
+        </WinModal>
       ) : gameStatus === "lost" ? (
-        <LoseModal score={score} restartGame={restartGame} />
+        <LoseModal score={score} restartGame={restartGame}>
+          Drago got overwhelmed by the lava!
+        </LoseModal>
       ) : null}
     </div>
   );
@@ -375,7 +375,5 @@ function ActionBtn({ icon, onClick, disabled = false, primary = false }) {
     </button>
   );
 }
-
-
 
 export default VolcanoWords;
