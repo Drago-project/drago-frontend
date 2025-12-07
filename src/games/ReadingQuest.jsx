@@ -98,6 +98,13 @@ function ReadingQuest() {
 
   return (
     <div className={styles.gameContainer}>
+      <nav className={styles.headerNav}>
+        <div className={styles.scoreBoard}>⭐ Score: {score}</div>
+        <button className={styles.exitBtn} onClick={() => navigate("/home")}>
+          Exit Adventure
+        </button>
+      </nav>
+
       {/* 2. إضافة الاحتفال لما يكسب
       {gameStatus === "won" && (
         <Confetti
