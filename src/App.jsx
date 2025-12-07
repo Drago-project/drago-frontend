@@ -1,4 +1,3 @@
-// import { useTranslation } from "react-i18next"
 import {
   BrowserRouter,
   Route,
@@ -8,48 +7,96 @@ import {
 } from "react-router-dom";
 import "./styles/App.css";
 
+// Pages
 import Home from "./pages/Home";
-import ReadingPage from "./pages/ReadingPage";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
+import Dashboard from "./pages/DashBoard";
+import About from "./pages/About";
+
+// Components
 import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
-import Dashboard from "./pages/DashBoard";
-import About from "./pages/about/About";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
+import SideBar from "./components/SideBar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
-// component wrapper for conditional NavBar
+// Games
+import VolcanoWords from "./games/VolcanoWords";
+import ReadingQuest from "./games/ReadingQuest"; //  دي اللعبة الجديدة
+
+// Layout component
 function Layout() {
   const location = useLocation();
+  const hideAllNav = location.pathname.startsWith("/games");
 
-  const hideNavBarOn = ["/home", "/reading", "/dashboard"];
-  const shouldHideNav = hideNavBarOn.includes(location.pathname);
+  const pathsWithInsideNav = ["/home", "/reading"];
+  const isInsideApp = pathsWithInsideNav.some((path) =>
+    location.pathname.startsWith(path)
+  );
+  const pathsWithSideBar = ["/dashboard"];
+  const isWithSideBar = pathsWithSideBar.some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
-      {!shouldHideNav ? <NavBar /> : <NavInside />}
+      {hideAllNav ? null : isWithSideBar ? <SideBar /> : isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
-        {/* Auth routes */}
+
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
           <Route path="signup" element={<SignUpForm />} />
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        {/* Redirect old routes to new auth routes */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/games">
+          <Route
+            path="volcano-words"
+            element={
+              <ProtectedRoute>
+                <VolcanoWords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="reading-quest"
+            element={
+              <ProtectedRoute>
+                <ReadingQuest />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/signup"
           element={<Navigate to="/auth/signup" replace />}
         />
         <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/reading" element={<ReadingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route path="*" element={<h1>404 Not Found</h1>} />
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </>
   );

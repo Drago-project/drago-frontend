@@ -33,14 +33,23 @@
     "selectUserType": "من فضلك اختر نوع حسابك للمتابعة.",
     "iamStudent": "طفل / طالب",
     "iamDoctor": "دكتور / معالج",
-    "licenseNumberPlaceholder": "رقم رخصة مزاولة المهنة",
+    "licenseNumberPlaceholder": "رقم  اعتماد رخصة مزاولة المهنة",
     "specializationPlaceholder": "التخصص (مثال: أخصائي تخاطب)",
     "backButton": "رجوع",
 
     "doctorPhonePlaceholder": "رقم الموبايل الشخصي",
     "clinicNamePlaceholder": "اسم العيادة",
     "clinicPhonePlaceholder": "رقم تليفون العيادة",
-    "clinicWebsitePlaceholder": "رابط صفحة العيادة (اختياري)"
+    "clinicWebsitePlaceholder": "رابط صفحة العيادة (اختياري)",
+    "invalidPhoneNumber": "رقم الهاتف غير صالح!",
+    "invalidLicenseNumber": "رقم رخصة مزاولة المهنة غير صالح!",
+    "specializations": {
+      "speechLanguagePathology": "أخصائي تخاطب",
+      "learningDisabilities": "أخصائي صعوبات تعلم",
+      "specialEducation": "أخصائي تربية خاصة",
+      "behavioralTherapy": "أخصائي تعديل سلوك",
+      "other": "أخرى"
+    }
   },
 
   "login": {

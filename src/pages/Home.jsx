@@ -5,17 +5,28 @@ import books from "../assets/islands/Reading Quest Island.svg";
 import styles from "../styles/Home.module.css";
 import Lottie from "lottie-react";
 import { useTranslation } from "react-i18next";
-// import animate2 from "../assets/animation/drago(holding map 2).svg";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+
+const Island = React.memo(function Island({ to, label, img, alt, children }) {
+  return (
+    <Link to={to} className={styles.islandLink}>
+      <div className={styles.islandWrapper}>
+        <div className={styles.empty}></div>
+        <div className={styles.islandLabel}>{label}</div>
+        <img src={img} alt={alt} />
+        {children}
+      </div>
+    </Link>
+  );
+});
 
 function Home() {
   const [animationData, setAnimationData] = useState(null);
   const { i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
- 
+
   useEffect(() => {
-    // Load the animation data
     fetch("/map.json")
       .then((response) => response.json())
       .then((data) => setAnimationData(data))
@@ -25,66 +36,74 @@ function Home() {
       });
   }, []);
 
+  const labels = useMemo(
+    () => ({
+      adventure: isRTL ? "جزيرة البركان" : "Adventure Games Island",
+      history: isRTL ? "جزيرة التاريخ" : "History Stories Island",
+      writing: isRTL ? "جزيرة الكتابة" : "Writing Workshop Island",
+      reading: isRTL ? "جزيرة القراءة" : "Reading Quest Island",
+    }),
+    [isRTL]
+  );
+
+  const animationNode = useMemo(() => {
+    if (animationData) {
+      return (
+        <Lottie animationData={animationData} loop={true} autoplay={true} />
+      );
+    }
+    return (
+      <div
+        style={{
+          width: 250,
+          height: 250,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        Loading animation...
+      </div>
+    );
+  }, [animationData]);
+
   return (
     <div className={styles.homePage}>
-      {/* <p>help drago find his way to the treasure!</p> */}
+      <div className={styles.animationRow}>{animationNode}</div>
 
-      {/* Drago Animation */}
-      <div className={styles.animationRow}>
-        {animationData ? (
-          <Lottie animationData={animationData} loop={true} autoplay={true} />
-        ) : (
-          <div
-            style={{
-              width: 250,
-              height: 250,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            Loading animation...
-          </div>
-        )}
-      </div>
-
-      {/* First row of islands */}
       <div className={styles.islandRow}>
-        <Link to="#" className={styles.islandLink}>
-          <div className={styles.islandWrapper}>
+        <Island
+          to="/games/volcano-words"
+          label={labels.adventure}
+          img={volcano}
+          alt={labels.adventure}
+        />
+        <Island
+          to="#"
+          label={labels.history}
+          img={pyramids}
+          alt={labels.history}
+        >
           <div className={styles.empty}></div>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة الكتابة" : "Writing Workshop Island"}</div>
-            <img src={writing} alt="Writing Workshop Island" />
-          </div>
-        </Link>
-        <Link to="#" className={styles.islandLink}>
-          <div className={styles.islandWrapper}>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة التاريخ" : "History Stories Island"}</div>
-            <img src={pyramids} alt="History Stories Island" />
-          <div className={styles.empty}></div>
-          </div>
-        </Link>
+        </Island>
       </div>
 
-      {/* Second row of islands */}
       <div className={styles.islandRow}>
-        <Link to="#" className={styles.islandLink}>
-          <div className={styles.islandWrapper}>
+        <Island
+          to="/games/volcano-words"
+          label={labels.writing}
+          img={writing}
+          alt={labels.writing}
+        />
+        <Island
+          to="/games/reading-quest"
+          label={labels.reading}
+          img={books}
+          alt={labels.reading}
+        >
           <div className={styles.empty}></div>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة البركان" : "Adventure Games Island"}</div>
-            <img src={volcano} alt="Adventure Games Island" />
-          </div>
-        </Link>
-        <Link to="#" className={styles.islandLink}>
-          <div className={styles.islandWrapper}>
-            <div className={styles.islandLabel}>{isRTL? "جزيرة القراءة" : "Reading Quest Island"}</div>
-            <img src={books} alt="Reading Quest Island" />
-          <div className={styles.empty}></div>
-          </div>
-        </Link>
+        </Island>
       </div>
-
-      
     </div>
   );
 }

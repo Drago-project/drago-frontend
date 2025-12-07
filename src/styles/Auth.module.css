@@ -260,6 +260,17 @@ select:focus {
   text-align: center;
 }
 
+/* Invalid field styling */
+.invalid {
+  border: 2px solid #e63946 !important;
+  background-color: #ffe6e6;
+}
+
+.invalid:focus {
+  border-color: #e63946 !important;
+  box-shadow: 0px 0px 6px rgba(230, 57, 70, 0.4) !important;
+}
+
 /* RTL Support for Arabic */
 [dir="rtl"] .auth-container {
   font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;

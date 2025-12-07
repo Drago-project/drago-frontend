@@ -5,7 +5,7 @@
   align-items: center;
   gap: 20px;
   padding: 50px;
-  padding-top: 100px; /* Add space for fixed navbar */
+  padding-top: 120px; /* Add space for fixed navbar */
   min-height: 100vh;
   /* direction: ltr !important; */
 }
@@ -87,7 +87,7 @@
 }
 
 .islandRow img {
-  width: 80%;
+  width: 70%;
   height: auto;
   animation: float 3s ease-in-out infinite;
   transition: transform 0.3s ease;
@@ -164,7 +164,7 @@
 
 .animationRow {
   position: absolute;
-  top: 0;
+  top: 70px;
   left: 30%;
   z-index: 3;
   width: 40%; /* Desktop width */
