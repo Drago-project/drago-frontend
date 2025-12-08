@@ -27,7 +27,7 @@
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
     "passwordsMismatch": "Passwords do not match!",
-    "passwordTooShort": "Password must be at least 8 characters long!",
+    "passwordTooShort": "Password must be at least 8 characters long! contains letters and numbers.",
     "invalidEmail": "Invalid email address!",
     "whoAreYou": "Who are you?",
     "selectUserType": "Please choose your account type to continue.",

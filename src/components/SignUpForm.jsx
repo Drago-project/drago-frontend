@@ -49,6 +49,9 @@ export default function SignUpForm() {
   // --- student handlers ---
   const handleStudentChange = (e) => {
     setStudentForm({ ...studentForm, [e.target.name]: e.target.value });
+    // Clear errors when user starts typing
+    setError("");
+    setInvalidFields([]);
   };
 
   const handleStudentSubmit = async (e) => {
@@ -56,23 +59,39 @@ export default function SignUpForm() {
     setError("");
     setInvalidFields([]);
 
-    // 1. Validation - collect all invalid fields
-    const errors = [];
+    // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    if (!emailRegex.test(studentForm.email.trim())) errors.push("email");
-    if (!passwordRegex.test(studentForm.password)) errors.push("password");
-    if (studentForm.password !== studentForm.confirmPassword)
-      errors.push("confirmPassword");
-
-    if (errors.length > 0) {
-      setInvalidFields(errors);
-      setError(t("signup.fixErrors"));
+    // Check email first
+    if (!emailRegex.test(studentForm.email.trim())) {
+      setInvalidFields(["email"]);
+      setError(t("signup.invalidEmail"));
       return;
     }
 
-    // 2. تجهيز تاريخ الميلاد (تحويل من يوم/شهر/سنة إلى تاريخ كامل)
+    // Check password length
+    if (studentForm.password.length < 8) {
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password complexity
+    if (!passwordRegex.test(studentForm.password)) {
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password match
+    if (studentForm.password !== studentForm.confirmPassword) {
+      setInvalidFields(["confirmPassword"]);
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    // 2. تجهيز تاريخ الميلاد
     const monthMap = {
       Jan: "01",
       Feb: "02",
@@ -88,7 +107,6 @@ export default function SignUpForm() {
       Dec: "12",
     };
 
-    // لو المستخدم مختارش تاريخ، نوقف العملية (اختياري، بس أمان)
     if (!studentForm.dobDay || !studentForm.dobMonth || !studentForm.dobYear) {
       setError("Please select a valid date of birth");
       return;
@@ -97,23 +115,21 @@ export default function SignUpForm() {
     const day = studentForm.dobDay.toString().padStart(2, "0");
     const month = monthMap[studentForm.dobMonth];
     const year = studentForm.dobYear;
-
-    // تكوين التاريخ بصيغة ISO
     const finalBirthDate = new Date(`${year}-${month}-${day}`).toISOString();
 
-    // 3. API Call للطلاب — use shared `api` axios instance
+    // 3. API Call للطلاب
     try {
       const payload = {
         firstName: studentForm.firstName,
         lastName: studentForm.lastName,
-        birthDate: finalBirthDate, // التاريخ المجمع
+        birthDate: finalBirthDate,
         gender: studentForm.gender,
         email: studentForm.email,
         password: studentForm.password,
         confirmPassword: studentForm.confirmPassword,
-        usageType: studentForm.usage, // تعديل الاسم ليطابق Swagger
-        role: "Student", // إضافة الدور يدوياً
-        clinicName: studentForm.clinicName || "N/A", // لو فاضية نبعت قيمة افتراضية
+        usageType: studentForm.usage,
+        role: "Student",
+        clinicName: studentForm.clinicName || "N/A",
         doctorName: studentForm.doctorName || "N/A",
       };
 
@@ -136,6 +152,9 @@ export default function SignUpForm() {
   // --- doctor handlers ---
   const handleDoctorChange = (e) => {
     setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
+    // Clear errors when user starts typing
+    setError("");
+    setInvalidFields([]);
   };
 
   const handleDoctorSubmit = async (e) => {
@@ -143,35 +162,66 @@ export default function SignUpForm() {
     setError("");
     setInvalidFields([]);
 
-    // 1. Validation - collect all invalid fields
-    const errors = [];
+    // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const mobileRegex = /^(010|011|012|015)\d{8}$/;
     const landlineRegex = /^0\d{2,3}\d{7}$/;
     const licenseRegex = /^mti-?qni-?\d{3}$/i;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    if (!emailRegex.test(doctorForm.email.trim())) errors.push("email");
-    if (!passwordRegex.test(doctorForm.password)) errors.push("password");
-    if (doctorForm.password !== doctorForm.confirmPassword)
-      errors.push("confirmPassword");
-    if (!mobileRegex.test(doctorForm.phoneNumber.trim()))
-      errors.push("phoneNumber");
-    if (!licenseRegex.test(doctorForm.licenseNumber.trim()))
-      errors.push("licenseNumber");
+    // Check email first
+    if (!emailRegex.test(doctorForm.email.trim())) {
+      setInvalidFields(["email"]);
+      setError(t("signup.invalidEmail"));
+      return;
+    }
+
+    // Check phone number
+    if (!mobileRegex.test(doctorForm.phoneNumber.trim())) {
+      setInvalidFields(["phoneNumber"]);
+      setError(t("signup.invalidPhoneNumber"));
+      return;
+    }
+
+    // Check license number
+    if (!licenseRegex.test(doctorForm.licenseNumber.trim())) {
+      setInvalidFields(["licenseNumber"]);
+      setError(t("signup.invalidLicenseNumber"));
+      return;
+    }
+
+    // Check clinic phone
     if (
       !mobileRegex.test(doctorForm.clinicPhone.trim()) &&
       !landlineRegex.test(doctorForm.clinicPhone.trim())
-    )
-      errors.push("clinicPhone");
-
-    if (errors.length > 0) {
-      setInvalidFields(errors);
-      setError(t("signup.fixErrors"));
+    ) {
+      setInvalidFields(["clinicPhone"]);
+      setError(t("signup.invalidPhoneNumber"));
       return;
     }
-    setInvalidFields([]);
-    // 2. API Call للدكاترة — use shared `api` axios instance
+
+    // Check password length
+    if (doctorForm.password.length < 8) {
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password complexity
+    if (!passwordRegex.test(doctorForm.password)) {
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password match
+    if (doctorForm.password !== doctorForm.confirmPassword) {
+      setInvalidFields(["confirmPassword"]);
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    // 2. API Call للدكاترة
     try {
       const payload = {
         firstName: doctorForm.firstName,
@@ -399,10 +449,11 @@ export default function SignUpForm() {
             </div>
           )}
 
+          {error && <p className={styles["error-text"]}>{error}</p>}
+
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
-          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
@@ -472,21 +523,6 @@ export default function SignUpForm() {
             required
           />
 
-          {/* <input
-            type="text"
-            name="specialization"
-            placeholder={t("signup.specializationPlaceholder")}
-            value={doctorForm.specialization}
-            onChange={handleDoctorChange}
-            required
-            options={[
-              t("signup.specializations.speechLanguagePathology"),
-              t("signup.specializations.learningDisabilities"),
-              t("signup.specializations.specialEducation"),
-              t("signup.specializations.behavioralTherapy"),
-              t("signup.specializations.other"),
-            ]}
-          /> */}
           <select
             name="specialization"
             value={doctorForm.specialization}
@@ -562,11 +598,11 @@ export default function SignUpForm() {
             required
           />
 
+          {error && <p className={styles["error-text"]}>{error}</p>}
+
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
-
-          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
