@@ -24,11 +24,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 // Games
 import VolcanoWords from "./games/VolcanoWords";
-import ReadingQuest from "./games/ReadingQuest"; //  دي اللعبة الجديدة
+import ReadingQuest from "./games/ReadingQuest";
+import WordHuntGame from "./games/WordHunt"; // 👈 1. استدعاء اللعبة هنا (تأكد إن الملف جوه فولدر games)
 
 // Layout component
 function Layout() {
   const location = useLocation();
+  // إضافة اللعبة الجديدة للقائمة اللي بنخفي فيها الناف بار
   const hideAllNav = location.pathname.startsWith("/games");
 
   const pathsWithInsideNav = ["/home", "/reading"];
@@ -42,7 +44,13 @@ function Layout() {
 
   return (
     <>
-      {hideAllNav ? null : isWithSideBar ? <SideBar /> : isInsideApp ? <NavInside /> : <NavBar />}
+      {hideAllNav ? null : isWithSideBar ? (
+        <SideBar />
+      ) : isInsideApp ? (
+        <NavInside />
+      ) : (
+        <NavBar />
+      )}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
@@ -62,6 +70,7 @@ function Layout() {
           }
         />
 
+        {/* 👇 2. هنا ضفنا الراوت الخاص باللعبة */}
         <Route path="/games">
           <Route
             path="volcano-words"
@@ -76,6 +85,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ReadingQuest />
+              </ProtectedRoute>
+            }
+          />
+          {/* الراوت الجديد للعبة كوخ الكلمات */}
+          <Route
+            path="word-hunt"
+            element={
+              <ProtectedRoute>
+                <WordHuntGame />
               </ProtectedRoute>
             }
           />

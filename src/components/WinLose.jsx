@@ -1,3 +1,4 @@
+// src/games/WinLose.jsx
 import sad from "../assets/emotions/drago(crying).svg";
 import celebrationAnimation from "../assets/animation/celebration drago.json";
 import styles from "../styles/WinLose.module.css";
@@ -6,13 +7,12 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Confetti from "react-confetti";
 
-// Function to handle playing sounds
+// دالة تشغيل الأصوات
 const playSound = (type) => {
   const sounds = {
     win: "/sounds/win.mp3",
     lose: "/sounds/lose.mp3",
   };
-  // Ensure the sound exists before attempting to play it
   const soundPath = sounds[type];
   if (soundPath) {
     const audio = new Audio(soundPath);
@@ -23,7 +23,6 @@ const playSound = (type) => {
 export function WinModal({ score, restartGame, children }) {
   const navigate = useNavigate();
 
-  // Play the win sound once when the component mounts
   useEffect(() => {
     playSound("win");
   }, []);
@@ -43,15 +42,15 @@ export function WinModal({ score, restartGame, children }) {
             autoplay={true}
           />
         </div>
-        <h2 className={styles.modalTitle}>You Won!</h2>
+        <h2 className={styles.modalTitle}>!أنت بطل</h2>
         <p className={styles.modalSubtitle}>{children}</p>
-        <p className={styles.modalScore}>Final Score: {score}</p>
+        <p className={styles.modalScore}>النتيجة النهائية: {score}</p>
         <div className={styles.btnContainer}>
           <button className={styles.modalBtn} onClick={restartGame}>
-            Play Again
+            العب مجدداً
           </button>
           <button className={styles.exitBtn} onClick={() => navigate("/home")}>
-            Exit
+            خروج
           </button>
         </div>
       </div>
@@ -62,31 +61,28 @@ export function WinModal({ score, restartGame, children }) {
 export function LoseModal({ score, restartGame, children }) {
   const navigate = useNavigate();
 
-  // Play the lose sound once when the component mounts
   useEffect(() => {
     playSound("lose");
   }, []);
+
   return (
     <div className={styles.modalOverlay}>
       <div className={`${styles.modal} ${styles.lose}`}>
         <div className={styles.modalEmoji}>
           <img src={sad} alt="Sad Drago" className={styles.sadAnimation} />
         </div>
-        <h2 className={styles.modalTitle}>Game Over!</h2>
+        <h2 className={styles.modalTitle}>!انتهت القلوب</h2>
         <p className={styles.modalSubtitle}>{children}</p>
-        <p className={styles.modalScore}>Final Score: {score}</p>
+        <p className={styles.modalScore}>النتيجة النهائية: {score}</p>
         <div className={styles.btnContainer}>
-          {" "}
-          {/* Using the common container class */}
           <button className={styles.modalBtn} onClick={restartGame}>
-            Try Again
+            حاول مرة أخرى
           </button>
           <button className={styles.exitBtn} onClick={() => navigate("/home")}>
-            Exit
+            خروج
           </button>
         </div>
       </div>
     </div>
   );
 }
-
