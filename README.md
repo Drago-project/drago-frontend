@@ -1,4 +1,4 @@
-# Drago Frontend
+ # Drago Frontend
 
 This is the **frontend repository** for **Drago – AI-Powered Educational Platform for Dyslexia Support**.  
 The project is built with **React + Vite**.
@@ -23,6 +23,9 @@ git checkout dev
 ### 3. Install dependencies
 ```bash
 npm install
+npm i axios
+npm i lottie-react
+npm i confetti
 ```
 
 ### 4. Run the project locally
