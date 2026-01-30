@@ -119,6 +119,7 @@ export default function LoginForm() {
           value={form.password}
           onChange={handleChange}
           required
+          style={{ fontFamily: "monospace" }}
         />
 
         <button type="submit" className={styles["auth-btn"]}>

@@ -396,6 +396,7 @@ export default function SignUpForm() {
             onChange={handleStudentChange}
             className={invalidFields.includes("password") ? styles.invalid : ""}
             required
+            style={{ fontFamily: "monospace" }}
           />
           <input
             type="password"
@@ -407,6 +408,7 @@ export default function SignUpForm() {
               invalidFields.includes("confirmPassword") ? styles.invalid : ""
             }
             required
+            style={{ fontFamily: "monospace" }}
           />
 
           <label className={styles["label"]}>{t("signup.usageLabel")}</label>
@@ -416,7 +418,7 @@ export default function SignUpForm() {
             onChange={(e) => {
               handleStudentChange(e);
               setInClinic(
-                e.target.value === "clinic" || e.target.value === "both"
+                e.target.value === "clinic" || e.target.value === "both",
               );
             }}
             required
@@ -584,6 +586,7 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
             className={invalidFields.includes("password") ? styles.invalid : ""}
             required
+            style={{ fontFamily: "monospace" }}
           />
 
           <input
@@ -596,6 +599,7 @@ export default function SignUpForm() {
               invalidFields.includes("confirmPassword") ? styles.invalid : ""
             }
             required
+            style={{ fontFamily: "monospace" }}
           />
 
           {error && <p className={styles["error-text"]}>{error}</p>}
