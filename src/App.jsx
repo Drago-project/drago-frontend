@@ -25,12 +25,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Games
 import VolcanoWords from "./games/VolcanoWords";
 import ReadingQuest from "./games/ReadingQuest";
-import WordHuntGame from "./games/WordHunt"; // 👈 1. استدعاء اللعبة هنا (تأكد إن الملف جوه فولدر games)
+import WordHuntGame from "./games/WordHunt";
+// اللعبة الجديدة موجودة
+import TombPuzzle from "./games/TombPuzzle";
 
 // Layout component
 function Layout() {
   const location = useLocation();
-  // إضافة اللعبة الجديدة للقائمة اللي بنخفي فيها الناف بار
   const hideAllNav = location.pathname.startsWith("/games");
 
   const pathsWithInsideNav = ["/home", "/reading"];
@@ -61,6 +62,7 @@ function Layout() {
           <Route path="login" element={<LoginForm />} />
         </Route>
 
+        {/* ✅ رجعنا الحماية لصفحة Home */}
         <Route
           path="/home"
           element={
@@ -70,8 +72,8 @@ function Layout() {
           }
         />
 
-        {/* 👇 2. هنا ضفنا الراوت الخاص باللعبة */}
         <Route path="/games">
+          {/* ✅ رجعنا الحماية للألعاب القديمة */}
           <Route
             path="volcano-words"
             element={
@@ -88,12 +90,21 @@ function Layout() {
               </ProtectedRoute>
             }
           />
-          {/* الراوت الجديد للعبة كوخ الكلمات */}
           <Route
             path="word-hunt"
             element={
               <ProtectedRoute>
                 <WordHuntGame />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ✅ اللعبة الجديدة موجودة ومحمية بـ ProtectedRoute */}
+          <Route
+            path="tomb-puzzle"
+            element={
+              <ProtectedRoute>
+                <TombPuzzle />
               </ProtectedRoute>
             }
           />
