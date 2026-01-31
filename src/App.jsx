@@ -13,6 +13,8 @@ import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/DashBoard";
 import About from "./pages/About";
+import ContactUs from "./pages/ContactUs";
+import Profile from "./pages/Profile";
 
 // Components
 import SignUpForm from "./components/SignUpForm";
@@ -26,7 +28,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import VolcanoWords from "./games/VolcanoWords";
 import ReadingQuest from "./games/ReadingQuest";
 import WordHuntGame from "./games/WordHunt";
-// اللعبة الجديدة موجودة
 import TombPuzzle from "./games/TombPuzzle";
 
 // Layout component
@@ -34,13 +35,13 @@ function Layout() {
   const location = useLocation();
   const hideAllNav = location.pathname.startsWith("/games");
 
-  const pathsWithInsideNav = ["/home", "/reading"];
+  const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
-    location.pathname.startsWith(path)
+    location.pathname.startsWith(path),
   );
   const pathsWithSideBar = ["/dashboard"];
   const isWithSideBar = pathsWithSideBar.some((path) =>
-    location.pathname.startsWith(path)
+    location.pathname.startsWith(path),
   );
 
   return (
@@ -55,7 +56,7 @@ function Layout() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
-
+        <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
           <Route path="signup" element={<SignUpForm />} />
@@ -68,6 +69,14 @@ function Layout() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
             </ProtectedRoute>
           }
         />
