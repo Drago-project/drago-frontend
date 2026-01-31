@@ -78,8 +78,10 @@ function Home() {
           img={volcano}
           alt={labels.adventure}
         />
+
+        {/* 👇 التعديل هنا: ربطنا جزيرة التاريخ بلعبة Tomb Puzzle */}
         <Island
-          to="#"
+          to="/games/tomb-puzzle"
           label={labels.history}
           img={pyramids}
           alt={labels.history}
@@ -89,7 +91,6 @@ function Home() {
       </div>
 
       <div className={styles.islandRow}>
-        {/* 👇 هنا التعديل: الجزيرة دي دلوقتي بتودي على لعبة كوخ الكلمات */}
         <Island
           to="/games/word-hunt"
           label={labels.writing}
