@@ -293,7 +293,6 @@ export default function SignUpForm() {
   if (userType === "student") {
     return (
       <>
-        {renderBackButton()}
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
         <form onSubmit={handleStudentSubmit} className={styles["auth-form"]}>
@@ -457,6 +456,8 @@ export default function SignUpForm() {
             {t("signup.signUpButton")}
           </button>
         </form>
+
+        {renderBackButton()}
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
         </p>
