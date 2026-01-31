@@ -67,7 +67,7 @@ function Layout() {
         <Route
           path="/home"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="student">
               <Home />
             </ProtectedRoute>
           }
@@ -75,18 +75,18 @@ function Layout() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="student">
               <Profile />
             </ProtectedRoute>
           }
         />
 
-        <Route path="/games">
+        <Route path="/games" >
           {/* ✅ رجعنا الحماية للألعاب القديمة */}
           <Route
             path="volcano-words"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <VolcanoWords />
               </ProtectedRoute>
             }
@@ -94,7 +94,7 @@ function Layout() {
           <Route
             path="reading-quest"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <ReadingQuest />
               </ProtectedRoute>
             }
@@ -102,17 +102,16 @@ function Layout() {
           <Route
             path="word-hunt"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <WordHuntGame />
               </ProtectedRoute>
             }
           />
 
-          {/* ✅ اللعبة الجديدة موجودة ومحمية بـ ProtectedRoute */}
           <Route
             path="tomb-puzzle"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <TombPuzzle />
               </ProtectedRoute>
             }
@@ -122,7 +121,7 @@ function Layout() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="doctor">
               <Dashboard />
             </ProtectedRoute>
           }

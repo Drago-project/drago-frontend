@@ -271,6 +271,73 @@ select:focus {
   box-shadow: 0px 0px 6px rgba(230, 57, 70, 0.4) !important;
 }
 
+/* Input wrapper to allow icons and inline error display */
+.input-wrapper {
+  position: relative;
+}
+
+.field-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+  pointer-events: none;
+  transition:
+    transform 0.18s ease,
+    opacity 0.2s ease;
+  opacity: 0.95;
+}
+
+/* green border + subtle pop animation for success */
+.valid {
+  border: 2px solid #2ecc71 !important;
+  background-color: #eefaf0;
+  animation: valid-pop 220ms ease;
+}
+
+@keyframes valid-pop {
+  0% {
+    transform: scale(0.98);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.field-error {
+  color: #e63946;
+  font-size: 0.85rem;
+  margin-top: 6px;
+  display: block;
+}
+
+/* Top-form/server error styling */
+.form-error-top {
+  color: #e63946;
+  background: rgba(230, 57, 70, 0.05);
+  border-left: 4px solid #e63946;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+/* RTL support for icons */
+[dir="rtl"] .field-icon {
+  right: auto;
+  left: 12px;
+}
+
+[dir="rtl"] .form-error-top {
+  text-align: right;
+}
+
 /* RTL Support for Arabic */
 [dir="rtl"] .auth-container {
   font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
