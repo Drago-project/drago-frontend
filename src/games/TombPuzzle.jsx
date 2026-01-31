@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import "./TombPuzzle.css";
+import style from "../styles/TombPuzzle.module.css";
 
 function TombPuzzle() {
   const [screen, setScreen] = useState("start");
@@ -195,13 +195,13 @@ function TombPuzzle() {
     if (saved) {
       const parsedCollection = JSON.parse(saved);
       const validCollection = parsedCollection.filter((savedItem) =>
-        allArtifacts.some((validItem) => validItem.id === savedItem.id)
+        allArtifacts.some((validItem) => validItem.id === savedItem.id),
       );
       setMyCollection(validCollection);
       if (validCollection.length !== parsedCollection.length) {
         localStorage.setItem(
           "pharaoh_treasures",
-          JSON.stringify(validCollection)
+          JSON.stringify(validCollection),
         );
       }
     }
@@ -227,7 +227,7 @@ function TombPuzzle() {
     setNotification({ show: true, message, type });
     setTimeout(
       () => setNotification({ show: false, message: "", type: "" }),
-      2000
+      2000,
     );
   };
 
@@ -242,8 +242,8 @@ function TombPuzzle() {
 
   const useHint = () => {
     if (hints <= 0 || notification.show) return;
-    const currentCorrectWord =
-      levels[currentLevelIndex].correct[userAnswer.length];
+    // const currentCorrectWord =
+    //   levels[currentLevelIndex].correct[userAnswer.length];
 
     let firstErrorIndex = 0;
     while (
@@ -366,18 +366,18 @@ function TombPuzzle() {
   const goToCollection = () => setScreen("collection");
 
   return (
-    <div className="game-container">
-      <button className="music-toggle" onClick={toggleMusic}>
+    <div className={style["game-container"]}>
+      <button className={style["music-toggle"]} onClick={toggleMusic}>
         {isMusicPlaying ? "🔊" : "🔇"}
       </button>
 
       {/* Info Card */}
       {secretInfo.show && (
-        <div className="secret-overlay">
-          <div className="secret-scroll">
+        <div className={style["secret-overlay"]}>
+          <div className={style["secret-scroll"]}>
             <h2>📜 بردية سرية اكتشفتها!</h2>
             <p>{secretInfo.text}</p>
-            <button className="btn-next" onClick={nextLevel}>
+            <button className={style["btn-next"]} onClick={nextLevel}>
               متابعة الرحلة ➡️
             </button>
           </div>
@@ -385,19 +385,21 @@ function TombPuzzle() {
       )}
 
       {notification.show && (
-        <div className={`notification-popup ${notification.type}`}>
+        <div
+          className={`${style["notification-popup"]} ${style[notification.type]}`}
+        >
           {notification.message}
         </div>
       )}
 
       {/* Start Screen */}
       {screen === "start" && (
-        <div className="start-screen">
+        <div className={style["start-screen"]}>
           {/* 👇 1. المسار المباشر للصورة من public/tomb */}
           <img
             src="/tomb/pharaoh.png"
             alt="Pharaoh"
-            className="character-avatar bounce"
+            className={`${style["character-avatar"]} ${style["bounce"]}`}
           />
           <h1>🏺 مقبرة الأسرار 🏺</h1>
           <p>
@@ -406,11 +408,14 @@ function TombPuzzle() {
             هل يمكنك جمعها كلها؟
           </p>
 
-          <button className="btn-start" onClick={startGame}>
+          <button className={style["btn-start"]} onClick={startGame}>
             ابدأ المغامرة 🔦
           </button>
 
-          <button className="btn-start btn-collection" onClick={goToCollection}>
+          <button
+            className={`${style["btn-start"]} ${style["btn-collection"]}`}
+            onClick={goToCollection}
+          >
             🏆 متحف الكنوز ({myCollection.length}/5)
           </button>
         </div>
@@ -418,24 +423,24 @@ function TombPuzzle() {
 
       {/* Collection Screen */}
       {screen === "collection" && (
-        <div className="start-screen">
+        <div className={style["start-screen"]}>
           <h2>🏆 مجموعتي الأثرية</h2>
           <p>لقد جمعت {myCollection.length} من 5 كنوز</p>
 
-          <div className="collection-grid">
+          <div className={style["collection-grid"]}>
             {allArtifacts.map((artifact) => {
               const isUnlocked = myCollection.find((a) => a.id === artifact.id);
               return (
                 <div
                   key={artifact.id}
-                  className={`artifact-slot ${
-                    isUnlocked ? "unlocked" : "locked"
+                  className={`${style["artifact-slot"]} ${
+                    isUnlocked ? style["unlocked"] : style["locked"]
                   }`}
                 >
-                  <span className="slot-icon">
+                  <span className={style["slot-icon"]}>
                     {isUnlocked ? artifact.icon : "🔒"}
                   </span>
-                  <span className="slot-name">
+                  <span className={style["slot-name"]}>
                     {isUnlocked ? artifact.name : "؟؟؟"}
                   </span>
                 </div>
@@ -443,7 +448,7 @@ function TombPuzzle() {
             })}
           </div>
 
-          <button className="btn-secondary" onClick={goHome}>
+          <button className={style["btn-secondary"]} onClick={goHome}>
             العودة للقائمة 🏠
           </button>
         </div>
@@ -451,23 +456,23 @@ function TombPuzzle() {
 
       {/* Game Screen */}
       {screen === "game" && levels.length > 0 && (
-        <div className="game-screen">
+        <div className={style["game-screen"]}>
           {/* 👇 2. المسار المباشر هنا أيضاً */}
           <img
             src="/tomb/pharaoh.png"
             alt="Pharaoh"
-            className={`character-avatar ${
+            className={`${style["character-avatar"]} ${
               pharaohMood === "happy"
-                ? "avatar-happy"
+                ? style["avatar-happy"]
                 : pharaohMood === "angry"
-                ? "avatar-angry"
-                : "bounce"
+                  ? style["avatar-angry"]
+                  : style["bounce"]
             }`}
           />
 
-          <div className="status-bar">
+          <div className={style["status-bar"]}>
             <span>لغز {currentLevelIndex + 1} / 5</span>
-            <span className="hearts">
+            <span className={style["hearts"]}>
               {[...Array(3)].map((_, i) => (
                 <span
                   key={i}
@@ -484,24 +489,24 @@ function TombPuzzle() {
 
           <h2 style={{ marginTop: "20px" }}>ما هذا الشيء؟</h2>
 
-          <div className="puzzle-container">
-            <div className="answer-wrapper">
+          <div className={style["puzzle-container"]}>
+            <div className={style["answer-wrapper"]}>
               <button
-                className="hint-btn"
+                className={style["hint-btn"]}
                 onClick={useHint}
                 disabled={hints === 0}
                 title="مساعدة"
               >
-                💡 <div className="hint-badge">{hints}</div>
+                💡 <div className={style["hint-badge"]}>{hints}</div>
               </button>
-              <div className="answer-box">
+              <div className={style["answer-box"]}>
                 {userAnswer.length === 0 ? (
                   <span style={{ opacity: 0.5 }}>رتب الوصف...</span>
                 ) : null}
                 {userAnswer.map((word, index) => (
                   <span
                     key={index}
-                    className="word-card user-word clickable"
+                    className={`${style["word-card"]} ${style["user-word"]} ${style["clickable"]}`}
                     onClick={() => handleReturnWord(word, index)}
                   >
                     {word}
@@ -509,11 +514,11 @@ function TombPuzzle() {
                 ))}
               </div>
             </div>
-            <div className="words-pool">
+            <div className={style["words-pool"]}>
               {shuffledWords.map((word, index) => (
                 <button
                   key={index}
-                  className="word-btn"
+                  className={style["word-btn"]}
                   onClick={() => handleWordClick(word)}
                 >
                   {word}
@@ -522,7 +527,7 @@ function TombPuzzle() {
             </div>
           </div>
 
-          <button className="btn-secondary" onClick={goHome}>
+          <button className={style["btn-secondary"]} onClick={goHome}>
             انسحاب 🏃‍♂️
           </button>
         </div>
@@ -530,21 +535,21 @@ function TombPuzzle() {
 
       {/* Victory Screen */}
       {screen === "victory" && (
-        <div className="victory-screen" style={{ zIndex: 100 }}>
+        <div className={style["victory-screen"]} style={{ zIndex: 100 }}>
           {!chestOpened ? (
             <>
               <h1>🎉 مبروك يا بطل! 🎉</h1>
               <p>لقد وجدت صندوق كنز قديم!</p>
-              <button className="chest-btn" onClick={openChest}>
+              <button className={style["chest-btn"]} onClick={openChest}>
                 🎁
               </button>
               <p>اضغط لفتح الصندوق</p>
             </>
           ) : (
             <>
-              <div className="artifact-reveal">
+              <div className={style["artifact-reveal"]}>
                 <h1>✨ اكتشاف مذهل! ✨</h1>
-                <span className="artifact-icon">{reward.icon}</span>
+                <span className={style["artifact-icon"]}>{reward.icon}</span>
                 <h2 style={{ color: "#ffd700" }}>{reward.name}</h2>
                 <p>تمت إضافته إلى متحفك</p>
               </div>
@@ -560,7 +565,7 @@ function TombPuzzle() {
 
       {/* Game Over */}
       {screen === "gameover" && (
-        <div className="gameover-screen">
+        <div className={style["gameover-screen"]}>
           <div style={{ fontSize: "80px", marginBottom: "20px" }}>☠️</div>
           <h1 style={{ color: "#e74c3c", textShadow: "0 0 10px red" }}>
             محاولة فاشلة!
@@ -578,7 +583,7 @@ function TombPuzzle() {
             إعادة نفس المحاولة 🔄
           </button>
           <br />
-          <button className="btn-secondary" onClick={startGame}>
+          <button className={style["btn-secondary"]} onClick={startGame}>
             تحدي جديد 🆕
           </button>
         </div>

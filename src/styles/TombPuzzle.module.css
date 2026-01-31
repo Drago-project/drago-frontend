@@ -57,24 +57,27 @@
 }
 
 /* النصوص */
-h1 {
+.game-container h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
   text-shadow: 2px 2px 4px #000;
   color: #ffd700;
 }
-h2 {
+
+.game-container h2 {
   color: #f1c40f;
   margin-top: 10px;
   text-shadow: 2px 2px 4px black;
 }
-p {
+
+.game-container p {
   font-size: 1.2rem;
   color: #fff;
   line-height: 1.6;
   text-shadow: 2px 2px 4px black;
   font-weight: bold;
 }
+
 
 /* صورة الفرعون */
 .character-avatar {
@@ -163,7 +166,7 @@ p {
 }
 
 /* الأزرار */
-button {
+.game-container button {
   background-color: #d4a017;
   color: #1a1a1a;
   border: none;
@@ -178,7 +181,7 @@ button {
   box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
   border: 2px solid #ffd700;
 }
-button:hover {
+.game-container button:hover {
   transform: scale(1.05);
   background-color: #f1c40f;
 }
