@@ -1,10 +1,12 @@
 /* VolcanoWords.module.css */
-body{
+body {
   margin: 0;
 }
-/* Base Container */
+
+/* --- Base Container --- */
 .gameContainer {
   min-height: 100vh;
+  /* Ensure background image asset path is correct */
   background-image: url("../assets/backgrunds/x5ng_lpkv_201030.jpg");
   background-size: cover;
   background-position: center;
@@ -12,7 +14,7 @@ body{
   flex-direction: column;
 }
 
-/* Header Navigation */
+/* --- Header Navigation --- */
 .headerNav {
   background: transparent;
   padding: 15px;
@@ -22,11 +24,12 @@ body{
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
+
 .scoreBoard {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .heartsContainer {
@@ -41,7 +44,7 @@ body{
 }
 
 .exitBtn {
-  background: #ff5722; /* Example color for exit */
+  background: #ff5722;
   border: none;
   color: #fff;
   padding: 10px 24px;
@@ -56,17 +59,18 @@ body{
   background: #e64a19;
 }
 
-/* Main Game Area */
+/* --- Main Game Area --- */
 .gameContent {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* DESKTOP/LARGE TABLET: Favor word panel slightly */
+  grid-template-columns: 1.5fr 1fr;
   gap: 60px;
-  padding: 0 10%;
+  padding: 0 5%;
   align-items: center;
 }
 
-/* Left Panel - Word Card */
+/* --- Left Panel - Word Card --- */
 .wordPanel {
   display: flex;
   flex-direction: column;
@@ -97,6 +101,7 @@ body{
   text-transform: uppercase;
 }
 
+/* Feedback Styling */
 .feedbackMessage {
   margin-top: 20px;
   font-size: 18px;
@@ -123,7 +128,7 @@ body{
   font-style: italic;
 }
 
-/* Action Buttons */
+/* --- Action Buttons --- */
 .actionButtons {
   display: flex;
   gap: 20px;
@@ -148,7 +153,7 @@ body{
   width: 80px;
   height: 80px;
   background: #1a2332;
-  border-color: #ffaa00; /* Primary action color */
+  border-color: #ffaa00;
 }
 
 .actionBtn.primary:hover:not(:disabled) {
@@ -174,36 +179,34 @@ body{
   margin-top: 10px;
 }
 
-/* Right Panel - Volcano */
+/* --- Right Panel - Volcano & Drago --- */
 .volcanoPanel {
-  /* FIX 1: Use Flexbox to center Drago and Volcano */
+  /* Aligns the volcano body to the center-left of this panel */
   display: flex;
-  flex-direction: column; 
-  align-items: center; 
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: center;
   position: relative;
-  /* Ensure the panel takes up the necessary space */
-  flex: 1; 
+  flex: 1;
+  padding-left: 50px; /* Space for the volcano body to sit within the panel */
 }
 
 .dragonContainer {
-  /* FIX 2: Absolute position for Drago over the volcano */
-  position: absolute; 
-  z-index: 20; 
-  top: 70%; 
-  left: 15%; 
-  transform: translate(-50%, -50%); /* Precisely center the element */
+  position: absolute;
+  z-index: 20;
+  /* Position relative to the center of the Volcano body */
+  top: 60%;
+  left: calc(50% + 50px);
+  transform: translate(-50%, -50%);
 }
 
 .dragonImage {
-  /* FIX 3: Make Drago bigger */
-  width: 250px; 
+  width: 250px;
   height: auto;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
-  transition: width 0.3s ease; /* Smooth transition for size if needed */
+  transition: width 0.3s ease;
 }
 
-/* Volcano Container */
 .volcanoContainer {
   position: relative;
   width: 320px;
@@ -213,7 +216,7 @@ body{
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
   overflow: hidden;
   border: 4px solid #2d3a4d;
-  margin-top: 40px; /* Slight top margin to accommodate positioning */
+  margin: 0; /* Ensures consistent positioning */
 }
 
 /* Top Platform */
@@ -334,7 +337,6 @@ body{
 .feedbackIndicator {
   position: absolute;
   font-size: 24px;
-  /* font-weight: 700; */
   padding: 8px 16px;
   border-radius: 20px;
   animation: slideInOut 1.5s ease;
@@ -351,7 +353,8 @@ body{
 .feedbackIndicator.wrong {
   background: #f44336;
   color: #fff;
-  left: -100px;
+  /* Adjusted to be closer to the volcano on the left side of the panel */
+  left: 30px;
   top: 40%;
 }
 
@@ -374,114 +377,13 @@ body{
   }
 }
 
-/* Modal Styles */
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
+/* --- Responsive Design FIXES --- */
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.modal {
-  background: #fff;
-  border-radius: 20px;
-  padding: 50px;
-  text-align: center;
-  max-width: 600px;
-  width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: scaleIn 0.3s ease;
-}
-
-@keyframes scaleIn {
-  from {
-    transform: scale(0.9);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.modal.win {
-  background: linear-gradient(
-    135deg,
-    #4caf50 0%,
-    #8bc34a 100%
-  );
-  color: #fff;
-}
-
-.modal.lose {
-  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
-  color: #fff;
-}
-
-.modalEmoji {
-  font-size: 80px;
-  margin: auto;
-  max-width: 270px;
-  width: 80%;
-}
-
-.modalTitle {
-  font-size: 32px;
-  font-weight: 900;
-  margin-bottom: 15px;
-}
-
-.modalSubtitle {
-  font-size: 20px;
-  margin-bottom: 10px;
-  opacity: 0.95;
-}
-
-.modalScore {
-  font-size: 18px;
-  margin-bottom: 30px;
-  opacity: 0.9;
-}
-
-.modalBtn {
-  background: #fff;
-  color: #1a2332;
-  border: none;
-  padding: 15px 40px;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.modalBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-/* Responsive Design */
 @media (max-width: 1200px) {
-  /* FIX 4: Ensure side-by-side layout on smaller screens */
+  /* Mid-size desktops/large tablets */
   .gameContent {
-    grid-template-columns: 1fr 1fr; 
-    gap: 20px; 
+    grid-template-columns: 1.3fr 1fr; /* Slightly favor word panel */
+    gap: 30px;
     padding: 30px;
   }
   .percentageMarkers {
@@ -489,37 +391,104 @@ body{
   }
 }
 
-@media (max-width: 768px) {
-  .headerNav {
-    padding: 12px 20px;
-  }
-
-  .heart {
-    font-size: 24px;
-  }
-
-  .wordDisplay {
-    font-size: 56px;
-  }
-  
+@media (max-width: 992px) {
+  /* TABLET: Narrow volcano column */
   .gameContent {
-    /* Stack elements vertically on very small devices if space is too tight */
-    /* If you want to force side-by-side even on small phones, remove the next line: */
-    /* grid-template-columns: 1fr; */ 
-    padding: 15px;
-  }
-  
-  .wordPanel {
-    padding: 0;
-    margin-top: 20px;
+    grid-template-columns: 2fr 1fr; /* Word panel takes 2/3, volcano takes 1/3 */
+    gap: 20px;
+    padding: 20px;
+    align-items: center;
   }
 
+  .wordCard {
+    min-width: unset;
+    padding: 40px 20px;
+  }
+
+  /* Shrink Volcano */
   .volcanoContainer {
-    width: 100px; 
-    /* height: 400px; */
+    width: 200px; /* Reduced size for tablets */
+    height: 350px;
+  }
+
+  /* Reposition Drago relative to the smaller volcano */
+  .dragonContainer {
+    top: 65%;
+    left: calc(50% + 20px); /* Adjust based on new volcano position/size */
   }
 
   .dragonImage {
-    width: 180px; /* Smaller dragon on small screens */
+    width: 160px;
+  }
+
+  /* Markers need to be closer */
+  .percentageMarkers {
+    right: -30px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* MOBILE PHONE: Drastically shrink Volcano, maintain side-by-side */
+  .gameContent {
+    /* Extreme ratio: 3 parts word panel, 1 part volcano/drago */
+    grid-template-columns: 3fr 1fr;
+    padding: 15px;
+    gap: 10px;
+  }
+  .headerNav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .wordCard {
+    min-width: unset;
+    padding: 25px 15px;
+  }
+
+  .wordDisplay {
+    font-size: 36px;
+  }
+
+  /* Volcano must be tiny to fit */
+  .volcanoContainer {
+    width: 150px; /* Minimal functional width for vertical bar */
+    height: 250px;
+  }
+
+  .volcanoPanel {
+    padding-left: 5px; /* Minimal padding */
+  }
+
+  /* Drago must be small and positioned next to the tiny volcano */
+  .dragonContainer {
+    top: 75%;
+    /* Position Drago relative to the tiny Volcano */
+    left: calc(50% + 5px);
+  }
+
+  .dragonImage {
+    width: 150px; /* Smallest functional size for Drago */
+  }
+
+  /* Hide markers on tiny screens to save space */
+  .percentageMarkers {
+    display: none;
+  }
+
+  /* Shrink buttons */
+  .actionBtn {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
+
+  .actionBtn.primary {
+    width: 60px;
+    height: 60px;
+  }
+
+  .scoreBoard,
+  .exitBtn {
+    font-size: 16px;
   }
 }

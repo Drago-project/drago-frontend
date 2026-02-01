@@ -43,6 +43,14 @@ export default function LoginForm() {
         }
       }
 
+      // persist user data (useful when server doesn't return a JWT)
+      try {
+        const userObj = data.user || data || {};
+        localStorage.setItem("userData", JSON.stringify(userObj));
+      } catch (e) {
+        console.warn("Could not persist user data:", e);
+      }
+
       // decode JWT payload if possible
       const decodeJwt = (jwt) => {
         try {
@@ -51,7 +59,7 @@ export default function LoginForm() {
           const payload = parts[1].replace(/-/g, "+").replace(/_/g, "/");
           const padded = payload.padEnd(
             payload.length + ((4 - (payload.length % 4)) % 4),
-            "="
+            "=",
           );
           const json = atob(padded);
           return JSON.parse(json);
@@ -119,6 +127,7 @@ export default function LoginForm() {
           value={form.password}
           onChange={handleChange}
           required
+          style={{ fontFamily: "monospace" }}
         />
 
         <button type="submit" className={styles["auth-btn"]}>

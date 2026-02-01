@@ -13,6 +13,12 @@ export default function SignUpForm() {
   const [error, setError] = useState("");
   const [invalidFields, setInvalidFields] = useState([]);
 
+  // Field-level validation state -> real-time errors & valid tracking
+  const [studentErrors, setStudentErrors] = useState({});
+  const [doctorErrors, setDoctorErrors] = useState({});
+  const [studentValidFields, setStudentValidFields] = useState([]);
+  const [doctorValidFields, setDoctorValidFields] = useState([]);
+
   // --- حالة فورم الطالب ---
   const [studentForm, setStudentForm] = useState({
     firstName: "",
@@ -47,8 +53,55 @@ export default function SignUpForm() {
   const [inClinic, setInClinic] = useState(false);
 
   // --- student handlers ---
+  const validateStudentField = (name, value) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (name === "email") {
+      if (!emailRegex.test(value.trim())) return t("signup.invalidEmail");
+      return "";
+    }
+
+    if (name === "password") {
+      if (value.length < 8) return t("signup.passwordTooShort");
+      if (!passwordRegex.test(value)) return t("signup.passwordTooShort");
+      if (
+        studentForm.confirmPassword &&
+        studentForm.confirmPassword !== value
+      ) {
+        setStudentErrors((prev) => ({
+          ...prev,
+          confirmPassword: t("signup.passwordsMismatch"),
+        }));
+      } else {
+        setStudentErrors((prev) => ({ ...prev, confirmPassword: "" }));
+      }
+      return "";
+    }
+
+    if (name === "confirmPassword") {
+      if (value !== studentForm.password) return t("signup.passwordsMismatch");
+      return "";
+    }
+
+    return "";
+  };
+
   const handleStudentChange = (e) => {
-    setStudentForm({ ...studentForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setStudentForm((prev) => ({ ...prev, [name]: value }));
+    setError("");
+    setInvalidFields([]);
+
+    const msg = validateStudentField(name, value);
+    setStudentErrors((prev) => ({ ...prev, [name]: msg }));
+
+    setStudentValidFields((prev) => {
+      const set = new Set(prev);
+      if (!msg && value !== "") set.add(name);
+      else set.delete(name);
+      return Array.from(set);
+    });
   };
 
   const handleStudentSubmit = async (e) => {
@@ -56,23 +109,61 @@ export default function SignUpForm() {
     setError("");
     setInvalidFields([]);
 
-    // 1. Validation - collect all invalid fields
-    const errors = [];
+    // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    if (!emailRegex.test(studentForm.email.trim())) errors.push("email");
-    if (!passwordRegex.test(studentForm.password)) errors.push("password");
-    if (studentForm.password !== studentForm.confirmPassword)
-      errors.push("confirmPassword");
-
-    if (errors.length > 0) {
-      setInvalidFields(errors);
-      setError(t("signup.fixErrors"));
+    // Check email first
+    if (!emailRegex.test(studentForm.email.trim())) {
+      setStudentErrors((prev) => ({
+        ...prev,
+        email: t("signup.invalidEmail"),
+      }));
+      setStudentValidFields((prev) => prev.filter((f) => f !== "email"));
+      setInvalidFields(["email"]);
+      setError(t("signup.invalidEmail"));
       return;
     }
 
-    // 2. تجهيز تاريخ الميلاد (تحويل من يوم/شهر/سنة إلى تاريخ كامل)
+    // Check password length
+    if (studentForm.password.length < 8) {
+      setStudentErrors((prev) => ({
+        ...prev,
+        password: t("signup.passwordTooShort"),
+      }));
+      setStudentValidFields((prev) => prev.filter((f) => f !== "password"));
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password complexity
+    if (!passwordRegex.test(studentForm.password)) {
+      setStudentErrors((prev) => ({
+        ...prev,
+        password: t("signup.passwordTooShort"),
+      }));
+      setStudentValidFields((prev) => prev.filter((f) => f !== "password"));
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password match
+    if (studentForm.password !== studentForm.confirmPassword) {
+      setStudentErrors((prev) => ({
+        ...prev,
+        confirmPassword: t("signup.passwordsMismatch"),
+      }));
+      setStudentValidFields((prev) =>
+        prev.filter((f) => f !== "confirmPassword"),
+      );
+      setInvalidFields(["confirmPassword"]);
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    // 2. تجهيز تاريخ الميلاد
     const monthMap = {
       Jan: "01",
       Feb: "02",
@@ -88,7 +179,6 @@ export default function SignUpForm() {
       Dec: "12",
     };
 
-    // لو المستخدم مختارش تاريخ، نوقف العملية (اختياري، بس أمان)
     if (!studentForm.dobDay || !studentForm.dobMonth || !studentForm.dobYear) {
       setError("Please select a valid date of birth");
       return;
@@ -97,23 +187,21 @@ export default function SignUpForm() {
     const day = studentForm.dobDay.toString().padStart(2, "0");
     const month = monthMap[studentForm.dobMonth];
     const year = studentForm.dobYear;
-
-    // تكوين التاريخ بصيغة ISO
     const finalBirthDate = new Date(`${year}-${month}-${day}`).toISOString();
 
-    // 3. API Call للطلاب — use shared `api` axios instance
+    // 3. API Call للطلاب
     try {
       const payload = {
         firstName: studentForm.firstName,
         lastName: studentForm.lastName,
-        birthDate: finalBirthDate, // التاريخ المجمع
+        birthDate: finalBirthDate,
         gender: studentForm.gender,
         email: studentForm.email,
         password: studentForm.password,
         confirmPassword: studentForm.confirmPassword,
-        usageType: studentForm.usage, // تعديل الاسم ليطابق Swagger
-        role: "Student", // إضافة الدور يدوياً
-        clinicName: studentForm.clinicName || "N/A", // لو فاضية نبعت قيمة افتراضية
+        usageType: studentForm.usage,
+        role: "Student",
+        clinicName: studentForm.clinicName || "N/A",
         doctorName: studentForm.doctorName || "N/A",
       };
 
@@ -134,8 +222,73 @@ export default function SignUpForm() {
   };
 
   // --- doctor handlers ---
+  const validateDoctorField = (name, value) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const mobileRegex = /^(010|011|012|015)\d{8}$/;
+    const landlineRegex = /^0\d{2,3}\d{7}$/;
+    const licenseRegex = /^mti-?qni-?\d{3}$/i;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    if (name === "email") {
+      if (!emailRegex.test(value.trim())) return t("signup.invalidEmail");
+      return "";
+    }
+
+    if (name === "phoneNumber") {
+      if (!mobileRegex.test(value.trim()))
+        return t("signup.invalidPhoneNumber");
+      return "";
+    }
+
+    if (name === "licenseNumber") {
+      if (!licenseRegex.test(value.trim()))
+        return t("signup.invalidLicenseNumber");
+      return "";
+    }
+
+    if (name === "clinicPhone") {
+      if (!mobileRegex.test(value.trim()) && !landlineRegex.test(value.trim()))
+        return t("signup.invalidPhoneNumber");
+      return "";
+    }
+
+    if (name === "password") {
+      if (value.length < 8) return t("signup.passwordTooShort");
+      if (!passwordRegex.test(value)) return t("signup.passwordTooShort");
+      if (doctorForm.confirmPassword && doctorForm.confirmPassword !== value) {
+        setDoctorErrors((prev) => ({
+          ...prev,
+          confirmPassword: t("signup.passwordsMismatch"),
+        }));
+      } else {
+        setDoctorErrors((prev) => ({ ...prev, confirmPassword: "" }));
+      }
+      return "";
+    }
+
+    if (name === "confirmPassword") {
+      if (value !== doctorForm.password) return t("signup.passwordsMismatch");
+      return "";
+    }
+
+    return "";
+  };
+
   const handleDoctorChange = (e) => {
-    setDoctorForm({ ...doctorForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setDoctorForm((prev) => ({ ...prev, [name]: value }));
+    setError("");
+    setInvalidFields([]);
+
+    const msg = validateDoctorField(name, value);
+    setDoctorErrors((prev) => ({ ...prev, [name]: msg }));
+
+    setDoctorValidFields((prev) => {
+      const set = new Set(prev);
+      if (!msg && value !== "") set.add(name);
+      else set.delete(name);
+      return Array.from(set);
+    });
   };
 
   const handleDoctorSubmit = async (e) => {
@@ -143,35 +296,100 @@ export default function SignUpForm() {
     setError("");
     setInvalidFields([]);
 
-    // 1. Validation - collect all invalid fields
-    const errors = [];
+    // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const mobileRegex = /^(010|011|012|015)\d{8}$/;
     const landlineRegex = /^0\d{2,3}\d{7}$/;
     const licenseRegex = /^mti-?qni-?\d{3}$/i;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-    if (!emailRegex.test(doctorForm.email.trim())) errors.push("email");
-    if (!passwordRegex.test(doctorForm.password)) errors.push("password");
-    if (doctorForm.password !== doctorForm.confirmPassword)
-      errors.push("confirmPassword");
-    if (!mobileRegex.test(doctorForm.phoneNumber.trim()))
-      errors.push("phoneNumber");
-    if (!licenseRegex.test(doctorForm.licenseNumber.trim()))
-      errors.push("licenseNumber");
+    // Check email first
+    if (!emailRegex.test(doctorForm.email.trim())) {
+      setDoctorErrors((prev) => ({ ...prev, email: t("signup.invalidEmail") }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "email"));
+      setInvalidFields(["email"]);
+      setError(t("signup.invalidEmail"));
+      return;
+    }
+
+    // Check phone number
+    if (!mobileRegex.test(doctorForm.phoneNumber.trim())) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        phoneNumber: t("signup.invalidPhoneNumber"),
+      }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "phoneNumber"));
+      setInvalidFields(["phoneNumber"]);
+      setError(t("signup.invalidPhoneNumber"));
+      return;
+    }
+
+    // Check license number
+    if (!licenseRegex.test(doctorForm.licenseNumber.trim())) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        licenseNumber: t("signup.invalidLicenseNumber"),
+      }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "licenseNumber"));
+      setInvalidFields(["licenseNumber"]);
+      setError(t("signup.invalidLicenseNumber"));
+      return;
+    }
+
+    // Check clinic phone
     if (
       !mobileRegex.test(doctorForm.clinicPhone.trim()) &&
       !landlineRegex.test(doctorForm.clinicPhone.trim())
-    )
-      errors.push("clinicPhone");
-
-    if (errors.length > 0) {
-      setInvalidFields(errors);
-      setError(t("signup.fixErrors"));
+    ) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        clinicPhone: t("signup.invalidPhoneNumber"),
+      }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "clinicPhone"));
+      setInvalidFields(["clinicPhone"]);
+      setError(t("signup.invalidPhoneNumber"));
       return;
     }
-    setInvalidFields([]);
-    // 2. API Call للدكاترة — use shared `api` axios instance
+
+    // Check password length
+    if (doctorForm.password.length < 8) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        password: t("signup.passwordTooShort"),
+      }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "password"));
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password complexity
+    if (!passwordRegex.test(doctorForm.password)) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        password: t("signup.passwordTooShort"),
+      }));
+      setDoctorValidFields((prev) => prev.filter((f) => f !== "password"));
+      setInvalidFields(["password"]);
+      setError(t("signup.passwordTooShort"));
+      return;
+    }
+
+    // Check password match
+    if (doctorForm.password !== doctorForm.confirmPassword) {
+      setDoctorErrors((prev) => ({
+        ...prev,
+        confirmPassword: t("signup.passwordsMismatch"),
+      }));
+      setDoctorValidFields((prev) =>
+        prev.filter((f) => f !== "confirmPassword"),
+      );
+      setInvalidFields(["confirmPassword"]);
+      setError(t("signup.passwordsMismatch"));
+      return;
+    }
+
+    // 2. API Call للدكاترة
     try {
       const payload = {
         firstName: doctorForm.firstName,
@@ -243,9 +461,9 @@ export default function SignUpForm() {
   if (userType === "student") {
     return (
       <>
-        {renderBackButton()}
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
+        {error && <p className={styles["form-error-top"]}>{error}</p>}
         <form onSubmit={handleStudentSubmit} className={styles["auth-form"]}>
           <div className={styles["row"]}>
             <input
@@ -329,35 +547,96 @@ export default function SignUpForm() {
             </label>
           </div>
 
-          <input
-            type="email"
-            name="email"
-            placeholder={t("signup.emailPlaceholder")}
-            value={studentForm.email}
-            onChange={handleStudentChange}
-            className={invalidFields.includes("email") ? styles.invalid : ""}
-            required
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder={t("signup.passwordPlaceholder")}
-            value={studentForm.password}
-            onChange={handleStudentChange}
-            className={invalidFields.includes("password") ? styles.invalid : ""}
-            required
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder={t("signup.confirmPasswordPlaceholder")}
-            value={studentForm.confirmPassword}
-            onChange={handleStudentChange}
-            className={
-              invalidFields.includes("confirmPassword") ? styles.invalid : ""
-            }
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="email"
+              name="email"
+              placeholder={t("signup.emailPlaceholder")}
+              value={studentForm.email}
+              onChange={handleStudentChange}
+              className={
+                studentErrors.email || invalidFields.includes("email")
+                  ? styles.invalid
+                  : studentValidFields.includes("email")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {studentValidFields.includes("email")
+                ? "✓"
+                : studentErrors.email
+                  ? "!"
+                  : ""}
+            </span>
+            {studentErrors.email && (
+              <small className={styles["field-error"]}>
+                {studentErrors.email}
+              </small>
+            )}
+          </div>
+
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="password"
+              name="password"
+              placeholder={t("signup.passwordPlaceholder")}
+              value={studentForm.password}
+              onChange={handleStudentChange}
+              className={
+                studentErrors.password || invalidFields.includes("password")
+                  ? styles.invalid
+                  : studentValidFields.includes("password")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {studentValidFields.includes("password")
+                ? "✓"
+                : studentErrors.password
+                  ? "!"
+                  : ""}
+            </span>
+            {studentErrors.password && (
+              <small className={styles["field-error"]}>
+                {studentErrors.password}
+              </small>
+            )}
+          </div>
+
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder={t("signup.confirmPasswordPlaceholder")}
+              value={studentForm.confirmPassword}
+              onChange={handleStudentChange}
+              className={
+                studentErrors.confirmPassword ||
+                invalidFields.includes("confirmPassword")
+                  ? styles.invalid
+                  : studentValidFields.includes("confirmPassword")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {studentValidFields.includes("confirmPassword")
+                ? "✓"
+                : studentErrors.confirmPassword
+                  ? "!"
+                  : ""}
+            </span>
+            {studentErrors.confirmPassword && (
+              <small className={styles["field-error"]}>
+                {studentErrors.confirmPassword}
+              </small>
+            )}
+          </div>
 
           <label className={styles["label"]}>{t("signup.usageLabel")}</label>
           <select
@@ -366,7 +645,7 @@ export default function SignUpForm() {
             onChange={(e) => {
               handleStudentChange(e);
               setInClinic(
-                e.target.value === "clinic" || e.target.value === "both"
+                e.target.value === "clinic" || e.target.value === "both",
               );
             }}
             required
@@ -402,8 +681,9 @@ export default function SignUpForm() {
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
-          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
+
+        {renderBackButton()}
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>
         </p>
@@ -418,6 +698,7 @@ export default function SignUpForm() {
         {renderBackButton()}
         <h2 className={styles["title"]}>{t("signup.title")}</h2>
         <p className={styles["subtitle"]}>{t("signup.subtitle")}</p>
+        {error && <p className={styles["form-error-top"]}>{error}</p>}
         <form onSubmit={handleDoctorSubmit} className={styles["auth-form"]}>
           <div className={styles["row"]}>
             <input
@@ -438,55 +719,98 @@ export default function SignUpForm() {
             />
           </div>
 
-          <input
-            type="email"
-            name="email"
-            placeholder={t("signup.emailPlaceholder")}
-            value={doctorForm.email}
-            onChange={handleDoctorChange}
-            className={invalidFields.includes("email") ? styles.invalid : ""}
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="email"
+              name="email"
+              placeholder={t("signup.emailPlaceholder")}
+              value={doctorForm.email}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.email || invalidFields.includes("email")
+                  ? styles.invalid
+                  : doctorValidFields.includes("email")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("email")
+                ? "✓"
+                : doctorErrors.email
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.email && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.email}
+              </small>
+            )}
+          </div>
 
-          <input
-            type="tel"
-            name="phoneNumber"
-            placeholder={t("signup.doctorPhonePlaceholder")}
-            value={doctorForm.phoneNumber}
-            onChange={handleDoctorChange}
-            className={
-              invalidFields.includes("phoneNumber") ? styles.invalid : ""
-            }
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder={t("signup.doctorPhonePlaceholder")}
+              value={doctorForm.phoneNumber}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.phoneNumber ||
+                invalidFields.includes("phoneNumber")
+                  ? styles.invalid
+                  : doctorValidFields.includes("phoneNumber")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("phoneNumber")
+                ? "✓"
+                : doctorErrors.phoneNumber
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.phoneNumber && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.phoneNumber}
+              </small>
+            )}
+          </div>
 
-          <input
-            type="text"
-            name="licenseNumber"
-            placeholder={t("signup.licenseNumberPlaceholder")}
-            value={doctorForm.licenseNumber}
-            onChange={handleDoctorChange}
-            className={
-              invalidFields.includes("licenseNumber") ? styles.invalid : ""
-            }
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="text"
+              name="licenseNumber"
+              placeholder={t("signup.licenseNumberPlaceholder")}
+              value={doctorForm.licenseNumber}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.licenseNumber ||
+                invalidFields.includes("licenseNumber")
+                  ? styles.invalid
+                  : doctorValidFields.includes("licenseNumber")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("licenseNumber")
+                ? "✓"
+                : doctorErrors.licenseNumber
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.licenseNumber && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.licenseNumber}
+              </small>
+            )}
+          </div>
 
-          {/* <input
-            type="text"
-            name="specialization"
-            placeholder={t("signup.specializationPlaceholder")}
-            value={doctorForm.specialization}
-            onChange={handleDoctorChange}
-            required
-            options={[
-              t("signup.specializations.speechLanguagePathology"),
-              t("signup.specializations.learningDisabilities"),
-              t("signup.specializations.specialEducation"),
-              t("signup.specializations.behavioralTherapy"),
-              t("signup.specializations.other"),
-            ]}
-          /> */}
           <select
             name="specialization"
             value={doctorForm.specialization}
@@ -520,17 +844,36 @@ export default function SignUpForm() {
             required
           />
 
-          <input
-            type="tel"
-            name="clinicPhone"
-            placeholder={t("signup.clinicPhonePlaceholder")}
-            value={doctorForm.clinicPhone}
-            onChange={handleDoctorChange}
-            className={
-              invalidFields.includes("clinicPhone") ? styles.invalid : ""
-            }
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="tel"
+              name="clinicPhone"
+              placeholder={t("signup.clinicPhonePlaceholder")}
+              value={doctorForm.clinicPhone}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.clinicPhone ||
+                invalidFields.includes("clinicPhone")
+                  ? styles.invalid
+                  : doctorValidFields.includes("clinicPhone")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("clinicPhone")
+                ? "✓"
+                : doctorErrors.clinicPhone
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.clinicPhone && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.clinicPhone}
+              </small>
+            )}
+          </div>
 
           <input
             type="url"
@@ -540,33 +883,70 @@ export default function SignUpForm() {
             onChange={handleDoctorChange}
           />
 
-          <input
-            type="password"
-            name="password"
-            placeholder={t("signup.passwordPlaceholder")}
-            value={doctorForm.password}
-            onChange={handleDoctorChange}
-            className={invalidFields.includes("password") ? styles.invalid : ""}
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="password"
+              name="password"
+              placeholder={t("signup.passwordPlaceholder")}
+              value={doctorForm.password}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.password || invalidFields.includes("password")
+                  ? styles.invalid
+                  : doctorValidFields.includes("password")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("password")
+                ? "✓"
+                : doctorErrors.password
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.password && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.password}
+              </small>
+            )}
+          </div>
 
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder={t("signup.confirmPasswordPlaceholder")}
-            value={doctorForm.confirmPassword}
-            onChange={handleDoctorChange}
-            className={
-              invalidFields.includes("confirmPassword") ? styles.invalid : ""
-            }
-            required
-          />
+          <div className={styles["input-wrapper"]}>
+            <input
+              type="password"
+              name="confirmPassword"
+              placeholder={t("signup.confirmPasswordPlaceholder")}
+              value={doctorForm.confirmPassword}
+              onChange={handleDoctorChange}
+              className={
+                doctorErrors.confirmPassword ||
+                invalidFields.includes("confirmPassword")
+                  ? styles.invalid
+                  : doctorValidFields.includes("confirmPassword")
+                    ? styles.valid
+                    : ""
+              }
+              required
+            />
+            <span className={styles["field-icon"]}>
+              {doctorValidFields.includes("confirmPassword")
+                ? "✓"
+                : doctorErrors.confirmPassword
+                  ? "!"
+                  : ""}
+            </span>
+            {doctorErrors.confirmPassword && (
+              <small className={styles["field-error"]}>
+                {doctorErrors.confirmPassword}
+              </small>
+            )}
+          </div>
 
           <button type="submit" className={styles["auth-btn"]}>
             {t("signup.signUpButton")}
           </button>
-
-          {error && <p className={styles["error-text"]}>{error}</p>}
         </form>
         <p className={styles["auth-link"]}>
           <Link to="/auth/login">{t("signup.alreadyAccount")}</Link>

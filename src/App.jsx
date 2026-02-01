@@ -13,6 +13,8 @@ import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/DashBoard";
 import About from "./pages/About";
+import ContactUs from "./pages/ContactUs";
+import Profile from "./pages/Profile";
 
 // Components
 import SignUpForm from "./components/SignUpForm";
@@ -24,49 +26,67 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 // Games
 import VolcanoWords from "./games/VolcanoWords";
-import ReadingQuest from "./games/ReadingQuest"; //  دي اللعبة الجديدة
+import ReadingQuest from "./games/ReadingQuest";
+import WordHuntGame from "./games/WordHunt";
+import TombPuzzle from "./games/TombPuzzle";
 
 // Layout component
 function Layout() {
   const location = useLocation();
   const hideAllNav = location.pathname.startsWith("/games");
 
-  const pathsWithInsideNav = ["/home", "/reading"];
+  const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
-    location.pathname.startsWith(path)
+    location.pathname.startsWith(path),
   );
   const pathsWithSideBar = ["/dashboard"];
   const isWithSideBar = pathsWithSideBar.some((path) =>
-    location.pathname.startsWith(path)
+    location.pathname.startsWith(path),
   );
 
   return (
     <>
-      {hideAllNav ? null : isWithSideBar ? <SideBar /> : isInsideApp ? <NavInside /> : <NavBar />}
+      {hideAllNav ? null : isWithSideBar ? (
+        <SideBar />
+      ) : isInsideApp ? (
+        <NavInside />
+      ) : (
+        <NavBar />
+      )}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
-
+        <Route path="/contact-us" element={<ContactUs />} />
         <Route path="/auth" element={<Auth />}>
           <Route index element={<SignUpForm />} />
           <Route path="signup" element={<SignUpForm />} />
           <Route path="login" element={<LoginForm />} />
         </Route>
 
+        {/* ✅ رجعنا الحماية لصفحة Home */}
         <Route
           path="/home"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="student">
               <Home />
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute requiredRole="student">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/games">
+        <Route path="/games" >
+          {/* ✅ رجعنا الحماية للألعاب القديمة */}
           <Route
             path="volcano-words"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <VolcanoWords />
               </ProtectedRoute>
             }
@@ -74,8 +94,25 @@ function Layout() {
           <Route
             path="reading-quest"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="student">
                 <ReadingQuest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="word-hunt"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <WordHuntGame />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="tomb-puzzle"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <TombPuzzle />
               </ProtectedRoute>
             }
           />
@@ -84,7 +121,7 @@ function Layout() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="doctor">
               <Dashboard />
             </ProtectedRoute>
           }

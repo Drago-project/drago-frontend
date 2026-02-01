@@ -66,7 +66,7 @@ function NavBar() {
                     </li>
                     <li className={styles.navItem}>
                         <NavLink 
-                            to="#" 
+                            to="contact-us" 
                             className={styles.navLink}
                         >
                             {i18n.language === 'ar' ? 'اتصل بنا' : 'Contact'}
@@ -129,7 +129,7 @@ function NavBar() {
                         </li>
                         <li className={styles.mobileNavItem}>
                             <NavLink 
-                                to="#" 
+                                to="/contact-us" 
                                 className={styles.mobileNavLink}
                                 onClick={closeMobileMenu}
                             >

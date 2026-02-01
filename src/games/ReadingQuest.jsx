@@ -1,38 +1,13 @@
-// المسار: src/games/ReadingQuest.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// 👇 ده السطر اللي اتصلح عشان يقرا من فولدر styles
+import Confetti from "react-confetti"; // 1. استدعاء مكتبة الاحتفالات
 import styles from "../styles/ReadingQuest.module.css";
 
-const STORY_DATA = [
-  {
-    id: 1,
-    text: "Drago found a boat near the river.",
-    question: "What did Drago find?",
-    options: [
-      { id: "a", text: "A Car", emoji: "🚗", isCorrect: false },
-      { id: "b", text: "A Boat", emoji: "🛶", isCorrect: true },
-    ],
-  },
-  {
-    id: 2,
-    text: "The river flows very fast towards the waterfall.",
-    question: "Where does the river go?",
-    options: [
-      { id: "a", text: "Waterfall", emoji: "🌊", isCorrect: true },
-      { id: "b", text: "Desert", emoji: "🌵", isCorrect: false },
-    ],
-  },
-  {
-    id: 3,
-    text: "Drago needs to paddle to stay safe.",
-    question: "What should Drago do?",
-    options: [
-      { id: "a", text: "Sleep", emoji: "😴", isCorrect: false },
-      { id: "b", text: "Paddle", emoji: "🚣", isCorrect: true },
-    ],
-  },
-];
+import { WinModal, LoseModal } from "../components/WinLose";
+
+// استدعاء البيانات والرسومات من ملفاتهم الخارجية
+import { STORY_DATA } from "../data/stories";
+import { BoatSVG, TornadoSVG } from "../components/GameIcons";
 
 function ReadingQuest() {
   const navigate = useNavigate();
@@ -45,6 +20,20 @@ function ReadingQuest() {
 
   const activeStory = STORY_DATA[currentSegment];
 
+  // 🔊 دالة تشغيل الأصوات
+  const playSound = (type) => {
+    const sounds = {
+      correct: "/sounds/correct.mp3",
+      wrong: "/sounds/wrong.mp3",
+      // win: "/sounds/win.mp3",
+      // lose: "/sounds/lose.mp3",
+    };
+    // التأكد من وجود الصوت قبل تشغيله لتجنب الأخطاء
+    const audio = new Audio(sounds[type]);
+    audio.play().catch((e) => console.log("Sound play error:", e));
+  };
+
+  // 🗣️ دالة القراءة
   const speakText = (text) => {
     if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(text);
@@ -67,7 +56,7 @@ function ReadingQuest() {
     if (isCorrect) {
       setFeedback("correct");
       setScore(score + 10);
-      setWaterLevel((prev) => Math.max(10, prev - 20));
+      playSound("correct"); // صوت صح
 
       setTimeout(() => {
         if (currentSegment < STORY_DATA.length - 1) {
@@ -76,14 +65,20 @@ function ReadingQuest() {
           setFeedback(null);
         } else {
           setGameStatus("won");
+          playSound("win"); // صوت الفوز
         }
       }, 1500);
     } else {
       setFeedback("wrong");
-      setWaterLevel((prev) => Math.min(100, prev + 25));
+      playSound("wrong"); // صوت غلط
 
-      if (waterLevel + 25 >= 100) {
+      // زيادة مستوى الخطر
+      const newLevel = Math.min(100, waterLevel + 25);
+      setWaterLevel(newLevel);
+
+      if (newLevel >= 100) {
         setGameStatus("lost");
+        playSound("lose"); // صوت الخسارة
       } else {
         setTimeout(() => {
           setFeedback(null);
@@ -110,104 +105,112 @@ function ReadingQuest() {
         </button>
       </nav>
 
-      <div className={styles.gameContent}>
-        <div className={styles.interactionPanel}>
-          <div className={styles.scrollCard}>
-            {!showQuestion ? (
-              <div className={styles.readingMode}>
-                <h2 className={styles.segmentTitle}>Read the Story</h2>
-                <p className={styles.storyText}>{activeStory.text}</p>
-                <div className={styles.controls}>
-                  <button
-                    className={styles.speakBtn}
-                    onClick={() => speakText(activeStory.text)}
-                  >
-                    🔊 Listen
-                  </button>
-                  <button
-                    className={styles.primaryBtn}
-                    onClick={handleNextClick}
-                  >
-                    Start Quiz ➜
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className={styles.quizMode}>
-                <h2 className={styles.questionText}>{activeStory.question}</h2>
-                <div className={styles.optionsGrid}>
-                  {activeStory.options.map((opt) => (
-                    <button
-                      key={opt.id}
-                      className={`${styles.optionCard} ${
-                        feedback === "correct" && opt.isCorrect
-                          ? styles.correctCard
-                          : ""
-                      } ${
-                        feedback === "wrong" && !opt.isCorrect
-                          ? styles.dimmedCard
-                          : ""
-                      }`}
-                      onClick={() => handleOptionClick(opt.isCorrect)}
-                    >
-                      <span className={styles.emoji}>{opt.emoji}</span>
-                      <span className={styles.optText}>{opt.text}</span>
-                    </button>
-                  ))}
-                </div>
-                {feedback && (
-                  <div className={`${styles.feedbackMsg} ${styles[feedback]}`}>
-                    {feedback === "correct"
-                      ? "🛶 Great! Keeping the boat safe."
-                      : "🌊 Oh no! Drifting towards the waterfall!"}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <div
-            style={{
-              textAlign: "center",
-              color: "#01579B",
-              fontWeight: "bold",
-            }}
-          >
-            Part {currentSegment + 1} of {STORY_DATA.length}
-          </div>
-        </div>
+      {/* 2. إضافة الاحتفال لما يكسب
+      {gameStatus === "won" && (
+        <Confetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          recycle={true}
+        />
+      )} */}
 
-        <div className={styles.visualPanel}>
-          <div className={styles.riverContainer}>
-            <div className={styles.dangerLabel}>⚠️ WATERFALL AHEAD</div>
-            <div className={styles.waterPath}>
-              <div
-                className={styles.waterLevel}
-                style={{ width: `${waterLevel}%` }}
-              >
-                <div className={styles.boatIcon}>🛶</div>
+      {/* منطقة القصة والأسئلة */}
+      <div className={styles.mainStage}>
+        <div className={styles.scrollCard}>
+          {!showQuestion ? (
+            <div className={styles.readingMode}>
+              <h2 className={styles.segmentTitle}>Read the Story</h2>
+              <p className={styles.storyText}>{activeStory.text}</p>
+              <div className={styles.controls}>
+                <button
+                  className={styles.speakBtn}
+                  onClick={() => speakText(activeStory.text)}
+                >
+                  🔊 Listen
+                </button>
+                <button className={styles.primaryBtn} onClick={handleNextClick}>
+                  Start Quiz ➜
+                </button>
               </div>
-              <div className={styles.dangerIcon}>🌪️</div>
             </div>
+          ) : (
+            <div className={styles.quizMode}>
+              <h2 className={styles.questionText}>{activeStory.question}</h2>
+              <div className={styles.optionsGrid}>
+                {activeStory.options.map((opt) => (
+                  <button
+                    key={opt.id}
+                    className={`${styles.optionCard} ${
+                      feedback === "correct" && opt.isCorrect
+                        ? styles.correctCard
+                        : ""
+                    } ${
+                      feedback === "wrong" && !opt.isCorrect
+                        ? styles.dimmedCard
+                        : ""
+                    }`}
+                    onClick={() => handleOptionClick(opt.isCorrect)}
+                  >
+                    <span className={styles.emoji}>{opt.emoji}</span>
+                    <span className={styles.optText}>{opt.text}</span>
+                  </button>
+                ))}
+              </div>
+              {feedback && (
+                <div className={`${styles.feedbackMsg} ${styles[feedback]}`}>
+                  {feedback === "correct"
+                    ? "Great! Boat is steady."
+                    : "Oh no! Drifting closer!"}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className={styles.progressText}>
+          Part {currentSegment + 1} / {STORY_DATA.length}
+        </div>
+      </div>
+
+      {/* الفوتر: النهر والرسومات */}
+      <div className={styles.riverFooter}>
+        <div className={styles.dangerLabel}>⚠️ DANGER ZONE</div>
+        <div className={styles.waterSurface}></div>
+
+        <div className={styles.waterPath}>
+          <div
+            className={styles.waterLevel}
+            style={{ width: `${waterLevel}%` }}
+          >
+            <div className={styles.dynamicBoat}>
+              {/* استدعاء أيقونة المركب */}
+              <BoatSVG className={styles.svgGraphic} />
+              <div className={styles.boatRipple}></div>
+            </div>
+          </div>
+          <div className={styles.dynamicDanger}>
+            {/* استدعاء أيقونة الإعصار */}
+            <TornadoSVG className={styles.svgGraphic} />
           </div>
         </div>
       </div>
 
-      {gameStatus === "won" && (
+      {/* نوافذ الفوز والخسارة */}
+      {/* {gameStatus === "won" && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h1>🏝️ Safe Arrival!</h1>
-            <p>You guided Drago safely across the river.</p>
             <h2>Final Score: {score}</h2>
-            <button className={styles.primaryBtn} onClick={restartGame}>
-              Play Again
-            </button>
-            <button
-              className={styles.exitBtn}
-              onClick={() => navigate("/home")}
-              style={{ marginLeft: "10px" }}
-            >
-              Exit
-            </button>
+            <div className="btn-container">
+              <button className={styles.primaryBtn} onClick={restartGame}>
+                Play Again
+              </button>
+              <button
+                className={styles.exitBtn}
+                onClick={() => navigate("/home")}
+              >
+                Exit
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -215,14 +218,23 @@ function ReadingQuest() {
       {gameStatus === "lost" && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h1>🌊 Waterfall!</h1>
-            <p>The current was too strong. Try again!</p>
+            <h1>🌊 You fell!</h1>
+            <p>The current was too strong.</p>
             <button className={styles.primaryBtn} onClick={restartGame}>
               Retry
             </button>
           </div>
         </div>
-      )}
+      )} */}
+      {gameStatus === "won" ? (
+        <WinModal score={score} restartGame={restartGame}>
+          You safely navigated the river!
+        </WinModal>
+      ) : gameStatus === "lost" ? (
+        <LoseModal score={score} restartGame={restartGame}>
+          The current was too strong.
+        </LoseModal>
+      ) : null}
     </div>
   );
 }
