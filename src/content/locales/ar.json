@@ -39,7 +39,7 @@
     "clinicNamePlaceholder": "اسم العيادة",
     "clinicPhonePlaceholder": "رقم تليفون العيادة",
     "clinicWebsitePlaceholder": "رابط صفحة العيادة (اختياري)",
-    "passwordTooShort": "يجب أن تكون كلمة المرور مكونة من 8 أحرف  على الأقل! تحتوي على أحرف وأرقام.",
+    "passwordTooShort": "يجب أن تكون كلمة المرور مكونة من 8 أحرف  على الأقل! تحتوي على أحرف كبيرة و صغيرة وأرقام.",
     "invalidEmail": "عنوان البريد الإلكتروني غير صالح!",
     "invalidPhoneNumber": "رقم الهاتف غير صالح!",
     "invalidLicenseNumber": "رقم رخصة مزاولة المهنة غير صالح!",
