@@ -1,0 +1,138 @@
+/* Contact.module.css */
+
+.contactPage {
+  padding: 40px 0;
+  min-height: 80vh;
+  background-color: #f9f9f9;
+}
+
+/* بنسيب container عادي عشان ده غالباً Global Class عندك */
+/* لكن لو عايز تخصصه للصفحة دي بس، ممكن تضيفه هنا */
+
+.pageTitle {
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  color: #333;
+  font-weight: bold;
+}
+
+.contactSection {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  padding: 40px;
+  margin-bottom: 40px;
+}
+
+.sectionContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+/* Form Wrapper */
+.textContent {
+  flex: 1;
+}
+
+.imageContent {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.sectionImage {
+  max-width: 100%;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.sectionTitle {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+}
+
+.sectionText {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+/* --- Form Styles --- */
+.contactForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: bold;
+  color: #444;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  border-color: #ff9f43;
+  outline: none;
+}
+
+.submitBtn {
+  background-color: #ff9f43;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
+  align-self: flex-start;
+}
+
+.submitBtn:hover {
+  background-color: #f39c12;
+  transform: scale(1.05);
+}
+
+.successMsg {
+  color: green;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+/* RTL Override logic is usually handled via global classes or conditional styles in JS */
+/* But if you need specific RTL adjustments inside the module: */
+/* Note: We handle RTL text-align via the global 'rtl' class in the parent div usually, 
+   or we can use logical properties like text-align: start; */
+
+@media (max-width: 768px) {
+  .sectionContent {
+    flex-direction: column-reverse;
+  }
+
+  .pageTitle {
+    font-size: 2rem;
+  }
+}

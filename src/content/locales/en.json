@@ -2,7 +2,6 @@
   "welcome": "Meet your friend",
   "drago": "Drago!",
   "lesson": "Start Lesson",
-
   "signup": {
     "title": "Create a new account",
     "subtitle": "It's quick and easy.",
@@ -23,7 +22,7 @@
     "clinic": "At clinic",
     "home": "At Home",
     "both": "Both",
-    "doctorNamePlaceholder" :"Enter the doctor's name",
+    "doctorNamePlaceholder": "Enter the doctor's name",
     "signUpButton": "Sign Up",
     "alreadyAccount": "Already have an account? Go to login",
     "passwordsMismatch": "Passwords do not match!",
@@ -50,7 +49,6 @@
       "other": "Other"
     }
   },
-
   "login": {
     "title": "Welcome Back",
     "subtitle": "Log in to your account.",
@@ -61,7 +59,6 @@
     "createAccount": "Create a new account",
     "missingFields": "Please enter your email and password."
   },
-
   "about": {
     "title": "About Drago",
     "section1": {
@@ -76,5 +73,20 @@
       "title": "How Our Games Help",
       "content": "Our educational games use sound, color, and motion to make reading and memory exercises more fun. They help children strengthen their focus, recognize words, and build confidence step by step. Learning through play helps children enjoy the process instead of feeling stressed or judged."
     }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "We'd love to hear from you!",
+    "desc": "Have a question about Drago or a suggestion? Fill out the form below.",
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "Your Name",
+      "email": "Email",
+      "emailPlaceholder": "example@mail.com",
+      "message": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "send": "Send Message"
+    },
+    "successMsg": "Message sent successfully! Thank you."
   }
 }
