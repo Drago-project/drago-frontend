@@ -1,9 +1,8 @@
 .about-page {
-  margin-top: 50 px;
+  margin-top: 80px;
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 2rem 0;
-  font-family: "Arial", sans-serif;
 }
 
 .container {
@@ -14,7 +13,6 @@
 
 .page-title {
   text-align: center;
-  font-size: 3rem;
   color: #44968e;
   margin-bottom: 3rem;
   margin-top: 30px;
@@ -22,6 +20,9 @@
 }
 
 .about-section {
+  display: flex;
+  justify-content: space-around;
+  /* gap: 2rem; */
   margin-bottom: 4rem;
   background: white;
   border-radius: 20px;
@@ -30,10 +31,32 @@
   transition: transform 0.3s ease;
 }
 
-.about-section:hover {
-  transform: translateY(-5px);
+.section-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-secondary) 100%
+  );
+  color: white;
+  font-size: 10rem;
+  font-weight: bold;
+  width: 250px;
+  height: 350px;
+  /* border: 20px solid var(--color-avatar); */
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
 }
+.section-card:hover{
+  transform: translateY(-10px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  /*flip the card on hover*/
 
+}
 .section-content {
   display: flex;
   align-items: center;
