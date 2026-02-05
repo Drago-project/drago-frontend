@@ -70,6 +70,7 @@ export default function LoginForm() {
           const json = atob(padded);
           return JSON.parse(json);
         } catch (e) {
+          console.warn("Failed to decode JWT:", e);
           return null;
         }
       };
