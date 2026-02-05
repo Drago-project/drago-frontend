@@ -248,7 +248,7 @@ const About = () => {
             </div>
           </section>
         </div>
-        <section style={{ textAlign: "center", margin: "2rem 1rem" }}>
+        <section style={{ textAlign: "center"}}>
           <h2 className={styles.heroSubtitle}>{t("about.subtitle")}</h2>
         </section>
         {/* Ferris Wheel Section */}
@@ -301,10 +301,14 @@ const About = () => {
               t={t}
             />
           )}
-          <section style={{ marginRight: "500px" }}>
-            <img src={drago} alt="Drago Mascot" style={{ width: "200px" }} />
-          </section>
-          <Ground />
+          <div className={styles.groundScene}>
+            <img
+              src={drago}
+              alt="Drago Mascot"
+              className={styles.dragoOnGround}
+            />
+            <Ground />
+          </div>
         </section>
       </div>
       <Footer />
