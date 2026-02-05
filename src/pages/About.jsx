@@ -9,7 +9,6 @@ import brain from "../assets/about/brain.svg";
 import connection from "../assets/about/connection.svg";
 import visual from "../assets/about/visual learning.svg";
 import distructing from "../assets/about/distructing.svg";
-import { TextAlignCenter } from "lucide-react";
 
 const About = () => {
   const { i18n, t } = useTranslation();
@@ -505,24 +504,6 @@ function QuizModal({
             </button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function DragoMascot({ visitedCabins, currentLang }) {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.mascotContainer}>
-      <div className={styles.bubble}>
-        {visitedCabins.size === 6
-          ? currentLang === "ar"
-            ? "أحسنت! أنت بطل المعرفة! 🎉"
-            : "Great! You are a Knowledge Champion! 🎉"
-          : t("about.dragoIntro")}
-      </div>
-      <div className={styles.dragoAvatar}>
-        <img src={drago} alt="Drago Mascot" />
       </div>
     </div>
   );
