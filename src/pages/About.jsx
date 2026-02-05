@@ -83,6 +83,7 @@ const About = () => {
     styles.pos5,
     styles.pos6,
   ];
+  const langKey = currentLang.startsWith("ar") ? "ar" : "en";
 
   return (
     <>
@@ -248,7 +249,7 @@ const About = () => {
             </div>
           </section>
         </div>
-        <section style={{ textAlign: "center"}}>
+        <section style={{ textAlign: "center" }}>
           <h2 className={styles.heroSubtitle}>{t("about.subtitle")}</h2>
         </section>
         {/* Ferris Wheel Section */}
@@ -274,15 +275,12 @@ const About = () => {
           <Wheel
             handleStartQuiz={handleStartQuiz}
             quizData={quizData}
-            currentLang={currentLang}
+            currentLang={langKey}
             visitedCabins={visitedCabins}
             cabinPositions={cabinPositions}
           />
 
-          {/* <DragoMascot
-            visitedCabins={visitedCabins}
-            currentLang={currentLang}
-          /> */}
+    
 
           {/* Modal Quiz */}
           {isModalOpen && currentQuiz && (
