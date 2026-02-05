@@ -450,9 +450,6 @@
   }
 }
 
-.wheelArea:hover .wheel {
-  animation-play-state: paused;
-}
 
 .spoke {
   position: absolute;

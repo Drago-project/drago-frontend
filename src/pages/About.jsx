@@ -301,6 +301,9 @@ const About = () => {
               t={t}
             />
           )}
+          <section style={{ marginRight: "500px" }}>
+            <img src={drago} alt="Drago Mascot" style={{ width: "200px" }} />
+          </section>
           <Ground />
         </section>
       </div>
