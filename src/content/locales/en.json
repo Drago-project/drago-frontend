@@ -60,9 +60,9 @@
     "missingFields": "Please enter your email and password."
   },
   "about": {
-    "title": "Drago Learning Park",
+    "title": "Learn more about Dyslexia",
     "subtitle": "Open cabins, answer questions, and learn new things!",
-    "progress": "Completed Cards:",
+   
     "dragoIntro": "Ready for a challenge? Each cabin has simple questions to help you learn!",
     "nextBtn": "Next Question",
     "closeBtn": "Finish",
@@ -71,6 +71,50 @@
     "finishTitle": "Your Score",
     "scoreMsg": "Excellent! You learned a lot.",
     "reviewMsg": "Good! Review the info again.",
+    "section1": {
+      "title": "What is Dyslexia?",
+      "text": "Dyslexia is a learning difference that affects reading, writing, and spelling. It may sometimes affect memory and organization, but it does not affect intelligence."
+    },
+    "section2": {
+      "title": "Important Facts About Dyslexia",
+      "fact1": {
+        "label": "Common:",
+        "text": "Affects 10% to 20% of people"
+      },
+      "fact2": {
+        "label": "Reading Can Be Learned:",
+        "text": "With the right approach"
+      },
+      "fact3": {
+        "label": "Not Related to Intelligence:",
+        "text": "Most affected individuals have normal intelligence"
+      },
+      "fact4": {
+        "label": "Early Diagnosis is Important:",
+        "text": "Increases chances of success"
+      },
+      "fact5": {
+        "label": "Hereditary:",
+        "text": "May run in families"
+      }
+    },
+    "section3": {
+      "title": "Why Is It Positive for the Child to Know Their Condition?",
+      "intro": "Knowing the real reason for the difficulty relieves the child and protects them from self-blame.",
+      "benefit1": "Boosts self-confidence",
+      "benefit2": "Reduces anxiety and school aversion",
+      "benefit3": "Helps the child understand their learning style",
+      "highlight": "Dyslexia is a learning difference, not a failure."
+    },
+    "section4": {
+      "title": "Common Difficulties for Those with Dyslexia",
+      "difficulty1": "Slow reading",
+      "difficulty2": "Confusing similar letters",
+      "difficulty3": "Reversing letter order",
+      "difficulty4": "Difficulty remembering words",
+      "difficulty5": "Difficulty copying",
+      "difficulty6": "Slow writing despite many ideas"
+    },
     "cabins": [
       {
         "title": "5 Essential Facts",
