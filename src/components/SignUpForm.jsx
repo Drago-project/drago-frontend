@@ -1,17 +1,21 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "../server/api";
+import EmailVerification from "../components/Emailverification";
 
 export default function SignUpForm() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   // --- الحالة الرئيسية ---
   const [userType, setUserType] = useState(null);
   const [error, setError] = useState("");
   const [invalidFields, setInvalidFields] = useState([]);
+
+  // Email Verification State
+  const [showVerification, setShowVerification] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
 
   // Field-level validation state -> real-time errors & valid tracking
   const [studentErrors, setStudentErrors] = useState({});
@@ -208,8 +212,10 @@ export default function SignUpForm() {
       const response = await api.post("/api/Users/register", payload);
 
       console.log("✅ Student Registered Successfully", response.data);
-      alert(t("signup.successMessage") || "تم إنشاء حساب الطالب بنجاح!");
-      navigate("/home", { replace: true });
+
+      // Show email verification modal
+      setRegisteredEmail(studentForm.email);
+      setShowVerification(true);
     } catch (err) {
       console.error("Signup (student) error:", err);
       if (err.response) {
@@ -408,8 +414,10 @@ export default function SignUpForm() {
       const response = await api.post("/api/Doctors/register", payload);
 
       console.log("Doctor Registered Successfully", response.data);
-      alert(t("signup.successMessage") || "تم إنشاء حساب الدكتور بنجاح!");
-      navigate("/dashboard", { replace: true });
+
+      // Show email verification modal
+      setRegisteredEmail(doctorForm.email);
+      setShowVerification(true);
     } catch (err) {
       console.error("Signup (doctor) error:", err);
       if (err.response) {
@@ -432,6 +440,17 @@ export default function SignUpForm() {
   );
 
   // --- العرض (Render) ---
+
+  // Email Verification Modal
+  if (showVerification) {
+    return (
+      <EmailVerification
+        email={registeredEmail}
+        userType={userType}
+        onClose={() => setShowVerification(false)}
+      />
+    );
+  }
 
   // 1. اختيار النوع
   if (userType === null) {

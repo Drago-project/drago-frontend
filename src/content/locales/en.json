@@ -59,10 +59,23 @@
     "createAccount": "Create a new account",
     "missingFields": "Please enter your email and password."
   },
+  "verification": {
+    "title": "Verify Your Email",
+    "subtitle": "Enter the 6-digit code sent to",
+    "codeIncomplete": "Please enter the complete code (6 digits)",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "failed": "Verification failed. Please try again.",
+    "networkError": "Network error. Check your connection.",
+    "didntReceive": "Didn't receive the code?",
+    "resend": "Resend Code",
+    "sending": "Sending...",
+    "codeSent": "Code sent successfully!",
+    "resendFailed": "Failed to send code. Try again."
+  },
   "about": {
     "title": "Learn more about Dyslexia",
     "subtitle": "Open cabins, answer questions, and learn new things!",
-   
     "dragoIntro": "Ready for a challenge? Each cabin has simple questions to help you learn!",
     "nextBtn": "Next Question",
     "closeBtn": "Finish",
@@ -115,134 +128,7 @@
       "difficulty5": "Difficulty copying",
       "difficulty6": "Slow writing despite many ideas"
     },
-    "cabins": [
-      {
-        "title": "5 Essential Facts",
-        "questions": [
-          {
-            "q": "What % of people have dyslexia?",
-            "options": ["1-2%", "10-20%", "50%"],
-            "correct": 1,
-            "explanation": "Dyslexia is very common, affecting 1 in 5 people."
-          },
-          {
-            "q": "Can dyslexics learn to read?",
-            "options": ["No", "Yes, with diff methods", "Only if smart"],
-            "correct": 1,
-            "explanation": "Yes, they can learn but need different teaching approaches."
-          },
-          {
-            "q": "Relation to IQ?",
-            "options": ["Direct link", "Lowers IQ", "No relation"],
-            "correct": 2,
-            "explanation": "Dyslexia has nothing to do with intelligence levels."
-          },
-          {
-            "q": "Is it hereditary?",
-            "options": ["Yes, mostly", "No", "Caused by pollution"],
-            "correct": 0,
-            "explanation": "It often runs in families (genetic factor)."
-          }
-        ]
-      },
-      {
-        "title": "How to Explain?",
-        "questions": [
-          {
-            "q": "How to describe dyslexia?",
-            "options": ["A disease", "Brain difference", "Laziness"],
-            "correct": 1,
-            "explanation": "It is a learning difference, not a disease."
-          },
-          {
-            "q": "Best way to build confidence?",
-            "options": ["Grades", "Talents", "Comparing"],
-            "correct": 1,
-            "explanation": "Supporting talents builds healthy self-esteem."
-          }
-        ]
-      },
-      {
-        "title": "Help by Age",
-        "questions": [
-          {
-            "q": "Preschool focus:",
-            "options": ["Writing", "Phonological awareness", "Reading"],
-            "correct": 1,
-            "explanation": "Sound awareness is key before reading."
-          },
-          {
-            "q": "Age 5-7 focus:",
-            "options": ["Word shape", "Phonics", "Sentences"],
-            "correct": 1,
-            "explanation": "Linking sounds to letters is crucial."
-          },
-          {
-            "q": "Teenagers need:",
-            "options": ["Assistive Tech", "Punishment", "Repeating"],
-            "correct": 0,
-            "explanation": "Tech tools help them learn independently."
-          }
-        ]
-      },
-      {
-        "title": "Common Myths",
-        "questions": [
-          {
-            "q": "Child doesn't read because:",
-            "options": ["Lazy", "Tired", "Bored"],
-            "correct": 1,
-            "explanation": "They work harder, so they get exhausted."
-          },
-          {
-            "q": "Wait and see?",
-            "options": ["Yes", "No, intervene", "Maybe"],
-            "correct": 1,
-            "explanation": "Waiting widens the gap; early help is best."
-          },
-          {
-            "q": "Writing backwards?",
-            "options": ["Always", "Rarely", "Sometimes"],
-            "correct": 1,
-            "explanation": "Mirror writing is rare; confusing similar letters is common."
-          }
-        ]
-      },
-      {
-        "title": "Diagnosis",
-        "questions": [
-          {
-            "q": "Signs appear at:",
-            "options": ["Age 3", "Age 5", "Age 10"],
-            "correct": 1,
-            "explanation": "Signs can be spotted around age 5."
-          },
-          {
-            "q": "Parents role:",
-            "options": ["Hide it", "Ask for support", "Blame"],
-            "correct": 1,
-            "explanation": "Explain to school to get accommodations."
-          }
-        ]
-      },
-      {
-        "title": "Related Issues",
-        "questions": [
-          {
-            "q": "Dysgraphia is:",
-            "options": ["Reading issue", "Writing issue", "Speech"],
-            "correct": 1,
-            "explanation": "It's difficulty with handwriting and grip."
-          },
-          {
-            "q": "Dyscalculia is:",
-            "options": ["Math issue", "Memory", "Fear"],
-            "correct": 0,
-            "explanation": "Difficulty understanding numbers and math."
-          }
-        ]
-      }
-    ]
+    "cabins": []
   },
   "contact": {
     "title": "Contact Us",
