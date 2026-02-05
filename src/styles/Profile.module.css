@@ -1,0 +1,131 @@
+.profilePage {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f5f7fa, #e3f2fd);
+    padding: 120px 16px;
+  }
+  
+  .profileContainer {
+    max-width: 600px;
+    margin: auto;
+  }
+  
+  .profileHeader {
+    background: white;
+    border-radius: 20px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  
+  .avatar {
+    width: 140px;
+    border-radius: 50%;
+    border: 4px solid #22c55e;
+  }
+  
+  .userName {
+    margin-top: 12px;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  
+  .userHandle,
+  .userEmail {
+    color: #6b7280;
+    font-size: 14px;
+  }
+  
+  .statsRow {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+  }
+  
+  .statItem {
+    text-align: center;
+  }
+  
+  .statNumber {
+    font-size: 20px;
+    font-weight: 700;
+  }
+  
+  .levelSection {
+    margin-top: 16px;
+  }
+  
+  .levelHeader {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .levelBadge {
+    background: #22c55e;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 999px;
+  }
+  
+  .progressBar {
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    margin: 8px 0;
+  }
+  
+  .progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+  }
+  
+  .overviewSection,
+  .achievementsSection {
+    background: white;
+    margin-top: 24px;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  }
+  
+  .overviewGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  
+  .overviewCard {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: 16px;
+    display: flex;
+    gap: 12px;
+  }
+  
+  .cardIcon {
+    font-size: 32px;
+  }
+  
+  .achievementsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  
+  .achievementCard {
+    background: #f9fafb;
+    padding: 12px;
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+  }
+  
+  .unlocked {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+  }
+  
+  .lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+  
