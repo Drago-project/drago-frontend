@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import styles from "../styles/Profile.module.css";
 import dragoAvatar from "../assets/emotions/drago(wave).svg";
 
@@ -10,23 +10,25 @@ const getLevelData = (xp) => {
     { level: 3, name: "Intermediate", minXP: 250, maxXP: 500 },
     { level: 4, name: "Advanced", minXP: 500, maxXP: 1000 },
   ];
-  return levels.find((l) => xp >= l.minXP && xp < l.maxXP) || levels[0];
+  return levels.find(l => xp >= l.minXP && xp < l.maxXP) || levels[0];
 };
 
 function Profile() {
-  const { i18n } = useTranslation();
-  const isRTL = i18n.language === "ar";
+  const navigate = useNavigate();
 
   const [userData, setUserData] = useState({
     firstName: "Sara",
     lastName: "Student",
     email: "sara@email.com",
     username: "@sara",
-    streak: 5,
     xp: 263,
+    streak: 5,
     followers: 0,
     following: 0,
   });
+
+  const [showEdit, setShowEdit] = useState(false);
+  const [formData, setFormData] = useState(userData);
 
   const [achievements, setAchievements] = useState([
     { id: 1, name: "First Win", icon: "🏆", unlocked: true },
@@ -41,19 +43,29 @@ function Profile() {
       (levelData.maxXP - levelData.minXP)) *
     100;
 
+  /* Daily Goal */
+  const dailyGoal = 50;
+  const dailyProgress = Math.min(
+    ((userData.xp % dailyGoal) / dailyGoal) * 100,
+    100
+  );
+
   useEffect(() => {
-    setAchievements((prev) =>
-      prev.map((a) =>
+    localStorage.setItem("userData", JSON.stringify(userData));
+
+    setAchievements(prev =>
+      prev.map(a =>
         a.id === 4 && userData.xp >= 250
           ? { ...a, unlocked: true }
           : a
       )
     );
-  }, [userData.xp]);
+  }, [userData]);
 
   return (
-    <div className={styles.profilePage} dir={isRTL ? "rtl" : "ltr"}>
+    <div className={styles.profilePage}>
       <div className={styles.profileContainer}>
+
         {/* HEADER */}
         <div className={styles.profileHeader}>
           <img src={dragoAvatar} className={styles.avatar} alt="avatar" />
@@ -64,21 +76,29 @@ function Profile() {
           <p className={styles.userHandle}>{userData.username}</p>
           <p className={styles.userEmail}>{userData.email}</p>
 
+          <button
+            className={styles.editBtn}
+            onClick={() => {
+              setFormData(userData);
+              setShowEdit(true);
+            }}
+          >
+            ✏️ Edit Profile
+          </button>
+
           {/* STATS */}
           <div className={styles.statsRow}>
-            <div className={styles.statItem}>
-              <span className={styles.statNumber}>{userData.followers}</span>
-              <span className={styles.statLabel}>Followers</span>
+            <div>
+              <strong>{userData.followers}</strong>
+              <span>Followers</span>
             </div>
-            <div className={styles.statItem}>
-              <span className={styles.statNumber}>{userData.following}</span>
-              <span className={styles.statLabel}>Following</span>
+            <div>
+              <strong>{userData.following}</strong>
+              <span>Following</span>
             </div>
-            <div className={styles.statItem}>
-              <span className={styles.statIcon}>🔥</span>
-              <span className={styles.statLabel}>
-                {userData.streak} Days
-              </span>
+            <div>
+              <strong>🔥</strong>
+              <span>{userData.streak} Days</span>
             </div>
           </div>
 
@@ -88,9 +108,7 @@ function Profile() {
               <span className={styles.levelBadge}>
                 Level {levelData.level}
               </span>
-              <span className={styles.levelName}>
-                {levelData.name}
-              </span>
+              <span>{levelData.name}</span>
             </div>
 
             <div className={styles.progressBar}>
@@ -100,55 +118,95 @@ function Profile() {
               />
             </div>
 
-            <p className={styles.progressText}>
-              XP {userData.xp} / {levelData.maxXP}
-            </p>
+            <p>XP {userData.xp} / {levelData.maxXP}</p>
           </div>
         </div>
 
-        {/* OVERVIEW */}
-        <div className={styles.overviewSection}>
-          <h3 className={styles.sectionTitle}>Overview</h3>
+        {/* DAILY GOAL */}
+        <div className={styles.dailyGoal}>
+          <h3>🎯 Daily Goal</h3>
 
-          <div className={styles.overviewGrid}>
-            <div className={styles.overviewCard}>
-              <span className={styles.cardIcon}>🔥</span>
-              <div>
-                <p className={styles.cardValue}>{userData.streak}</p>
-                <p className={styles.cardLabel}>Day Streak</p>
-              </div>
-            </div>
-
-            <div className={styles.overviewCard}>
-              <span className={styles.cardIcon}>⚡</span>
-              <div>
-                <p className={styles.cardValue}>{userData.xp}</p>
-                <p className={styles.cardLabel}>XP Points</p>
-              </div>
-            </div>
+          <div className={styles.progressBar}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${dailyProgress}%` }}
+            />
           </div>
+
+          <p>
+            {dailyProgress === 100
+              ? "🎉 Goal Completed!"
+              : `${Math.floor(dailyProgress)}% completed`}
+          </p>
         </div>
 
         {/* ACHIEVEMENTS */}
         <div className={styles.achievementsSection}>
-          <h3 className={styles.sectionTitle}>Achievements</h3>
+          <h3>🏆 Achievements</h3>
 
           <div className={styles.achievementsGrid}>
-            {achievements.map((a) => (
+            {achievements.map(a => (
               <div
                 key={a.id}
                 className={`${styles.achievementCard} ${
                   a.unlocked ? styles.unlocked : styles.locked
                 }`}
               >
-                <span className={styles.achievementIcon}>{a.icon}</span>
-                <p className={styles.achievementName}>{a.name}</p>
+                <span>{a.icon}</span>
+                <p>{a.name}</p>
                 {!a.unlocked && <span className={styles.lock}>🔒</span>}
               </div>
             ))}
           </div>
         </div>
+
+        {/* LEADERBOARD BUTTON */}
+        <button
+          className={styles.leaderboardBtn}
+          onClick={() => navigate("/leaderboard")}
+        >
+          🏆 View Leaderboard
+        </button>
       </div>
+
+      {/* EDIT MODAL */}
+      {showEdit && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Edit Profile</h3>
+
+            <input
+              value={formData.firstName}
+              onChange={e =>
+                setFormData({ ...formData, firstName: e.target.value })
+              }
+              placeholder="First Name"
+            />
+
+            <input
+              value={formData.email}
+              onChange={e =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+              placeholder="Email"
+            />
+
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => {
+                  setUserData(formData);
+                  setShowEdit(false);
+                }}
+              >
+                Save
+              </button>
+              <button onClick={() => setShowEdit(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -128,4 +128,56 @@
     top: 6px;
     right: 6px;
   }
+  .editBtn,
+  .leaderboardBtn {
+    margin-top: 12px;
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  
+  .dailyGoal {
+    background: #ecfeff;
+    padding: 20px;
+    border-radius: 20px;
+    margin: 20px 0;
+    text-align: center;
+  }
+  
+  .modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal {
+    background: white;
+    padding: 24px;
+    border-radius: 20px;
+    width: 300px;
+  }
+  
+  .modal input {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+  }
+  
+  .modalActions {
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+  }
+  
   
