@@ -57,7 +57,8 @@
     "loginButton": "Log In",
     "forgotPassword": "Forgot password?",
     "createAccount": "Create a new account",
-    "missingFields": "Please enter your email and password."
+    "missingFields": "Please enter your email and password.",
+    "failed": "Login failed. Please check your credentials."
   },
   "verification": {
     "title": "Verify Your Email",
