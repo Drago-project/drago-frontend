@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import styles from "../styles/EmailVerification.module.css";
+import styles from "../styles/Emailverification.module.css";
 import api from "../server/api";
 
 function EmailVerification({ email, userType, onClose }) {
