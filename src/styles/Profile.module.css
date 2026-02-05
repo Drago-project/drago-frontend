@@ -20,7 +20,7 @@
   .avatar {
     width: 140px;
     border-radius: 50%;
-    border: 4px solid #22c55e;
+    border: 4px solid rgb(68, 150, 142);
   }
   
   .userName {
@@ -60,7 +60,7 @@
   }
   
   .levelBadge {
-    background: #22c55e;
+    background:rgb(68, 150, 142);
     color: white;
     padding: 4px 12px;
     border-radius: 999px;
@@ -75,7 +75,7 @@
   
   .progressFill {
     height: 100%;
-    background: linear-gradient(90deg, #22c55e, #4ade80);
+    background: linear-gradient(90deg, #4d9dac, #285f79);
   }
   
   .overviewSection,
@@ -130,14 +130,27 @@
   }
   .editBtn,
   .leaderboardBtn {
-    margin-top: 12px;
-    background: #22c55e;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 12px;
-    cursor: pointer;
-  }
+   
+        width: 100%;
+        margin: 20px 0;
+        background: linear-gradient(90deg, #22b2c5, #377469);
+        color: white;
+        border: none;
+        padding: 14px;
+        font-size: 18px;
+        font-weight: 700;
+        border-radius: 999px;
+        cursor: pointer;
+        text-align: center;
+        box-shadow:rgb(68, 150, 142);
+        transition: transform 0.2s ease;
+      }
+      
+      .dashboardBtn:hover {
+        transform: scale(1.03);
+      }
+      
+  
   
   .dailyGoal {
     background: #ecfeff;
@@ -180,4 +193,9 @@
     right: 6px;
   }
   
+  .passwordTitle {
+    margin: 12px 0 6px;
+    font-size: 14px;
+    color: #374151;
+  }
   

@@ -163,7 +163,7 @@ function Profile() {
         {/* LEADERBOARD BUTTON */}
         <button
           className={styles.leaderboardBtn}
-          onClick={() => navigate("/leaderboard")}
+          onClick={() => navigate("/Dashboard")}
         >
           🏆 View Leaderboard
         </button>
@@ -171,42 +171,67 @@ function Profile() {
 
       {/* EDIT MODAL */}
       {showEdit && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h3>Edit Profile</h3>
+  <div className={styles.modalOverlay}>
+    <div className={styles.modal}>
+      <h3>Edit Profile</h3>
 
-            <input
-              value={formData.firstName}
-              onChange={e =>
-                setFormData({ ...formData, firstName: e.target.value })
-              }
-              placeholder="First Name"
-            />
+      <input
+        type="text"
+        placeholder="First Name"
+        value={formData.firstName}
+        onChange={(e) =>
+          setFormData({ ...formData, firstName: e.target.value })
+        }
+      />
 
-            <input
-              value={formData.email}
-              onChange={e =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              placeholder="Email"
-            />
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) =>
+          setFormData({ ...formData, email: e.target.value })
+        }
+      />
 
-            <div className={styles.modalActions}>
-              <button
-                onClick={() => {
-                  setUserData(formData);
-                  setShowEdit(false);
-                }}
-              >
-                Save
-              </button>
-              <button onClick={() => setShowEdit(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* CHANGE PASSWORD */}
+      <hr />
+
+      <h4 className={styles.passwordTitle}>Change Password</h4>
+
+      <input
+        type="password"
+        placeholder="Current Password"
+      />
+
+      <input
+        type="password"
+        placeholder="New Password"
+      />
+
+      <input
+        type="password"
+        placeholder="Confirm New Password"
+      />
+
+      <div className={styles.modalActions}>
+        <button
+          onClick={() => {
+            setUserData(formData);
+            localStorage.setItem("userData", JSON.stringify(formData));
+            setShowEdit(false);
+          }}
+        >
+          Save Changes
+        </button>
+
+        <button onClick={() => setShowEdit(false)}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
