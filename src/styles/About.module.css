@@ -76,7 +76,6 @@
 }
 
 .heroSubtitle {
-  
   font-size: clamp(1.1rem, 2vw, 1.4rem);
   color: var(--text-secondary);
   margin-bottom: 30px;
@@ -338,7 +337,7 @@
 
 .wheelSection {
   position: relative;
-  padding: 80px 20px 200px;
+  padding: 80px 20px 10px;
   text-align: center;
 }
 
@@ -450,7 +449,6 @@
   }
 }
 
-
 .spoke {
   position: absolute;
   top: 50%;
@@ -492,7 +490,8 @@
   transition: all var(--transition-normal);
   animation: keepUpright 60s linear infinite;
   z-index: 5;
-  overflow: visible;
+  
+  overflow: hidden;
 }
 
 .cabin:hover {
@@ -510,8 +509,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   position: relative;
+  overflow: hidden;
 }
 
 .cabinEmoji {
@@ -1039,6 +1039,21 @@
   width: 100%;
   height: 100%;
 }
+.groundScene {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin-top: 60px;
+}
+
+.dragoOnGround {
+  position: absolute;
+  bottom: 50px;
+  left: 10%;
+  transform: translateX(-50%);
+  width: 300px;
+  z-index: 10;
+}
 
 /* ============================================
    ANIMATIONS
@@ -1108,19 +1123,32 @@
   .modalContent {
     padding: 28px 20px;
   }
-
-  .mascotContainer {
-    bottom: 20px;
-    right: 20px;
+  .dragoOnGround {
+    width: 150px;
   }
-
-  .ltr .mascotContainer {
-    left: 20px;
+  .wheelArea {
+    width: 450px;
+    height: 450px;
   }
-
-  .dragoAvatar {
-    width: 160px;
+  .cabin {
+    width: 130px;
+    height: 90px;
   }
+  .cabinContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cabinEmoji {
+  font-size: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+
 }
 
 @media (max-width: 480px) {
@@ -1131,5 +1159,8 @@
   .progressBadge {
     font-size: 0.95rem;
     padding: 10px 20px;
+  }
+  .dragoOnGround {
+    display: none;
   }
 }

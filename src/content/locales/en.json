@@ -57,12 +57,26 @@
     "loginButton": "Log In",
     "forgotPassword": "Forgot password?",
     "createAccount": "Create a new account",
-    "missingFields": "Please enter your email and password."
+    "missingFields": "Please enter your email and password.",
+    "failed": "Login failed. Please check your credentials."
+  },
+  "verification": {
+    "title": "Verify Your Email",
+    "subtitle": "Enter the 6-digit code sent to",
+    "codeIncomplete": "Please enter the complete code (6 digits)",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "failed": "Verification failed. Please try again.",
+    "networkError": "Network error. Check your connection.",
+    "didntReceive": "Didn't receive the code?",
+    "resend": "Resend Code",
+    "sending": "Sending...",
+    "codeSent": "Code sent successfully!",
+    "resendFailed": "Failed to send code. Try again."
   },
   "about": {
     "title": "Learn more about Dyslexia",
     "subtitle": "Open cabins, answer questions, and learn new things!",
-   
     "dragoIntro": "Ready for a challenge? Each cabin has simple questions to help you learn!",
     "nextBtn": "Next Question",
     "closeBtn": "Finish",

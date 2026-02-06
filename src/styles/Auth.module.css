@@ -429,3 +429,13 @@ select:focus {
     display: none;
   }
 }
+.error-banner {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+  border: 1px solid #ef9a9a;
+  font-size: 0.9rem;
+  text-align: center;
+}

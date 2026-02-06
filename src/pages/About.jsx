@@ -9,7 +9,6 @@ import brain from "../assets/about/brain.svg";
 import connection from "../assets/about/connection.svg";
 import visual from "../assets/about/visual learning.svg";
 import distructing from "../assets/about/distructing.svg";
-import { TextAlignCenter } from "lucide-react";
 
 const About = () => {
   const { i18n, t } = useTranslation();
@@ -83,6 +82,7 @@ const About = () => {
     styles.pos5,
     styles.pos6,
   ];
+  const langKey = currentLang.startsWith("ar") ? "ar" : "en";
 
   return (
     <>
@@ -248,7 +248,7 @@ const About = () => {
             </div>
           </section>
         </div>
-        <section style={{ textAlign: "center", margin: "2rem 1rem" }}>
+        <section style={{ textAlign: "center" }}>
           <h2 className={styles.heroSubtitle}>{t("about.subtitle")}</h2>
         </section>
         {/* Ferris Wheel Section */}
@@ -274,15 +274,12 @@ const About = () => {
           <Wheel
             handleStartQuiz={handleStartQuiz}
             quizData={quizData}
-            currentLang={currentLang}
+            currentLang={langKey}
             visitedCabins={visitedCabins}
             cabinPositions={cabinPositions}
           />
 
-          {/* <DragoMascot
-            visitedCabins={visitedCabins}
-            currentLang={currentLang}
-          /> */}
+    
 
           {/* Modal Quiz */}
           {isModalOpen && currentQuiz && (
@@ -301,10 +298,14 @@ const About = () => {
               t={t}
             />
           )}
-          <section style={{ marginRight: "500px" }}>
-            <img src={drago} alt="Drago Mascot" style={{ width: "200px" }} />
-          </section>
-          <Ground />
+          <div className={styles.groundScene}>
+            <img
+              src={drago}
+              alt="Drago Mascot"
+              className={styles.dragoOnGround}
+            />
+            <Ground />
+          </div>
         </section>
       </div>
       <Footer />
@@ -503,24 +504,6 @@ function QuizModal({
             </button>
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-function DragoMascot({ visitedCabins, currentLang }) {
-  const { t } = useTranslation();
-  return (
-    <div className={styles.mascotContainer}>
-      <div className={styles.bubble}>
-        {visitedCabins.size === 6
-          ? currentLang === "ar"
-            ? "أحسنت! أنت بطل المعرفة! 🎉"
-            : "Great! You are a Knowledge Champion! 🎉"
-          : t("about.dragoIntro")}
-      </div>
-      <div className={styles.dragoAvatar}>
-        <img src={drago} alt="Drago Mascot" />
       </div>
     </div>
   );

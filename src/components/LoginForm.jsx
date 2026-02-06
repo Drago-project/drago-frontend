@@ -12,16 +12,26 @@ export default function LoginForm() {
     password: "",
   });
 
+  // NEW: State for the error message
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
+    // Clear error when user starts typing again
+    if (errorMessage) setErrorMessage("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage(""); // Reset error on new attempt
+
     if (!form.email || !form.password) {
-      alert(t("login.missingFields"));
+      setErrorMessage(t("login.missingFields"));
       return;
     }
+
+    setLoading(true);
 
     try {
       const response = await api.post("/api/Auth/login", {
@@ -30,8 +40,6 @@ export default function LoginForm() {
       });
 
       const data = response.data || {};
-
-      // try to extract token from common locations
       const token =
         data.token || data.accessToken || data.jwt || data?.data?.token || null;
 
@@ -43,7 +51,6 @@ export default function LoginForm() {
         }
       }
 
-      // persist user data (useful when server doesn't return a JWT)
       try {
         const userObj = data.user || data || {};
         localStorage.setItem("userData", JSON.stringify(userObj));
@@ -51,7 +58,6 @@ export default function LoginForm() {
         console.warn("Could not persist user data:", e);
       }
 
-      // decode JWT payload if possible
       const decodeJwt = (jwt) => {
         try {
           const parts = jwt.split(".");
@@ -64,7 +70,7 @@ export default function LoginForm() {
           const json = atob(padded);
           return JSON.parse(json);
         } catch (e) {
-          console.error("JWT decode error:", e);
+          console.warn("Failed to decode JWT:", e);
           return null;
         }
       };
@@ -96,12 +102,16 @@ export default function LoginForm() {
       }
     } catch (err) {
       console.error("Login error:", err);
+      // Replace alert with setErrorMessage
       if (err.response) {
-        const d = err.response.data;
-        alert(d?.message || t("login.failed") || "Login failed");
+        setErrorMessage(
+          err.response.data?.message || t("login.failed") || "Login failed",
+        );
       } else {
-        alert(t("login.networkError") || "Network error");
+        setErrorMessage(t("login.networkError") || "Network error");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,6 +119,11 @@ export default function LoginForm() {
     <>
       <h2 className={styles["title"]}>{t("login.title")}</h2>
       <p className={styles["subtitle"]}>{t("login.subtitle")}</p>
+
+      {/* NEW: Conditional Error Message Container */}
+      {errorMessage && (
+        <div className={styles["error-banner"]}>{errorMessage}</div>
+      )}
 
       <form onSubmit={handleSubmit} className={styles["auth-form"]}>
         <input
@@ -130,8 +145,8 @@ export default function LoginForm() {
           style={{ fontFamily: "monospace" }}
         />
 
-        <button type="submit" className={styles["auth-btn"]}>
-          {t("login.loginButton")}
+        <button type="submit" className={styles["auth-btn"]} disabled={loading}>
+          {loading ? "..." : t("login.loginButton")}
         </button>
       </form>
 
