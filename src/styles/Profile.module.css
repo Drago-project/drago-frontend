@@ -121,7 +121,7 @@
   .statsRow {
     display: flex;
     justify-content: space-around;
-    margin: 20px 0;
+    margin: 10px 0;
   }
   
   .statsRow > div {
@@ -162,14 +162,15 @@
     background:rgb(68, 150, 142);
     color: white;
     padding: 4px 12px;
+    margin-top: 25px;
     border-radius: 999px;
   }
   
   .progressBar {
-    height: 12px;
+    height: 22px;
     background: #e5e7eb;
     border-radius: 999px;
-    margin: 8px 0;
+    margin: 7px 0;
   }
   
   .progressFill {
