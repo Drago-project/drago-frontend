@@ -118,16 +118,18 @@
 }
 
 .codeInput {
+  padding: 0;
   width: 50px;
   height: 60px;
   border: 3px solid var(--color-gray, #e9ecef);
   border-radius: 12px;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  text-align: center;
+  text-align: center !important;
   color: var(--text-primary, #212529);
   transition: all 0.3s ease;
   font-family: 'Courier New', monospace;
+
 }
 
 .codeInput:focus {
