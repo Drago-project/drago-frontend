@@ -68,23 +68,24 @@ function Profile() {
 
         {/* HEADER */}
         <div className={styles.profileHeader}>
-          <img src={dragoAvatar} className={styles.avatar} alt="avatar" />
+          <div className={styles.avatarContainer}>
+            <img src={dragoAvatar} className={styles.avatar} alt="avatar" />
+            <button
+              className={styles.editBtn}
+              onClick={() => {
+                setFormData(userData);
+                setShowEdit(true);
+              }}
+            >
+              ✏️
+            </button>
+          </div>
 
           <h1 className={styles.userName}>
             {userData.firstName} {userData.lastName}
           </h1>
           <p className={styles.userHandle}>{userData.username}</p>
           <p className={styles.userEmail}>{userData.email}</p>
-
-          <button
-            className={styles.editBtn}
-            onClick={() => {
-              setFormData(userData);
-              setShowEdit(true);
-            }}
-          >
-            ✏️ Edit Profile
-          </button>
 
           {/* STATS */}
           <div className={styles.statsRow}>
