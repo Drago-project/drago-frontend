@@ -501,6 +501,7 @@ function VolcanoWords() {
           lastError={lastError}
           analysis={analysis}
           renderMistakes={renderMistakes}
+          // dragoPose={dragoPose}
         />
 
         <div className={styles.dragonContainer}>
@@ -512,6 +513,7 @@ function VolcanoWords() {
           lavaBubbles={lavaBubbles}
           feedback={feedback}
           showFeedbackIndicator={showFeedbackIndicator}
+          dragoPose={dragoPose}
         />
       </div>
 
@@ -530,10 +532,11 @@ function VolcanoWords() {
 
 // Sub-Components
 
-function VolcanoPanel({ lavaLevel, lavaBubbles, feedback, showFeedbackIndicator }) {
+function VolcanoPanel({ lavaLevel, lavaBubbles, feedback, showFeedbackIndicator, dragoPose }) {
   return (
     <div className={styles.volcanoPanel}>
       <div style={{ position: "relative" }}>
+        <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} />
         <div className={styles.volcanoContainer}>
           <div className={styles.volcanoTop}></div>
 
@@ -583,6 +586,7 @@ function WordPanal({
   lastError,
   analysis,
   renderMistakes,
+  // dragoPose
 }) {
   const isArabic = /[\u0600-\u06FF]/.test(word || "");
   const { t } = useTranslation();
@@ -590,6 +594,7 @@ function WordPanal({
   return (
     <div className={styles.wordPanel}>
       <div className={styles.wordCard}>
+      {/* <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} /> */}
         <div className={styles.wordDisplay} style={{ direction: isArabic ? "rtl" : "ltr" }}>
           {word || "..."}
         </div>
