@@ -1,14 +1,13 @@
-/* Contact.module.css */
+/* Contact.module.css - الكود النهائي */
 
 .contactPage {
-  margin-top: 80px;
-  padding: 40px 0;
-  min-height: 80vh;
+  /* التعديل الأساسي هنا: استخدمنا padding-top بقيمة كبيرة (180px) عشان نضمن إن المحتوى ينزل تحت القائمة */
+  padding-top: 180px;
+  padding-bottom: 50px;
+  min-height: 100vh; /* الصفحة تاخد طول الشاشة بالكامل */
   background-color: #f9f9f9;
+  box-sizing: border-box; /* عشان المسافات متعملش سكرول بالعرض */
 }
-
-/* بنسيب container عادي عشان ده غالباً Global Class عندك */
-/* لكن لو عايز تخصصه للصفحة دي بس، ممكن تضيفه هنا */
 
 .pageTitle {
   text-align: center;
@@ -18,12 +17,15 @@
   font-weight: bold;
 }
 
+/* باقي التنسيقات زي ما هي */
 .contactSection {
   background: white;
   border-radius: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   padding: 40px;
-  margin-bottom: 40px;
+  margin: 0 auto 40px auto; /* توسيط السكشن */
+  max-width: 1200px; /* تحديد عرض أقصى عشان الشكل يكون منظم */
+  width: 90%; /* عشان الموبايل */
 }
 
 .sectionContent {
@@ -33,7 +35,6 @@
   gap: 40px;
 }
 
-/* Form Wrapper */
 .textContent {
   flex: 1;
 }
@@ -89,6 +90,8 @@
   font-size: 1rem;
   transition: border-color 0.3s ease;
   font-family: inherit;
+  width: 100%; /* ضمان إن الحقل ياخد العرض كامل */
+  box-sizing: border-box;
 }
 
 .formGroup input:focus,
@@ -123,17 +126,23 @@
   margin-top: 10px;
 }
 
-/* RTL Override logic is usually handled via global classes or conditional styles in JS */
-/* But if you need specific RTL adjustments inside the module: */
-/* Note: We handle RTL text-align via the global 'rtl' class in the parent div usually, 
-   or we can use logical properties like text-align: start; */
-
+/* Responsive Design */
 @media (max-width: 768px) {
+  .contactPage {
+    padding-top: 140px; /* تقليل المسافة شوية للموبايل */
+  }
+
   .sectionContent {
     flex-direction: column-reverse;
+    gap: 20px;
   }
 
   .pageTitle {
     font-size: 2rem;
+    margin-bottom: 20px;
+  }
+
+  .contactSection {
+    padding: 20px;
   }
 }

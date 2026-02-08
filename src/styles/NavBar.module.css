@@ -45,6 +45,7 @@
   text-align: center;
 }
 
+/* --- التعديل الأساسي هنا عشان الأيقونة فوق الكلام --- */
 .navLink {
   color: var(--text-primary);
   text-decoration: none;
@@ -55,6 +56,14 @@
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+
+  /* Flexbox Settings for Vertical Icon Alignment */
+  display: flex;
+  flex-direction: column; /* يخلي الأيقونة فوق والنص تحت */
+  align-items: center; /* يوسطنهم */
+  justify-content: center;
+  gap: 4px; /* مسافة صغيرة بين الأيقونة والكلمة */
+  line-height: 1.2;
 }
 
 .navLink:hover {
