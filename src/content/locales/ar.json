@@ -276,5 +276,52 @@
       "send": "إرسال الرسالة"
     },
     "successMsg": "تم إرسال رسالتك بنجاح! شكراً لك."
+  },
+  "volcanoWords": {
+    "exit": "خروج",
+    "level": "المستوى",
+    "score": "النقاط",
+    "word": "كلمة",
+    "of": "من",
+    "phases": {
+      "recording": "🎙️ يستمع... (اضغط مرة أخرى للتوقف)",
+      "uploading": "⬆️ جاري رفع الصوت...",
+      "processing": "⚙️ جاري التحليل... قد يستغرق بضع ثوانٍ",
+      "listening": "...يستمع..."
+    },
+    "feedback": {
+      "correct": "✓ صحيح! أحسنت!",
+      "wrong": "✗ حاول مرة أخرى!",
+      "youSaid": "قلت",
+      "noMistakes": "✅ لا توجد أخطاء"
+    },
+    "mistakes": {
+      "title": "الأخطاء:",
+      "missing": "كلمة ناقصة",
+      "extra": "كلمة زائدة",
+      "substitute": "قلت",
+      "insteadOf": "بدلاً من",
+      "letters": "الحروف:",
+      "missingChar": "ناقص",
+      "extraChar": "زائد",
+      "summary": "الأخطاء: ناقص {missing}، زائد {extra}، مستبدل {substitute}"
+    },
+    "errors": {
+      "audioNotClear": "الصوت غير واضح. تحدث بصوت أعلى وأقرب للميكروفون",
+      "checkWordError": "حدث خطأ في التحقق من الكلمة",
+      "recordingFailed": "فشل التسجيل. تحقق من إذن الميكروفون",
+      "loadLevelsFailed": "فشل تحميل المستويات",
+      "ttsFailed": "فشل تشغيل الصوت",
+      "timeout": "الطلب استغرق وقتاً طويلاً",
+      "connectionError": "حدث خطأ في الاتصال بالخادم"
+    },
+    "actions": {
+      "record": "سجل",
+      "stop": "توقف",
+      "hint": "تلميح",
+      "skip": "تخطي"
+    },
+    "winMessage": "دراجو هرب من البركان!",
+    "loseMessage": "دراجو غُمر باللافا!"
   }
 }

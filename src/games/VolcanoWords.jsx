@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import styles from "../styles/VolcanoWords.module.css";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import reading from "../assets/emotions/drago(reading).svg";
 import sitting from "../assets/poses/drago(sitting).svg";
 import { WinModal, LoseModal } from "../components/WinLose.jsx";
 
 const API_BASE = "https://mohamed4111-dyslexia.hf.space";
-
-// Vite env: .env next to package.json
-// VITE_HF_API_KEY=xxxx
 const HF_API_KEY = import.meta?.env?.VITE_HF_API_KEY || "";
 
 const INITIAL_LAVA_LEVEL = 40;
 const INITIAL_HINTS = 5;
 
 // Recording settings
-const RECORDING_MS = 6000;
+const RECORDING_MS = 5000; // Reduced from 6s to 5s
 const TIMESLICE_MS = 250;
+const API_TIMEOUT_MS = 30000; // 30 second timeout for API calls
 
 function VolcanoWords() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Levels
   const [levels, setLevels] = useState(null);
@@ -32,18 +32,18 @@ function VolcanoWords() {
   const [lavaLevel, setLavaLevel] = useState(INITIAL_LAVA_LEVEL);
   const [hints, setHints] = useState(INITIAL_HINTS);
   const [score, setScore] = useState(0);
-  const [gameStatus, setGameStatus] = useState("playing"); // playing|won|lost
+  const [gameStatus, setGameStatus] = useState("playing");
 
   // Speech / feedback
   const [isRecording, setIsRecording] = useState(false);
-  const [phase, setPhase] = useState("idle"); // idle|recording|uploading|processing
+  const [phase, setPhase] = useState("idle"); 
   const [transcript, setTranscript] = useState("");
-  const [feedback, setFeedback] = useState(null); // correct|wrong|null
+  const [feedback, setFeedback] = useState(null);
   const [showFeedbackIndicator, setShowFeedbackIndicator] = useState(false);
 
   // Endpoint outputs
   const [diffHtml, setDiffHtml] = useState("");
-  const [analysis, setAnalysis] = useState(null); // full /analyze output
+  const [analysis, setAnalysis] = useState(null);
   const [counts, setCounts] = useState(null);
   const [lastError, setLastError] = useState("");
 
@@ -76,11 +76,11 @@ function VolcanoWords() {
         setCurrentWordIndex(0);
       } catch (e) {
         console.error(e);
-        setLastError("Failed to load levels from /get_levels");
-        alert("Failed to load levels from Hugging Face Space.");
+        setLastError(t("volcanoWords.errors.loadLevelsFailed"));
+        alert(t("volcanoWords.errors.loadLevelsFailed"));
       }
     })();
-  }, []);
+  }, [t]);
 
   // Pose based on recording
   useEffect(() => {
@@ -102,9 +102,7 @@ function VolcanoWords() {
     []
   );
 
-  // -----------------------------
   // Helpers
-  // -----------------------------
   function shuffle(arr) {
     return [...arr].sort(() => 0.5 - Math.random());
   }
@@ -124,20 +122,20 @@ function VolcanoWords() {
     if (!analysisJson?.mistakes?.length) {
       return (
         <div style={{ marginTop: 12, fontSize: 14, color: "#2e7d32", fontWeight: 700 }}>
-          ✅ No mistakes
+          {t("volcanoWords.feedback.noMistakes")}
         </div>
       );
     }
 
     return (
       <div style={{ marginTop: 12, textAlign: "left", fontSize: 14, lineHeight: 1.6 }}>
-        <div style={{ fontWeight: 800, marginBottom: 6 }}>Mistakes:</div>
+        <div style={{ fontWeight: 800, marginBottom: 6 }}>{t("volcanoWords.mistakes.title")}</div>
 
         {analysisJson.mistakes.map((m, idx) => {
           if (m.type === "missing") {
             return (
               <div key={idx} style={{ color: "#e53935" }}>
-                • Missing word: <b>{m.expected}</b>
+                • {t("volcanoWords.mistakes.missing")}: <b>{m.expected}</b>
               </div>
             );
           }
@@ -145,7 +143,7 @@ function VolcanoWords() {
           if (m.type === "extra") {
             return (
               <div key={idx} style={{ color: "#fb8c00" }}>
-                • Extra word: <b>{m.spoken}</b>
+                • {t("volcanoWords.mistakes.extra")}: <b>{m.spoken}</b>
               </div>
             );
           }
@@ -154,10 +152,10 @@ function VolcanoWords() {
             const edits = m?.char_detail?.char_edits || [];
             return (
               <div key={idx} style={{ color: "#e53935" }}>
-                • Said <b>{m.spoken}</b> instead of <b>{m.expected}</b>
+                • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b> {t("volcanoWords.mistakes.insteadOf")} <b>{m.expected}</b>
                 {edits.length > 0 && (
                   <div style={{ marginLeft: 10, marginTop: 4, color: "#444" }}>
-                    Letters:
+                    {t("volcanoWords.mistakes.letters")}
                     {edits.slice(0, 8).map((e, i) => (
                       <span key={i} style={{ marginLeft: 8 }}>
                         {e.type === "substitute_char" && (
@@ -166,8 +164,8 @@ function VolcanoWords() {
                             {e.expected_char} → {e.spoken_char}{" "}
                           </>
                         )}
-                        {e.type === "missing_char" && <> missing “{e.expected_char}” </>}
-                        {e.type === "extra_char" && <> extra “{e.spoken_char}” </>}
+                        {e.type === "missing_char" && <> {t("volcanoWords.mistakes.missingChar")} "{e.expected_char}" </>}
+                        {e.type === "extra_char" && <> {t("volcanoWords.mistakes.extraChar")} "{e.spoken_char}" </>}
                       </span>
                     ))}
                   </div>
@@ -182,9 +180,7 @@ function VolcanoWords() {
     );
   }
 
-  // -----------------------------
   // Game logic
-  // -----------------------------
   const handleCorrectAnswer = () => {
     setFeedback("correct");
     setShowFeedbackIndicator(true);
@@ -256,9 +252,7 @@ function VolcanoWords() {
     resetPerWordUI();
   };
 
-  // -----------------------------
-  // Endpoint: /tts (Hint)
-  // -----------------------------
+  // TTS Hint
   const handleUseHint = async () => {
     if (hints <= 0 || isRecording || isGameOver || !activeWord) return;
     setHints((prev) => prev - 1);
@@ -268,15 +262,11 @@ function VolcanoWords() {
       await audio.play();
     } catch (e) {
       console.error(e);
-      setLastError("TTS failed");
+      setLastError(t("volcanoWords.errors.ttsFailed"));
     }
   };
 
-  // -----------------------------
-  // Recording + endpoints:
-  // /check_word (pass/retry + diff_html)
-  // /analyze    (accurate mistakes + counts)
-  // -----------------------------
+  // Recording + API with timeout
   const handleStartRecording = async () => {
     if (isGameOver) return;
 
@@ -285,7 +275,9 @@ function VolcanoWords() {
       try {
         clearTimeout(stopTimerRef.current);
         recorderRef.current.stop();
-      } catch { }
+      } catch (e) {
+        console.error("Error stopping recorder:", e);
+      }
       return;
     }
 
@@ -299,35 +291,38 @@ function VolcanoWords() {
       setIsRecording(false);
       setPhase("uploading");
 
-      // Primary: /check_word
-      const check = await callCheckWord(blob, activeWord);
+      // Primary: /check_word with timeout
+      const check = await callCheckWordWithTimeout(blob, activeWord);
 
       if (check.status === "retry") {
         setPhase("idle");
-        setLastError("Audio not clear. Speak louder & closer to the mic.");
+        setLastError(t("volcanoWords.errors.audioNotClear"));
         handleWrongAnswer();
         return;
       }
       if (check.status === "error") {
         setPhase("idle");
-        setLastError(check.message || "check_word error");
+        setLastError(check.message || t("volcanoWords.errors.checkWordError"));
         return;
       }
 
       setTranscript(check.spoken_text || "");
       setDiffHtml(check.diff_html || "");
 
-      // Optional but important: /analyze for correct mistakes display
-      setPhase("processing");
-      try {
-        const ana = await callAnalyze(blob, activeWord);
-        setAnalysis(ana);
-        setCounts(ana?.counts || null);
-        // If your /check_word spoken_text differs, prefer /analyze spoken_text
-        if (ana?.spoken_text) setTranscript(ana.spoken_text);
-      } catch (e) {
-        // If analyze fails (401/no key), game still works
-      } finally {
+      // Optional: /analyze for detailed mistakes (only if API key available)
+      if (HF_API_KEY) {
+        setPhase("processing");
+        try {
+          const ana = await callAnalyzeWithTimeout(blob, activeWord);
+          setAnalysis(ana);
+          setCounts(ana?.counts || null);
+          if (ana?.spoken_text) setTranscript(ana.spoken_text);
+        } catch (e) {
+          console.log("Analyze failed (optional):", e.message);
+        } finally {
+          setPhase("idle");
+        }
+      } else {
         setPhase("idle");
       }
 
@@ -337,8 +332,7 @@ function VolcanoWords() {
       console.error(e);
       setIsRecording(false);
       setPhase("idle");
-      setLastError("Recording failed. Check mic permission.");
-      alert("Recording failed. Check microphone permission.");
+      setLastError(t("volcanoWords.errors.recordingFailed"));
     }
   };
 
@@ -366,7 +360,6 @@ function VolcanoWords() {
         stream.getTracks().forEach((t) => t.stop());
         const blob = new Blob(chunksRef.current, { type: mimeType });
 
-        // prevent “silent/empty” audio
         if (blob.size < 5000) {
           reject(new Error("Empty/too small audio blob"));
           return;
@@ -374,32 +367,62 @@ function VolcanoWords() {
         resolve(blob);
       };
 
-      // timeslice => reliable chunking
       recorder.start(TIMESLICE_MS);
 
       stopTimerRef.current = setTimeout(() => {
         try {
           recorder.stop();
-        } catch { }
+        } catch (e) {
+          console.error("Error stopping recorder:", e);
+        }
       }, RECORDING_MS);
     });
   }
 
-  async function callCheckWord(audioBlob, targetWord) {
+  // Helper: fetch with timeout
+  async function fetchWithTimeout(url, options, timeout = API_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(id);
+      return response;
+    } catch (error) {
+      clearTimeout(id);
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - الطلب استغرق وقتاً طويلاً');
+      }
+      throw error;
+    }
+  }
+
+  async function callCheckWordWithTimeout(audioBlob, targetWord) {
     const form = new FormData();
     form.append("file", audioBlob, "speech.webm");
     form.append("target_word", targetWord);
 
-    const res = await fetch(`${API_BASE}/check_word`, {
-      method: "POST",
-      body: form,
-    });
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/check_word`, {
+        method: "POST",
+        body: form,
+      });
 
-    if (!res.ok) return { status: "error", message: await res.text() };
-    return await res.json();
+      if (!res.ok) return { status: "error", message: await res.text() };
+      return await res.json();
+    } catch (error) {
+      console.error("Check word error:", error);
+      return { 
+        status: "error", 
+        message: error.message || t("volcanoWords.errors.connectionError")
+      };
+    }
   }
 
-  async function callAnalyze(audioBlob, expectedText) {
+  async function callAnalyzeWithTimeout(audioBlob, expectedText) {
     const form = new FormData();
     form.append("audio", audioBlob, "speech.webm");
     form.append("expected_text", expectedText);
@@ -407,24 +430,27 @@ function VolcanoWords() {
 
     const headers = HF_API_KEY ? { "X-API-Key": HF_API_KEY } : undefined;
 
-    const res = await fetch(`${API_BASE}/analyze`, {
-      method: "POST",
-      headers,
-      body: form,
-    });
+    try {
+      const res = await fetchWithTimeout(`${API_BASE}/analyze`, {
+        method: "POST",
+        headers,
+        body: form,
+      });
 
-    if (!res.ok) throw new Error(await res.text());
-    return await res.json();
+      if (!res.ok) throw new Error(await res.text());
+      return await res.json();
+    } catch (error) {
+      console.error("Analyze error:", error);
+      throw error;
+    }
   }
 
-  // -----------------------------
   // Render
-  // -----------------------------
   return (
     <div className={styles.gameContainer}>
       <nav className={styles.headerNav}>
         <button className={styles.exitBtn} onClick={() => navigate("/home")}>
-          Exit
+          {t("volcanoWords.exit")}
         </button>
 
         <div className={styles.heartsContainer}>
@@ -436,7 +462,7 @@ function VolcanoWords() {
         </div>
 
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontWeight: 700 }}>Level:</span>
+          <span style={{ fontWeight: 700 }}>{t("volcanoWords.level")}:</span>
           <select
             value={levelId}
             onChange={(e) => handleChangeLevel(e.target.value)}
@@ -453,7 +479,7 @@ function VolcanoWords() {
           </select>
         </div>
 
-        <div className={styles.scoreBoard}>Score: {score}</div>
+        <div className={styles.scoreBoard}>{t("volcanoWords.score")}: {score}</div>
       </nav>
 
       <div className={styles.gameContent}>
@@ -491,18 +517,18 @@ function VolcanoWords() {
 
       {gameStatus === "won" ? (
         <WinModal score={score} restartGame={restartGame}>
-          Drago escaped the volcano!
+          {t("volcanoWords.winMessage")}
         </WinModal>
       ) : gameStatus === "lost" ? (
         <LoseModal score={score} restartGame={restartGame}>
-          Drago got overwhelmed by the lava!
+          {t("volcanoWords.loseMessage")}
         </LoseModal>
       ) : null}
     </div>
   );
 }
 
-// --- Sub-Components ---
+// Sub-Components
 
 function VolcanoPanel({ lavaLevel, lavaBubbles, feedback, showFeedbackIndicator }) {
   return (
@@ -559,6 +585,7 @@ function WordPanal({
   renderMistakes,
 }) {
   const isArabic = /[\u0600-\u06FF]/.test(word || "");
+  const { t } = useTranslation();
 
   return (
     <div className={styles.wordPanel}>
@@ -567,12 +594,12 @@ function WordPanal({
           {word || "..."}
         </div>
 
-        {/* Phase indicator */}
+        {/* Phase indicator with better messaging */}
         {phase !== "idle" && (
           <div style={{ marginTop: 10, fontSize: 14, fontWeight: 800 }}>
-            {phase === "recording" && "🎙️ Listening... (tap again to stop)"}
-            {phase === "uploading" && "⬆️ Uploading audio..."}
-            {phase === "processing" && "⚙️ Processing..."}
+            {phase === "recording" && t("volcanoWords.phases.recording")}
+            {phase === "uploading" && t("volcanoWords.phases.uploading")}
+            {phase === "processing" && t("volcanoWords.phases.processing")}
           </div>
         )}
 
@@ -581,19 +608,18 @@ function WordPanal({
             className={`${styles.feedbackMessage} ${feedback === "correct" ? styles.feedbackCorrect : styles.feedbackWrong
               }`}
           >
-            {feedback === "correct" ? "✓ Correct! Well done!" : "✗ Try again!"}
+            {feedback === "correct" ? t("volcanoWords.feedback.correct") : t("volcanoWords.feedback.wrong")}
           </div>
         )}
 
-        {isRecording && <div className={styles.feedbackMessage}>...Listening...</div>}
+        {isRecording && <div className={styles.feedbackMessage}>{t("volcanoWords.phases.listening")}</div>}
 
         {transcript && (
           <div className={styles.transcriptText} style={{ direction: isArabic ? "rtl" : "ltr" }}>
-            You said: "<strong>{transcript}</strong>"
+            {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>"
           </div>
         )}
 
-        {/* quick diff from /check_word */}
         {diffHtml && (
           <div
             style={{ marginTop: 10, fontSize: 16, direction: "rtl", lineHeight: 1.7 }}
@@ -601,23 +627,23 @@ function WordPanal({
           />
         )}
 
-        {/* accurate mistakes from /analyze */}
         {analysis && renderMistakes(analysis)}
 
-        {/* counts from /analyze */}
         {counts && (
           <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>
-            Mistakes: missing {counts.missing_words}, extra {counts.extra_words}, substitute{" "}
+            الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words}, مستبدل{" "}
             {counts.substitute_words}
           </div>
         )}
 
         {lastError && (
-          <div style={{ marginTop: 10, fontSize: 12, color: "#f44336" }}>{lastError}</div>
+          <div style={{ marginTop: 10, fontSize: 12, color: "#f44336", fontWeight: 600 }}>
+            {lastError}
+          </div>
         )}
 
         <div className={styles.wordCounter}>
-          Word {Math.min(wordIndex + 1, numWords || 1)} of {numWords || 1}
+          {t("volcanoWords.word")} {Math.min(wordIndex + 1, numWords || 1)} {t("volcanoWords.of")} {numWords || 1}
         </div>
       </div>
 
@@ -625,7 +651,7 @@ function WordPanal({
         <ActionBtn
           icon={isRecording ? "🛑" : "🎤"}
           primary
-          disabled={isGameOver}
+          disabled={isGameOver || phase !== "idle"}
           onClick={handleStartRecording}
         />
         <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
