@@ -43,6 +43,7 @@ function VolcanoWords() {
 
   // Endpoint outputs
   const [diffHtml, setDiffHtml] = useState("");
+  const [similarity, setSimilarity] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [counts, setCounts] = useState(null);
   const [lastError, setLastError] = useState("");
@@ -111,6 +112,7 @@ function VolcanoWords() {
     setTranscript("");
     setDiffHtml("");
     setAnalysis(null);
+    setSimilarity(null);
     setCounts(null);
     setFeedback(null);
     setShowFeedbackIndicator(false);
@@ -292,22 +294,44 @@ function VolcanoWords() {
       setPhase("uploading");
 
       // Primary: /check_word with timeout
-      const check = await callCheckWordWithTimeout(blob, activeWord);
+const check = await callCheckWordWithTimeout(blob, activeWord);
 
-      if (check.status === "retry") {
-        setPhase("idle");
-        setLastError(t("volcanoWords.errors.audioNotClear"));
-        handleWrongAnswer();
-        return;
-      }
-      if (check.status === "error") {
-        setPhase("idle");
-        setLastError(check.message || t("volcanoWords.errors.checkWordError"));
-        return;
-      }
+// guard unknown responses
+if (!check || typeof check.status !== "string") {
+  setPhase("idle");
+  setLastError(t("volcanoWords.errors.checkWordError"));
+  return;
+}
 
-      setTranscript(check.spoken_text || "");
-      setDiffHtml(check.diff_html || "");
+if (check.status === "retry") {
+  setPhase("idle");
+  setLastError(check.message || t("volcanoWords.errors.audioNotClear"));
+  handleWrongAnswer();
+  return;
+}
+
+if (check.status === "error") {
+  setPhase("idle");
+  setLastError(check.message || t("volcanoWords.errors.checkWordError"));
+  return;
+}
+
+//handle unexpected status values
+if (check.status !== "success") {
+  setPhase("idle");
+  setLastError(check.message || "Unexpected server response");
+  return;
+}
+
+// `recognized`, fallback to `spoken_text`
+const recognizedText = check.recognized ?? check.spoken_text ?? "";
+setTranscript(recognizedText);
+
+//  keep diff
+setDiffHtml(check.diff_html || "");
+
+// store similarity
+setSimilarity(check.similarity ?? null);
 
       // Optional: /analyze for detailed mistakes (only if API key available)
       if (HF_API_KEY) {
@@ -499,6 +523,7 @@ function VolcanoWords() {
           diffHtml={diffHtml}
           counts={counts}
           lastError={lastError}
+          similarity={similarity}
           analysis={analysis}
           renderMistakes={renderMistakes}
         />
@@ -583,6 +608,7 @@ function WordPanal({
   lastError,
   analysis,
   renderMistakes,
+  similarity,
 }) {
   const isArabic = /[\u0600-\u06FF]/.test(word || "");
   const { t } = useTranslation();
@@ -619,6 +645,13 @@ function WordPanal({
             {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>"
           </div>
         )}
+        
+        {similarity !== null && (
+          <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
+            Similarity: {Math.round(similarity)}%
+          </div>
+        )}
+
 
         {diffHtml && (
           <div
