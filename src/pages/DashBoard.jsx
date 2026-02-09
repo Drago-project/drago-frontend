@@ -271,7 +271,7 @@ const translations = {
 // --- Sub Components ---
 
 // Updated to Bar Chart
-const ProgressChart = ({ t, lang }) => {
+const ProgressChart = ({ lang }) => {
   const data = [
     { label: 'Mon', value: 40 },
     { label: 'Tue', value: 65 },
@@ -409,7 +409,7 @@ const HomeView = ({ t, lang }) => (
   </div>
 );
 
-const StudentsView = ({ t, lang, students }) => (
+const StudentsView = ({ t, students }) => (
   <div className="table-card">
     <div className="table-header">
       <h2 className="table-title">{t('students')}</h2>
