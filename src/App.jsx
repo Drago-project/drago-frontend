@@ -32,7 +32,9 @@ import TombPuzzle from "./games/TombPuzzle";
 // Layout component
 function Layout() {
   const location = useLocation();
-  const hideAllNav = location.pathname.startsWith("/games", "/dashboard");
+  const hideAllNav =
+    location.pathname.startsWith("/games") ||
+    location.pathname.startsWith("/dashboard");
 
   const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
