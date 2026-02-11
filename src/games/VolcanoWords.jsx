@@ -7,15 +7,13 @@ import reading from "../assets/emotions/drago(reading).svg";
 import sitting from "../assets/poses/drago(sitting).svg";
 import { WinModal, LoseModal } from "../components/WinLose.jsx";
 
-const API_BASE = "https://mohamed4111-dyslexia.hf.space";
+const API_BASE = "https://mohamed4111-dyslexia-v2.hf.space";
 const HF_API_KEY = import.meta?.env?.VITE_HF_API_KEY || "";
 
 const INITIAL_LAVA_LEVEL = 40;
 const INITIAL_HINTS = 5;
 
 // Recording settings
-const RECORDING_MS = 5000; // Reduced from 6s to 5s
-const TIMESLICE_MS = 250;
 const API_TIMEOUT_MS = 30000; // 30 second timeout for API calls
 
 function VolcanoWords() {
@@ -36,7 +34,7 @@ function VolcanoWords() {
 
   // Speech / feedback
   const [isRecording, setIsRecording] = useState(false);
-  const [phase, setPhase] = useState("idle"); 
+  const [phase, setPhase] = useState("idle");
   const [transcript, setTranscript] = useState("");
   const [feedback, setFeedback] = useState(null);
   const [showFeedbackIndicator, setShowFeedbackIndicator] = useState(false);
@@ -154,7 +152,8 @@ function VolcanoWords() {
             const edits = m?.char_detail?.char_edits || [];
             return (
               <div key={idx} style={{ color: "#e53935" }}>
-                • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b> {t("volcanoWords.mistakes.insteadOf")} <b>{m.expected}</b>
+                • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b> {t("volcanoWords.mistakes.insteadOf")}{" "}
+                <b>{m.expected}</b>
                 {edits.length > 0 && (
                   <div style={{ marginLeft: 10, marginTop: 4, color: "#444" }}>
                     {t("volcanoWords.mistakes.letters")}
@@ -166,8 +165,12 @@ function VolcanoWords() {
                             {e.expected_char} → {e.spoken_char}{" "}
                           </>
                         )}
-                        {e.type === "missing_char" && <> {t("volcanoWords.mistakes.missingChar")} "{e.expected_char}" </>}
-                        {e.type === "extra_char" && <> {t("volcanoWords.mistakes.extraChar")} "{e.spoken_char}" </>}
+                        {e.type === "missing_char" && (
+                          <> {t("volcanoWords.mistakes.missingChar")} "{e.expected_char}" </>
+                        )}
+                        {e.type === "extra_char" && (
+                          <> {t("volcanoWords.mistakes.extraChar")} "{e.spoken_char}" </>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -272,86 +275,25 @@ function VolcanoWords() {
   const handleStartRecording = async () => {
     if (isGameOver) return;
 
-    // Stop early if recording
+    // Manual STOP
     if (isRecording && recorderRef.current?.state === "recording") {
       try {
         clearTimeout(stopTimerRef.current);
         recorderRef.current.stop();
+        setPhase("uploading"); // optional: show uploading while stopping
       } catch (e) {
         console.error("Error stopping recorder:", e);
       }
       return;
     }
 
+    // Manual START
     resetPerWordUI();
     setIsRecording(true);
     setPhase("recording");
 
     try {
-      const blob = await recordAudioBlob();
-
-      setIsRecording(false);
-      setPhase("uploading");
-
-      // Primary: /check_word with timeout
-const check = await callCheckWordWithTimeout(blob, activeWord);
-
-// guard unknown responses
-if (!check || typeof check.status !== "string") {
-  setPhase("idle");
-  setLastError(t("volcanoWords.errors.checkWordError"));
-  return;
-}
-
-if (check.status === "retry") {
-  setPhase("idle");
-  setLastError(check.message || t("volcanoWords.errors.audioNotClear"));
-  handleWrongAnswer();
-  return;
-}
-
-if (check.status === "error") {
-  setPhase("idle");
-  setLastError(check.message || t("volcanoWords.errors.checkWordError"));
-  return;
-}
-
-//handle unexpected status values
-if (check.status !== "success") {
-  setPhase("idle");
-  setLastError(check.message || "Unexpected server response");
-  return;
-}
-
-// `recognized`, fallback to `spoken_text`
-const recognizedText = check.recognized ?? check.spoken_text ?? "";
-setTranscript(recognizedText);
-
-//  keep diff
-setDiffHtml(check.diff_html || "");
-
-// store similarity
-setSimilarity(check.similarity ?? null);
-
-      // Optional: /analyze for detailed mistakes (only if API key available)
-      if (HF_API_KEY) {
-        setPhase("processing");
-        try {
-          const ana = await callAnalyzeWithTimeout(blob, activeWord);
-          setAnalysis(ana);
-          setCounts(ana?.counts || null);
-          if (ana?.spoken_text) setTranscript(ana.spoken_text);
-        } catch (e) {
-          console.log("Analyze failed (optional):", e.message);
-        } finally {
-          setPhase("idle");
-        }
-      } else {
-        setPhase("idle");
-      }
-
-      if (check.passed) handleCorrectAnswer();
-      else handleWrongAnswer();
+      await startRecording(activeWord);
     } catch (e) {
       console.error(e);
       setIsRecording(false);
@@ -360,48 +302,114 @@ setSimilarity(check.similarity ?? null);
     }
   };
 
-  async function recordAudioBlob() {
+
+  async function startRecording(wordAtStart) {
     const stream = await navigator.mediaDevices.getUserMedia({
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
     });
 
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-      ? "audio/webm;codecs=opus"
-      : "audio/webm";
-
-    const recorder = new MediaRecorder(stream, { mimeType });
+    const recorder = new MediaRecorder(stream); // let browser choose best
     recorderRef.current = recorder;
     chunksRef.current = [];
 
-    return await new Promise((resolve, reject) => {
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
-      };
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+    };
 
-      recorder.onerror = (e) => reject(e);
+    recorder.onerror = (e) => {
+      console.error("Recorder error:", e);
+      stream.getTracks().forEach((t) => t.stop());
+      setIsRecording(false);
+      setPhase("idle");
+      setLastError(t("volcanoWords.errors.recordingFailed"));
+    };
 
-      recorder.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: mimeType });
+    recorder.onstop = async () => {
+      try {
+        clearTimeout(stopTimerRef.current);
+
+        stream.getTracks().forEach((tr) => tr.stop());
+
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+
+        setIsRecording(false);
 
         if (blob.size < 5000) {
-          reject(new Error("Empty/too small audio blob"));
+          setPhase("idle");
+          setLastError(t("volcanoWords.errors.audioNotClear"));
+          handleWrongAnswer();
           return;
         }
-        resolve(blob);
-      };
 
-      recorder.start(TIMESLICE_MS);
+        setPhase("uploading");
 
-      stopTimerRef.current = setTimeout(() => {
-        try {
-          recorder.stop();
-        } catch (e) {
-          console.error("Error stopping recorder:", e);
+        const check = await callCheckWordWithTimeout(blob, wordAtStart);
+
+        if (!check || typeof check.status !== "string") {
+          setPhase("idle");
+          setLastError(t("volcanoWords.errors.checkWordError"));
+          return;
         }
-      }, RECORDING_MS);
-    });
+
+        if (check.status === "retry") {
+          setPhase("idle");
+          setLastError(check.message || t("volcanoWords.errors.audioNotClear"));
+          handleWrongAnswer();
+          return;
+        }
+
+        if (check.status === "error") {
+          setPhase("idle");
+          setLastError(check.message || t("volcanoWords.errors.checkWordError"));
+          return;
+        }
+
+        if (check.status !== "success") {
+          setPhase("idle");
+          setLastError(check.message || "Unexpected server response");
+          return;
+        }
+
+        const recognizedText = check.recognized ?? check.spoken_text ?? "";
+        setTranscript(recognizedText);
+
+        setDiffHtml(check.diff_html || "");
+        setSimilarity(check.similarity ?? null);
+
+        setAnalysis(check.analysis || null);
+        setCounts(check.counts || null);
+
+        setPhase("idle");
+
+        if (check.passed) handleCorrectAnswer();
+        else handleWrongAnswer();
+      } catch (e) {
+        console.error(e);
+        setIsRecording(false);
+        setPhase("idle");
+        setLastError(t("volcanoWords.errors.connectionError"));
+      }
+    };
+
+    recorder.start(); // manual stop
+
+    // ✅ Fix "speak immediately": request an early chunk
+    setTimeout(() => {
+      try {
+        recorder.requestData();
+      } catch { }
+    }, 150);
+
+    // OPTIONAL safety max: auto-stop after 15s if user forgets
+    stopTimerRef.current = setTimeout(() => {
+      if (recorderRef.current?.state === "recording") {
+        try {
+          recorderRef.current.stop();
+        } catch { }
+      }
+    }, 15000);
   }
+
 
   // Helper: fetch with timeout
   async function fetchWithTimeout(url, options, timeout = API_TIMEOUT_MS) {
@@ -411,14 +419,14 @@ setSimilarity(check.similarity ?? null);
     try {
       const response = await fetch(url, {
         ...options,
-        signal: controller.signal
+        signal: controller.signal,
       });
       clearTimeout(id);
       return response;
     } catch (error) {
       clearTimeout(id);
-      if (error.name === 'AbortError') {
-        throw new Error('Request timeout - الطلب استغرق وقتاً طويلاً');
+      if (error.name === "AbortError") {
+        throw new Error("Request timeout - الطلب استغرق وقتاً طويلاً");
       }
       throw error;
     }
@@ -429,9 +437,12 @@ setSimilarity(check.similarity ?? null);
     form.append("file", audioBlob, "speech.webm");
     form.append("target_word", targetWord);
 
+    const headers = HF_API_KEY ? { "X-API-Key": HF_API_KEY } : undefined;
+
     try {
       const res = await fetchWithTimeout(`${API_BASE}/check_word`, {
         method: "POST",
+        headers,
         body: form,
       });
 
@@ -439,33 +450,10 @@ setSimilarity(check.similarity ?? null);
       return await res.json();
     } catch (error) {
       console.error("Check word error:", error);
-      return { 
-        status: "error", 
-        message: error.message || t("volcanoWords.errors.connectionError")
+      return {
+        status: "error",
+        message: error.message || t("volcanoWords.errors.connectionError"),
       };
-    }
-  }
-
-  async function callAnalyzeWithTimeout(audioBlob, expectedText) {
-    const form = new FormData();
-    form.append("audio", audioBlob, "speech.webm");
-    form.append("expected_text", expectedText);
-    form.append("beam_size", "5");
-
-    const headers = HF_API_KEY ? { "X-API-Key": HF_API_KEY } : undefined;
-
-    try {
-      const res = await fetchWithTimeout(`${API_BASE}/analyze`, {
-        method: "POST",
-        headers,
-        body: form,
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-      return await res.json();
-    } catch (error) {
-      console.error("Analyze error:", error);
-      throw error;
     }
   }
 
@@ -503,7 +491,9 @@ setSimilarity(check.similarity ?? null);
           </select>
         </div>
 
-        <div className={styles.scoreBoard}>{t("volcanoWords.score")}: {score}</div>
+        <div className={styles.scoreBoard}>
+          {t("volcanoWords.score")}: {score}
+        </div>
       </nav>
 
       <div className={styles.gameContent}>
@@ -620,7 +610,6 @@ function WordPanal({
           {word || "..."}
         </div>
 
-        {/* Phase indicator with better messaging */}
         {phase !== "idle" && (
           <div style={{ marginTop: 10, fontSize: 14, fontWeight: 800 }}>
             {phase === "recording" && t("volcanoWords.phases.recording")}
@@ -645,13 +634,12 @@ function WordPanal({
             {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>"
           </div>
         )}
-        
+
         {similarity !== null && (
           <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
             Similarity: {Math.round(similarity)}%
           </div>
         )}
-
 
         {diffHtml && (
           <div
@@ -664,8 +652,7 @@ function WordPanal({
 
         {counts && (
           <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>
-            الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words}, مستبدل{" "}
-            {counts.substitute_words}
+            الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words}, مستبدل {counts.substitute_words}
           </div>
         )}
 
@@ -684,9 +671,8 @@ function WordPanal({
         <ActionBtn
           icon={isRecording ? "🛑" : "🎤"}
           primary
-          disabled={isGameOver || phase !== "idle"}
-          onClick={handleStartRecording}
-        />
+          disabled={isGameOver || (!isRecording && phase !== "idle")}
+          onClick={handleStartRecording} />
         <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
         <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
       </div>
@@ -696,11 +682,7 @@ function WordPanal({
 
 function ActionBtn({ icon, onClick, disabled = false, primary = false }) {
   return (
-    <button
-      className={`${styles.actionBtn} ${primary ? styles.primary : ""}`}
-      disabled={disabled}
-      onClick={onClick}
-    >
+    <button className={`${styles.actionBtn} ${primary ? styles.primary : ""}`} disabled={disabled} onClick={onClick}>
       {icon}
     </button>
   );
