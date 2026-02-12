@@ -272,5 +272,52 @@
       "send": "Send Message"
     },
     "successMsg": "Message sent successfully! Thank you."
+  },
+  "volcanoWords": {
+    "exit": "Exit",
+    "level": "Level",
+    "score": "Score",
+    "word": "Word",
+    "of": "of",
+    "phases": {
+      "recording": "🎙️ Listening... (tap again to stop)",
+      "uploading": "⬆️ Uploading audio...",
+      "processing": "⚙️ Processing... may take a few seconds",
+      "listening": "...Listening..."
+    },
+    "feedback": {
+      "correct": "✓ Correct! Well done!",
+      "wrong": "✗ Try again!",
+      "youSaid": "You said",
+      "noMistakes": "✅ No mistakes"
+    },
+    "mistakes": {
+      "title": "Mistakes:",
+      "missing": "Missing word",
+      "extra": "Extra word",
+      "substitute": "Said",
+      "insteadOf": "instead of",
+      "letters": "Letters:",
+      "missingChar": "missing",
+      "extraChar": "extra",
+      "summary": "Mistakes: missing {missing}, extra {extra}, substitute {substitute}"
+    },
+    "errors": {
+      "audioNotClear": "Audio not clear. Speak louder & closer to the mic",
+      "checkWordError": "Error checking word",
+      "recordingFailed": "Recording failed. Check mic permission",
+      "loadLevelsFailed": "Failed to load levels",
+      "ttsFailed": "TTS failed",
+      "timeout": "Request timeout - took too long",
+      "connectionError": "Connection error to server"
+    },
+    "actions": {
+      "record": "Record",
+      "stop": "Stop",
+      "hint": "Hint",
+      "skip": "Skip"
+    },
+    "winMessage": "Drago escaped the volcano!",
+    "loseMessage": "Drago got overwhelmed by the lava!"
   }
 }

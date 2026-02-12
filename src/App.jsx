@@ -21,7 +21,6 @@ import SignUpForm from "./components/SignUpForm";
 import LoginForm from "./components/LoginForm";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
-import SideBar from "./components/SideBar";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Games
@@ -33,26 +32,18 @@ import TombPuzzle from "./games/TombPuzzle";
 // Layout component
 function Layout() {
   const location = useLocation();
-  const hideAllNav = location.pathname.startsWith("/games");
+  const hideAllNav =
+    location.pathname.startsWith("/games") ||
+    location.pathname.startsWith("/dashboard");
 
   const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
     location.pathname.startsWith(path),
   );
-  const pathsWithSideBar = ["/dashboard"];
-  const isWithSideBar = pathsWithSideBar.some((path) =>
-    location.pathname.startsWith(path),
-  );
 
   return (
     <>
-      {hideAllNav ? null : isWithSideBar ? (
-        <SideBar />
-      ) : isInsideApp ? (
-        <NavInside />
-      ) : (
-        <NavBar />
-      )}
+      {hideAllNav ? null : isInsideApp ? <NavInside /> : <NavBar />}
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/about" element={<About />} />
@@ -63,7 +54,6 @@ function Layout() {
           <Route path="login" element={<LoginForm />} />
         </Route>
 
-        {/* ✅ رجعنا الحماية لصفحة Home */}
         <Route
           path="/home"
           element={
@@ -81,8 +71,7 @@ function Layout() {
           }
         />
 
-        <Route path="/games" >
-          {/* ✅ رجعنا الحماية للألعاب القديمة */}
+        <Route path="/games">
           <Route
             path="volcano-words"
             element={
