@@ -87,19 +87,22 @@ function Profile() {
           <p className={styles.userHandle}>{userData.username}</p>
           <p className={styles.userEmail}>{userData.email}</p>
 
-          {/* STATS */}
+          {/* NEW STATS SECTION */}
           <div className={styles.statsRow}>
-            <div>
-              <strong>{userData.followers}</strong>
-              <span>Followers</span>
+            <div className={styles.statCard}>
+              <span className={styles.statIcon}>👥</span>
+              <strong className={styles.statNumber}>
+                {userData.followers + userData.following}
+              </strong>
+              <span className={styles.statLabel}>Friends</span>
             </div>
-            <div>
-              <strong>{userData.following}</strong>
-              <span>Following</span>
-            </div>
-            <div>
-              <strong>🔥</strong>
-              <span>{userData.streak} Days</span>
+
+            <div className={styles.statCard}>
+              <span className={styles.statIcon}>🔥</span>
+              <strong className={styles.statNumber}>
+                {userData.streak}
+              </strong>
+              <span className={styles.statLabel}>Day Streak</span>
             </div>
           </div>
 
@@ -161,7 +164,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* LEADERBOARD BUTTON */}
         <button
           className={styles.leaderboardBtn}
           onClick={() => navigate("/Dashboard")}
@@ -172,67 +174,53 @@ function Profile() {
 
       {/* EDIT MODAL */}
       {showEdit && (
-  <div className={styles.modalOverlay}>
-    <div className={styles.modal}>
-      <h3>Edit Profile</h3>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3>Edit Profile</h3>
 
-      <input
-        type="text"
-        placeholder="First Name"
-        value={formData.firstName}
-        onChange={(e) =>
-          setFormData({ ...formData, firstName: e.target.value })
-        }
-      />
+            <input
+              type="text"
+              placeholder="First Name"
+              value={formData.firstName}
+              onChange={(e) =>
+                setFormData({ ...formData, firstName: e.target.value })
+              }
+            />
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={formData.email}
-        onChange={(e) =>
-          setFormData({ ...formData, email: e.target.value })
-        }
-      />
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
+            />
 
-      {/* CHANGE PASSWORD */}
-      <hr />
+            <hr />
+            <h4 className={styles.passwordTitle}>Change Password</h4>
 
-      <h4 className={styles.passwordTitle}>Change Password</h4>
+            <input type="password" placeholder="Current Password" />
+            <input type="password" placeholder="New Password" />
+            <input type="password" placeholder="Confirm New Password" />
 
-      <input
-        type="password"
-        placeholder="Current Password"
-      />
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => {
+                  setUserData(formData);
+                  localStorage.setItem("userData", JSON.stringify(formData));
+                  setShowEdit(false);
+                }}
+              >
+                Save Changes
+              </button>
 
-      <input
-        type="password"
-        placeholder="New Password"
-      />
-
-      <input
-        type="password"
-        placeholder="Confirm New Password"
-      />
-
-      <div className={styles.modalActions}>
-        <button
-          onClick={() => {
-            setUserData(formData);
-            localStorage.setItem("userData", JSON.stringify(formData));
-            setShowEdit(false);
-          }}
-        >
-          Save Changes
-        </button>
-
-        <button onClick={() => setShowEdit(false)}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+              <button onClick={() => setShowEdit(false)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

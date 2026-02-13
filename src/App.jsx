@@ -57,9 +57,9 @@ function Layout() {
         <Route
           path="/home"
           element={
-            <ProtectedRoute requiredRole="student">
+            // <ProtectedRoute requiredRole="student">
               <Home />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
         <Route
