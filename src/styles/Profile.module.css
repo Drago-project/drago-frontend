@@ -254,7 +254,7 @@
 
 /* ===== BUTTON ===== */
 
-.leaderboardBtn {
+/* .leaderboardBtn {
   width: 100%;
   margin: 20px 0;
   background: linear-gradient(90deg, #22b2c5, #377469);
@@ -266,7 +266,7 @@
   border-radius: 999px;
   cursor: pointer;
   transition: transform 0.2s ease;
-}
+} */
 
 .leaderboardBtn:hover {
   transform: scale(1.03);

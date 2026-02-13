@@ -164,12 +164,12 @@ function Profile() {
           </div>
         </div>
 
-        <button
+        {/* <button
           className={styles.leaderboardBtn}
           onClick={() => navigate("/Dashboard")}
         >
           🏆 View Leaderboard
-        </button>
+        </button> */}
       </div>
 
       {/* EDIT MODAL */}
