@@ -1,0 +1,399 @@
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import styles from "../styles/Emailverification.module.css";
+import api from "../server/api";
+
+function ResetPasswordCode({ email, onClose, onSuccess }) {
+  const navigate = useNavigate();
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const inputRefs = useRef([]);
+
+  // Timer for resend
+  const formatTime = (time) => {
+    const mins = Math.floor(time / 60);
+    const secs = time % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  useEffect(() => {
+    setResendTimer(180); // 3 minutes cooldown
+  }, []);
+
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
+
+  // Handle code input
+  const handleCodeChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+
+    const newCode = [...code];
+    newCode[index] = value.slice(-1);
+    setCode(newCode);
+    setError("");
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+
+    // Auto-show password fields when all 6 digits are entered
+    if (newCode.join("").length === 6 && !newCode.includes("")) {
+      setShowPasswordFields(true);
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").slice(0, 6);
+
+    if (!/^\d+$/.test(pastedData)) return;
+
+    const newCode = [...code];
+    for (let i = 0; i < pastedData.length && i < 6; i++) {
+      newCode[i] = pastedData[i];
+    }
+    setCode(newCode);
+
+    const nextIndex = Math.min(pastedData.length, 5);
+    inputRefs.current[nextIndex]?.focus();
+
+    if (pastedData.length === 6) {
+      setShowPasswordFields(true);
+    }
+  };
+
+  // Password strength checker
+  const checkPasswordStrength = (password) => {
+    if (password.length === 0) return "";
+    if (password.length < 8) return "weak";
+
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecial = /[@$!%*?&]/.test(password);
+
+    const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+
+    if (score < 3) return "weak";
+    if (score === 3) return "medium";
+    return "strong";
+  };
+
+  const handlePasswordChange = (e) => {
+    const password = e.target.value;
+    setNewPassword(password);
+    setPasswordStrength(checkPasswordStrength(password));
+    setError("");
+  };
+
+  // Handle reset password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    const resetCode = code.join("");
+
+    if (resetCode.length !== 6) {
+      setError("Please enter the complete 6-digit code");
+      return;
+    }
+
+    if (!newPassword || !confirmPassword) {
+      setError("Please enter your new password");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
+    if (!passwordRegex.test(newPassword)) {
+      setError("Password must contain uppercase, lowercase, number, and special character");
+      return;
+    }
+
+    setIsResetting(true);
+    setError("");
+
+    try {
+      const response = await api.post("/api/Auth/reset-password", {
+        email: email,
+        code: resetCode,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      });
+
+      console.log("Password reset successfully", response.data);
+
+      setSuccessMsg("Password reset successfully! Redirecting to login...");
+
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        if (onSuccess) {
+          onSuccess();
+        }
+        navigate("/auth/login", { replace: true });
+      }, 2000);
+
+    } catch (err) {
+      console.error("Reset password error:", err);
+      if (err.response) {
+        const data = err.response.data;
+        setError(data?.message || "Failed to reset password. Please try again.");
+      } else {
+        setError("Network error. Please check your connection.");
+      }
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  // Resend code
+  const handleResend = async () => {
+    if (resendTimer > 0 || isResending) return;
+
+    setIsResending(true);
+    setError("");
+
+    try {
+      await api.post("/api/Auth/forgot-password", { email: email });
+
+      setResendTimer(240); // 4 minutes cooldown
+      setSuccessMsg("New code sent to your email!");
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      console.error("Resend error:", err);
+      if (err.response) {
+        const data = err.response.data;
+        setError(data?.message || "Failed to resend code. Please try again.");
+      } else {
+        setError("Network error. Please check your connection.");
+      }
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  return (
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <button className={styles.closeBtn} onClick={onClose}>
+          ✕
+        </button>
+
+        <div className={styles.iconContainer}>
+          <svg
+            className={styles.emailIcon}
+            width="64"
+            height="64"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+
+        <h2 className={styles.title}>Reset Password</h2>
+        <p className={styles.subtitle}>
+          Enter the 6-digit code sent to <strong>{email}</strong>
+        </p>
+
+        <form onSubmit={handleResetPassword}>
+          {/* 6-Digit Code Input */}
+          <div className={styles.codeInputContainer}>
+            {code.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => (inputRefs.current[index] = el)}
+                type="tel"
+                inputMode="numeric"
+                maxLength="1"
+                value={digit}
+                onChange={(e) => handleCodeChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                className={styles.codeInput}
+                autoFocus={index === 0}
+                disabled={isResetting}
+              />
+            ))}
+          </div>
+
+          {/* Password Fields - Show after code is complete */}
+          {showPasswordFields && (
+            <div style={{ marginTop: "20px", animation: "fadeIn 0.3s ease" }}>
+              <div style={{ marginBottom: "20px" }}>
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={handlePasswordChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    borderRadius: "12px",
+                    border: `3px solid ${
+                      passwordStrength === "strong"
+                        ? "#4caf50"
+                        : passwordStrength === "medium"
+                          ? "#ff9800"
+                          : "#e9ecef"
+                    }`,
+                    fontSize: "1rem",
+                    fontFamily: "inherit",
+                    transition: "all 0.3s ease",
+                  }}
+                  required
+                  disabled={isResetting}
+                  minLength={8}
+                />
+                {passwordStrength && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      backgroundColor:
+                        passwordStrength === "strong"
+                          ? "#e8f5e9"
+                          : passwordStrength === "medium"
+                            ? "#fff3e0"
+                            : "#ffebee",
+                      color:
+                        passwordStrength === "strong"
+                          ? "#2e7d32"
+                          : passwordStrength === "medium"
+                            ? "#e65100"
+                            : "#c62828",
+                    }}
+                  >
+                    Password strength: {passwordStrength}
+                  </div>
+                )}
+                <small
+                  style={{
+                    display: "block",
+                    marginTop: "6px",
+                    color: "#6c757d",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  8+ chars with uppercase, lowercase, number, and special character
+                </small>
+              </div>
+
+              <input
+                type="password"
+                placeholder="Confirm New Password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setError("");
+                }}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  borderRadius: "12px",
+                  border: "3px solid #e9ecef",
+                  fontSize: "1rem",
+                  marginBottom: "20px",
+                  fontFamily: "inherit",
+                  transition: "all 0.3s ease",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = "#44958e";
+                  e.target.style.boxShadow = "0 0 0 3px rgba(68, 149, 142, 0.1)";
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e9ecef";
+                  e.target.style.boxShadow = "none";
+                }}
+                required
+                disabled={isResetting}
+              />
+            </div>
+          )}
+
+          {error && <p className={styles.errorMsg}>{error}</p>}
+          {successMsg && <p className={styles.successMsg}>{successMsg}</p>}
+
+          <button
+            type="submit"
+            disabled={isResetting || !showPasswordFields}
+            className={styles.verifyBtn}
+            style={{
+              opacity: !showPasswordFields ? 0.5 : 1,
+              cursor: !showPasswordFields ? "not-allowed" : "pointer",
+            }}
+          >
+            {isResetting ? "Resetting..." : "Reset Password"}
+          </button>
+        </form>
+
+        {/* Resend Code Section */}
+        <div className={styles.resendSection}>
+          <p className={styles.resendText}>Didn't receive the code?</p>
+          <button
+            onClick={handleResend}
+            disabled={resendTimer > 0 || isResending}
+            className={`${styles.resendBtn} ${
+              resendTimer > 0 || isResending ? styles.disabled : ""
+            }`}
+          >
+            {isResending
+              ? "Sending..."
+              : resendTimer > 0
+                ? `Resend in ${formatTime(resendTimer)}`
+                : "Resend Code"}
+          </button>
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export default ResetPasswordCode;

@@ -22,6 +22,7 @@ import LoginForm from "./components/LoginForm";
 import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 import ProtectedRoute from "./components/ProtectedRoute";
+import ResetPassword from "./components/ResetPassword";
 
 // Games
 import VolcanoWords from "./games/VolcanoWords";
@@ -34,7 +35,8 @@ function Layout() {
   const location = useLocation();
   const hideAllNav =
     location.pathname.startsWith("/games") ||
-    location.pathname.startsWith("/dashboard");
+    location.pathname.startsWith("/dashboard")||
+    location.pathname.startsWith("/reset-password");
 
   const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
@@ -53,12 +55,13 @@ function Layout() {
           <Route path="signup" element={<SignUpForm />} />
           <Route path="login" element={<LoginForm />} />
         </Route>
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route
           path="/home"
           element={
             // <ProtectedRoute requiredRole="student">
-              <Home />
+            <Home />
             // </ProtectedRoute>
           }
         />
