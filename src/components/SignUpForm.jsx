@@ -231,7 +231,7 @@ export default function SignUpForm() {
   const validateDoctorField = (name, value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const mobileRegex = /^(010|011|012|015)\d{8}$/;
-    const landlineRegex = /^0\d{2,3}\d{7}$/;
+    const landlineRegex = /^0\d{1,2}\d{7}$/;
     const licenseRegex = /^mti-?qni-?\d{3}$/i;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -305,7 +305,7 @@ export default function SignUpForm() {
     // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const mobileRegex = /^(010|011|012|015)\d{8}$/;
-    const landlineRegex = /^0\d{2,3}\d{7}$/;
+    const landlineRegex = /^0\d{1,2}\d{7}$/;
     const licenseRegex = /^mti-?qni-?\d{3}$/i;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
