@@ -95,7 +95,7 @@
     "resending": "Sending...",
     "resendIn": "Resend in",
     "codeSent": "New code sent to your email!",
-    "errorMessage": "Failed to reset password. Please try again.",
+    "errorMessage": "Invalid or expired reset link",
     "networkError": "Network error. Please check your connection."
   },
   "verification": {
