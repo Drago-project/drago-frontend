@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next"; // استيراد Hook الترجمة
 import styles from "../styles/Emailverification.module.css";
 import api from "../server/api";
 
 function ResetPassword() {
+  const { t } = useTranslation(); // تفعيل الترجمة
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -21,7 +23,6 @@ function ResetPassword() {
   const [successMsg, setSuccessMsg] = useState("");
   const [passwordStrength, setPasswordStrength] = useState("");
 
-  // Validate token on mount
   useEffect(() => {
     validateToken();
   }, []);
@@ -29,7 +30,7 @@ function ResetPassword() {
   const validateToken = async () => {
     if (!formData.email || !formData.token) {
       setTokenValid(false);
-      setError("Invalid reset link. Missing email or token.");
+      setError(t("resetPassword.errorMessage")); // استخدام الترجمة من الملف
       setValidating(false);
       return;
     }
@@ -43,11 +44,11 @@ function ResetPassword() {
       setTokenValid(response.data.success);
 
       if (!response.data.success) {
-        setError("This password reset link is invalid or has expired.");
+        setError(t("resetPassword.errorMessage"));
       }
     } catch (err) {
       setTokenValid(false);
-      setError("Invalid reset link. Please request a new password reset.");
+      setError(t("resetPassword.errorMessage"));
     } finally {
       setValidating(false);
     }
@@ -63,7 +64,7 @@ function ResetPassword() {
     const hasSpecial = /[@$!%*?&]/.test(password);
 
     const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(
-      Boolean
+      Boolean,
     ).length;
 
     if (score < 3) return "weak";
@@ -82,20 +83,18 @@ function ResetPassword() {
     e.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("resetPassword.passwordMismatch"));
       return;
     }
 
     if (formData.newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t("resetPassword.passwordTooShort"));
       return;
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
     if (!passwordRegex.test(formData.newPassword)) {
-      setError(
-        "Password must contain uppercase, lowercase, number, and special character"
-      );
+      setError(t("resetPassword.passwordWeak"));
       return;
     }
 
@@ -110,23 +109,16 @@ function ResetPassword() {
         confirmPassword: formData.confirmPassword,
       });
 
-      setSuccessMsg(
-        response.data.message || "Password reset successfully!"
-      );
+      setSuccessMsg(response.data.message || t("resetPassword.successMessage"));
 
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate("/auth/login");
       }, 2000);
     } catch (err) {
-      console.error("Reset password error:", err);
       if (err.response) {
-        const data = err.response.data;
-        setError(
-          data?.message || "Failed to reset password. Please try again."
-        );
+        setError(err.response.data?.message || t("resetPassword.errorMessage"));
       } else {
-        setError("Network error. Please check your connection.");
+        setError(t("resetPassword.networkError"));
       }
     } finally {
       setLoading(false);
@@ -138,27 +130,11 @@ function ResetPassword() {
       <div className={styles.overlay}>
         <div className={styles.modal}>
           <div className={styles.iconContainer}>
-            <div
-              style={{
-                width: "60px",
-                height: "60px",
-                border: "4px solid #f3f3f3",
-                borderTop: "4px solid #44958e",
-                borderRadius: "50%",
-                animation: "spin 1s linear infinite",
-              }}
-            />
+            <div className={styles.spinner} />{" "}
+            {/* يفضل نقل الـ CSS للملف الخاص به */}
           </div>
-          <h2 className={styles.title}>Validating Reset Link...</h2>
+          <h2 className={styles.title}>{t("resetPassword.resetting")}</h2>
         </div>
-        <style>
-          {`
-            @keyframes spin {
-              0% { transform: rotate(0deg); }
-              100% { transform: rotate(360deg); }
-            }
-          `}
-        </style>
       </div>
     );
   }
@@ -181,14 +157,13 @@ function ResetPassword() {
               <line x1="9" y1="9" x2="15" y2="15" />
             </svg>
           </div>
-          <h2 className={styles.title}>Invalid Reset Link</h2>
-          <p className={styles.subtitle}>{error}</p>
+          <h2 className={styles.title}>{t("resetPassword.errorMessage")}</h2>
           <button
             onClick={() => navigate("/auth/login")}
             className={styles.verifyBtn}
             style={{ marginTop: "20px" }}
           >
-            Go to Login
+            {t("signup.alreadyAccount").split("?")[1] || "Login"}
           </button>
         </div>
       </div>
@@ -213,14 +188,16 @@ function ResetPassword() {
           </svg>
         </div>
 
-        <h2 className={styles.title}>Reset Password</h2>
-        <p className={styles.subtitle}>Enter your new password below.</p>
+        <h2 className={styles.title}>{t("resetPassword.title")}</h2>
+        <p className={styles.subtitle}>
+          {t("resetPassword.subtitle")} {formData.email}
+        </p>
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "20px" }}>
             <input
               type="password"
-              placeholder="New Password"
+              placeholder={t("resetPassword.newPasswordPlaceholder")}
               value={formData.newPassword}
               onChange={handlePasswordChange}
               style={{
@@ -236,11 +213,9 @@ function ResetPassword() {
                 }`,
                 fontSize: "1rem",
                 fontFamily: "inherit",
-                transition: "all 0.3s ease",
               }}
               required
               disabled={loading}
-              minLength={8}
             />
             {passwordStrength && (
               <div
@@ -264,7 +239,8 @@ function ResetPassword() {
                         : "#c62828",
                 }}
               >
-                Password strength: {passwordStrength}
+                {t("resetPassword.passwordStrength")}:{" "}
+                {t(`resetPassword.${passwordStrength}`)}
               </div>
             )}
             <small
@@ -275,14 +251,13 @@ function ResetPassword() {
                 fontSize: "0.85rem",
               }}
             >
-              Must be 8+ characters with uppercase, lowercase, number, and
-              special character
+              {t("resetPassword.passwordRequirements")}
             </small>
           </div>
 
           <input
             type="password"
-            placeholder="Confirm New Password"
+            placeholder={t("resetPassword.confirmPasswordPlaceholder")}
             value={formData.confirmPassword}
             onChange={(e) => {
               setFormData({ ...formData, confirmPassword: e.target.value });
@@ -296,15 +271,6 @@ function ResetPassword() {
               fontSize: "1rem",
               marginBottom: "20px",
               fontFamily: "inherit",
-              transition: "all 0.3s ease",
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = "#44958e";
-              e.target.style.boxShadow = "0 0 0 3px rgba(68, 149, 142, 0.1)";
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = "#e9ecef";
-              e.target.style.boxShadow = "none";
             }}
             required
             disabled={loading}
@@ -313,12 +279,10 @@ function ResetPassword() {
           {error && <p className={styles.errorMsg}>{error}</p>}
           {successMsg && <p className={styles.successMsg}>{successMsg}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={styles.verifyBtn}
-          >
-            {loading ? "Resetting..." : "Reset Password"}
+          <button type="submit" disabled={loading} className={styles.verifyBtn}>
+            {loading
+              ? t("resetPassword.resetting")
+              : t("resetPassword.resetButton")}
           </button>
         </form>
       </div>

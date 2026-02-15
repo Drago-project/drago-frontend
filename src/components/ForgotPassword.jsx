@@ -14,7 +14,7 @@ function ForgotPassword({ onClose, onCodeSent }) {
     e.preventDefault();
 
     if (!email) {
-      setError("Please enter your email address");
+      setError(t("forgotPassword.invalidEmail"));
       return;
     }
 
@@ -29,7 +29,7 @@ function ForgotPassword({ onClose, onCodeSent }) {
 
       console.log("Password reset code sent successfully", response.data);
 
-      setSuccessMsg("A 6-digit code has been sent to your email!");
+      setSuccessMsg(t("forgotPassword.successMessage"));
 
       // Call onCodeSent callback after showing success message
       setTimeout(() => {
@@ -41,11 +41,9 @@ function ForgotPassword({ onClose, onCodeSent }) {
       console.error("Forgot password error:", err);
       if (err.response) {
         const data = err.response.data;
-        setError(
-          data?.message || "Failed to send reset code. Please try again.",
-        );
+        setError(data?.message || t("forgotPassword.errorMessage"));
       } else {
-        setError("Network error. Please check your connection.");
+        setError(t("forgotPassword.networkError"));
       }
     } finally {
       setIsLoading(false);
@@ -76,16 +74,13 @@ function ForgotPassword({ onClose, onCodeSent }) {
           </svg>
         </div>
 
-        <h2 className={styles.title}>Forgot Password</h2>
-        <p className={styles.subtitle}>
-          Enter your email address and we'll send you a 6-digit code to reset
-          your password.
-        </p>
+        <h2 className={styles.title}>{t("forgotPassword.title")}</h2>
+        <p className={styles.subtitle}>{t("forgotPassword.subtitle")}</p>
 
         <form onSubmit={handleSubmit}>
           <input
             type="email"
-            placeholder="Email Address"
+            placeholder={t("forgotPassword.emailPlaceholder")}
             value={email}
             onChange={(e) => {
               setEmail(e.target.value);
@@ -121,7 +116,9 @@ function ForgotPassword({ onClose, onCodeSent }) {
             disabled={isLoading}
             className={styles.verifyBtn}
           >
-            {isLoading ? "Sending..." : "Send Reset Code"}
+            {isLoading
+              ? t("forgotPassword.sending")
+              : t("forgotPassword.sendButton")}
           </button>
         </form>
       </div>

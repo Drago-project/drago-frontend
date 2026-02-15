@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styles from "../styles/Emailverification.module.css";
 import api from "../server/api";
 
 function ResetPasswordCode({ email, onClose, onSuccess }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,7 +92,9 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
     const hasNumber = /\d/.test(password);
     const hasSpecial = /[@$!%*?&]/.test(password);
 
-    const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length;
+    const score = [hasUpper, hasLower, hasNumber, hasSpecial].filter(
+      Boolean,
+    ).length;
 
     if (score < 3) return "weak";
     if (score === 3) return "medium";
@@ -107,32 +111,32 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
   // Handle reset password
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    
+
     const resetCode = code.join("");
 
     if (resetCode.length !== 6) {
-      setError("Please enter the complete 6-digit code");
+      setError(t("resetPassword.invalidCode"));
       return;
     }
 
     if (!newPassword || !confirmPassword) {
-      setError("Please enter your new password");
+      setError(t("resetPassword.invalidCode"));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("resetPassword.passwordMismatch"));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t("resetPassword.passwordTooShort"));
       return;
     }
 
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/;
     if (!passwordRegex.test(newPassword)) {
-      setError("Password must contain uppercase, lowercase, number, and special character");
+      setError(t("resetPassword.passwordWeak"));
       return;
     }
 
@@ -149,7 +153,7 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
 
       console.log("Password reset successfully", response.data);
 
-      setSuccessMsg("Password reset successfully! Redirecting to login...");
+      setSuccessMsg(t("resetPassword.successMessage"));
 
       // Redirect to login after 2 seconds
       setTimeout(() => {
@@ -158,14 +162,13 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
         }
         navigate("/auth/login", { replace: true });
       }, 2000);
-
     } catch (err) {
       console.error("Reset password error:", err);
       if (err.response) {
         const data = err.response.data;
-        setError(data?.message || "Failed to reset password. Please try again.");
+        setError(data?.message || t("resetPassword.errorMessage"));
       } else {
-        setError("Network error. Please check your connection.");
+        setError(t("resetPassword.networkError"));
       }
     } finally {
       setIsResetting(false);
@@ -183,17 +186,17 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
       await api.post("/api/Auth/forgot-password", { email: email });
 
       setResendTimer(240); // 4 minutes cooldown
-      setSuccessMsg("New code sent to your email!");
-      
+      setSuccessMsg(t("resetPassword.codeSent"));
+
       // Clear success message after 3 seconds
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
       console.error("Resend error:", err);
       if (err.response) {
         const data = err.response.data;
-        setError(data?.message || "Failed to resend code. Please try again.");
+        setError(data?.message || t("resetPassword.errorMessage"));
       } else {
-        setError("Network error. Please check your connection.");
+        setError(t("resetPassword.networkError"));
       }
     } finally {
       setIsResending(false);
@@ -222,9 +225,9 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
           </svg>
         </div>
 
-        <h2 className={styles.title}>Reset Password</h2>
+        <h2 className={styles.title}>{t("resetPassword.title")}</h2>
         <p className={styles.subtitle}>
-          Enter the 6-digit code sent to <strong>{email}</strong>
+          {t("resetPassword.subtitle")} <strong>{email}</strong>
         </p>
 
         <form onSubmit={handleResetPassword}>
@@ -254,7 +257,7 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
               <div style={{ marginBottom: "20px" }}>
                 <input
                   type="password"
-                  placeholder="New Password"
+                  placeholder={t("resetPassword.newPasswordPlaceholder")}
                   value={newPassword}
                   onChange={handlePasswordChange}
                   style={{
@@ -298,7 +301,8 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
                             : "#c62828",
                     }}
                   >
-                    Password strength: {passwordStrength}
+                    {t("resetPassword.passwordStrength")}:{" "}
+                    {t(`resetPassword.${passwordStrength}`)}
                   </div>
                 )}
                 <small
@@ -309,13 +313,13 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
                     fontSize: "0.85rem",
                   }}
                 >
-                  8+ chars with uppercase, lowercase, number, and special character
+                  {t("resetPassword.passwordRequirements")}
                 </small>
               </div>
 
               <input
                 type="password"
-                placeholder="Confirm New Password"
+                placeholder={t("resetPassword.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -333,7 +337,8 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = "#44958e";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(68, 149, 142, 0.1)";
+                  e.target.style.boxShadow =
+                    "0 0 0 3px rgba(68, 149, 142, 0.1)";
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e9ecef";
@@ -357,13 +362,15 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
               cursor: !showPasswordFields ? "not-allowed" : "pointer",
             }}
           >
-            {isResetting ? "Resetting..." : "Reset Password"}
+            {isResetting
+              ? t("resetPassword.resetting")
+              : t("resetPassword.resetButton")}
           </button>
         </form>
 
         {/* Resend Code Section */}
         <div className={styles.resendSection}>
-          <p className={styles.resendText}>Didn't receive the code?</p>
+          <p className={styles.resendText}>{t("resetPassword.didntReceive")}</p>
           <button
             onClick={handleResend}
             disabled={resendTimer > 0 || isResending}
@@ -372,10 +379,10 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
             }`}
           >
             {isResending
-              ? "Sending..."
+              ? t("resetPassword.resending")
               : resendTimer > 0
-                ? `Resend in ${formatTime(resendTimer)}`
-                : "Resend Code"}
+                ? `${t("resetPassword.resendIn")} ${formatTime(resendTimer)}`
+                : t("resetPassword.resendCode")}
           </button>
         </div>
       </div>

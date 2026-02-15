@@ -168,8 +168,8 @@ export default function LoginForm() {
         {/* Forgot Password Link */}
         <div
           style={{
-            textAlign: "right",
-            marginTop: "-8px",
+            textAlign: "center",
+           
             marginBottom: "12px",
           }}
         >
