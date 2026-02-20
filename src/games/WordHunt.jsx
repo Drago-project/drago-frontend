@@ -4,6 +4,7 @@ import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
 import { Home, CheckCircle, XCircle, Volume2, Play, Heart } from "lucide-react";
+import api from "../server/api";
 
 // استيراد ملف الـ CSS الشامل
 import "../styles/WordHut.css";
@@ -93,13 +94,13 @@ const LoseModal = ({ score, restartGame, children }) => {
 // --- كود اللعبة الأساسي ---
 const gameSounds = {
   correct: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
   ),
   wrong: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3",
   ),
   click: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
   ),
 };
 
@@ -207,16 +208,74 @@ const WordHuntGame = () => {
     }
   };
 
-  const startGame = () => {
-    playSound("click");
-    const shuffled = shuffleArray(originalWordData).slice(0, 5);
-    setGameQuestions(shuffled);
-    setCurrentQuestion(0);
-    setScore(0);
-    setLives(3);
-    setGameState("playing");
-    setShowFeedback(false);
-    setSelectedOption(null);
+  const startGame = async () => {
+    try {
+      playSound("click");
+      setGameState("loading");
+      setShowFeedback(false);
+      setSelectedOption(null);
+      setScore(0);
+      setLives(3);
+
+      // 1️⃣ نجيب المستويات
+      const levelsRes = await api.get("/api/hutgame/levels");
+      const levels = levelsRes.data?.data || [];
+      const levelNumber = levels.length ? levels[0].levelNumber : 0;
+
+      console.log("Levels:", levels);
+      console.log("Level Number:", levelNumber);
+
+      // 2️⃣ نجيب 5 كلمات عشوائية
+      const fetches = Array.from({ length: 5 }).map(() =>
+        api.get(`/api/hutgame/levels/${levelNumber}/random-word`),
+      );
+
+      const responses = await Promise.all(fetches);
+
+      const questions = responses
+        .map((res, idx) => {
+          const d = res?.data?.data;
+          if (!d) return null;
+
+          const full = d.fullWord || "";
+          const missing = d.missingLetter || d.missing || "";
+
+          const missIdx = full.indexOf(missing);
+
+          const wordBefore =
+            missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
+
+          const wordAfter =
+            missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
+
+          return {
+            id: idx + 1,
+            wordBefore,
+            wordAfter,
+            missing,
+            options: d.options || [],
+            hint: d.hint || "",
+          };
+        })
+        .filter(Boolean);
+
+      if (questions.length) {
+        setGameQuestions(questions);
+      } else {
+        const shuffled = shuffleArray(originalWordData).slice(0, 5);
+        setGameQuestions(shuffled);
+      }
+
+      setCurrentQuestion(0);
+      setGameState("playing");
+    } catch (err) {
+      console.error("HutGame API error:", err);
+
+      const shuffled = shuffleArray(originalWordData).slice(0, 5);
+      setGameQuestions(shuffled);
+      setCurrentQuestion(0);
+      setGameState("playing");
+    }
   };
 
   const handleAnswer = (selectedLetter) => {
@@ -289,6 +348,20 @@ const WordHuntGame = () => {
           </p>
           <button onClick={startGame} className="wh-btn wh-btn-start">
             <Play size={28} fill="white" /> ابدأ اللعب
+          </button>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (gameState === "loading") {
+    return (
+      <PageWrapper>
+        <div className="wh-start-screen">
+          <h2 className="wh-title">جارٍ تحضير اللعبة...</h2>
+          <p className="wh-subtitle">جلب كلمات المستوى من الخادم</p>
+          <button className="wh-btn wh-btn-start" disabled>
+            <Play size={28} fill="white" /> تحميل...
           </button>
         </div>
       </PageWrapper>
