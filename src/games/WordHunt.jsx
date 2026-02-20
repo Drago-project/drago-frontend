@@ -217,7 +217,7 @@ const WordHuntGame = () => {
       setScore(0);
       setLives(3);
 
-      // 1️⃣ نجيب المستويات
+      // fetch levels
       const levelsRes = await api.get("/api/hutgame/levels");
       const levels = levelsRes.data?.data || [];
       const levelNumber = levels.length ? levels[0].levelNumber : 0;
@@ -225,7 +225,7 @@ const WordHuntGame = () => {
       console.log("Levels:", levels);
       console.log("Level Number:", levelNumber);
 
-      // 2️⃣ نجيب 5 كلمات عشوائية
+      // fetch 5 random words for the level
       const fetches = Array.from({ length: 5 }).map(() =>
         api.get(`/api/hutgame/levels/${levelNumber}/random-word`),
       );
@@ -328,7 +328,7 @@ const WordHuntGame = () => {
   const currentData = gameQuestions[currentQuestion] || originalWordData[0];
   const progressPercentage = (currentQuestion / gameQuestions.length) * 100;
 
-  // 👇 Wrapper عشان الخلفية تظهر في كل الصفحات
+  // Wrapper عشان الخلفية تظهر في كل الصفحات
   const PageWrapper = ({ children }) => (
     <div className="wh-full-page">
       <div className="wh-wrapper">{children}</div>
