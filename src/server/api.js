@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://drago-back.runasp.net",
+  baseURL: import.meta.env.VITE_API_URL,
 });
 
 export default api;
