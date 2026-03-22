@@ -29,11 +29,11 @@ function NavInside() {
     setIsMobileMenuOpen(false);
   };
   const handleLogout = () => {
-    localStorage.removeItem("authToken"); 
+    localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
 
     closeMobileMenu();
-    navigate("/"); 
+    navigate("/");
   };
 
   const isRTL = i18n.language === "ar";
@@ -47,7 +47,14 @@ function NavInside() {
     >
       <div className={styles.navContainer}>
         <NavLink to="/home" onClick={closeMobileMenu}>
-          <img src={logo} alt="Drago Logo" className={styles.logo} />
+          <img
+            src={logo}
+            alt="Drago Logo"
+            className={styles.logo}
+            width="184"
+            height="50"
+            loading="eager"
+          />
         </NavLink>
 
         {/* Desktop Navigation */}
