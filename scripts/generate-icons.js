@@ -1,11 +1,41 @@
 import sharp from "sharp";
-import { readFileSync, mkdirSync } from "fs";
 
-mkdirSync("public/icons", { recursive: true });
+async function generate() {
+  const iconBuffer = await sharp("public/app-icon.svg")
+    .resize(512, 512)
+    .toBuffer();
 
-const svg = readFileSync("public/app-icon.svg");
+  await sharp({
+    create: {
+      width: 512,
+      height: 512,
+      channels: 4,
+      background: { r: 248, g: 249, b: 250, alpha: 1 },
+    },
+  })
+    .composite([{ input: iconBuffer, gravity: "centre" }])
+    .png()
+    .toFile("public/icons/icon-512.png");
 
-await sharp(svg).resize(192, 192).png().toFile("public/icons/icon-192.png");
-await sharp(svg).resize(512, 512).png().toFile("public/icons/icon-512.png");
+  console.log("512px done");
 
-console.log("Icons generated!");
+  const iconBuffer2 = await sharp("public/app-icon.svg")
+    .resize(192, 192)
+    .toBuffer();
+
+  await sharp({
+    create: {
+      width: 192,
+      height: 192,
+      channels: 4,
+      background: { r: 248, g: 249, b: 250, alpha: 1 },
+    },
+  })
+    .composite([{ input: iconBuffer2, gravity: "centre" }])
+    .png()
+    .toFile("public/icons/icon-192.png");
+
+  console.log("192px done");
+}
+
+generate();

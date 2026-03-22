@@ -4,7 +4,9 @@ import {
   Routes,
   useLocation,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
+import { useEffect } from "react";
 import "./styles/App.css";
 
 // Pages
@@ -33,6 +35,41 @@ import TombPuzzle from "./games/TombPuzzle";
 // Layout component
 function Layout() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Only redirect on initial load at root
+    if (location.pathname !== "/") return;
+
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    try {
+      const parts = token.split(".");
+      const payload = JSON.parse(atob(parts[1]));
+
+      // Check if expired
+      if (payload.exp && payload.exp < Date.now() / 1000) {
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        return;
+      }
+
+      // Token valid — redirect based on role
+      const role = payload.role || payload.roles || "";
+      const roleStr = Array.isArray(role) ? role[0] : role;
+
+      if (roleStr?.toLowerCase().includes("doctor")) {
+        navigate("/dashboard", { replace: true });
+      } else {
+        navigate("/home", { replace: true });
+      }
+    } catch {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("userData");
+    }
+  }, []);
+
   const hideAllNav =
     location.pathname.startsWith("/games") ||
     location.pathname.startsWith("/dashboard") ||
