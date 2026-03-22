@@ -35,7 +35,7 @@ function Layout() {
   const location = useLocation();
   const hideAllNav =
     location.pathname.startsWith("/games") ||
-    location.pathname.startsWith("/dashboard")||
+    location.pathname.startsWith("/dashboard") ||
     location.pathname.startsWith("/reset-password");
 
   const pathsWithInsideNav = ["/home", "/profile"];
@@ -46,87 +46,92 @@ function Layout() {
   return (
     <>
       {hideAllNav ? null : isInsideApp ? <NavInside /> : <NavBar />}
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact-us" element={<ContactUs />} />
-        <Route path="/auth" element={<Auth />}>
-          <Route index element={<SignUpForm />} />
-          <Route path="signup" element={<SignUpForm />} />
-          <Route path="login" element={<LoginForm />} />
-        </Route>
-        <Route path="/reset-password" element={<ResetPassword />} />
+      <main>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact-us" element={<ContactUs />} />
+          <Route path="/auth" element={<Auth />}>
+            <Route index element={<SignUpForm />} />
+            <Route path="signup" element={<SignUpForm />} />
+            <Route path="login" element={<LoginForm />} />
+          </Route>
+          <Route path="/reset-password" element={<ResetPassword />} />
 
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute requiredRole="student">
-            <Home />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile" 
-          element={
-            <ProtectedRoute requiredRole="student">
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="/games">
           <Route
-            path="volcano-words"
+            path="/home"
             element={
               <ProtectedRoute requiredRole="student">
-                <VolcanoWords />
+                <Home />
               </ProtectedRoute>
             }
           />
           <Route
-            path="reading-quest"
+            path="/profile"
             element={
               <ProtectedRoute requiredRole="student">
-                <ReadingQuest />
+                <Profile />
               </ProtectedRoute>
             }
+          />
+
+          <Route path="/games">
+            <Route
+              path="volcano-words"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <VolcanoWords />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="reading-quest"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <ReadingQuest />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="word-hunt"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <WordHuntGame />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="tomb-puzzle"
+              element={
+                <ProtectedRoute requiredRole="student">
+                  <TombPuzzle />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute requiredRole="doctor">
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/signup"
+            element={<Navigate to="/auth/signup" replace />}
           />
           <Route
-            path="word-hunt"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <WordHuntGame />
-              </ProtectedRoute>
-            }
+            path="/login"
+            element={<Navigate to="/auth/login" replace />}
           />
 
-          <Route
-            path="tomb-puzzle"
-            element={
-              <ProtectedRoute requiredRole="student">
-                <TombPuzzle />
-              </ProtectedRoute>
-            }
-          />
-        </Route>
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute requiredRole="doctor">
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/signup"
-          element={<Navigate to="/auth/signup" replace />}
-        />
-        <Route path="/login" element={<Navigate to="/auth/login" replace />} />
-
-        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-      </Routes>
+          <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+        </Routes>
+      </main>
     </>
   );
 }
