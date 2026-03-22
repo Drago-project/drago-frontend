@@ -5,6 +5,7 @@ import {
   useLocation,
   Navigate,
 } from "react-router-dom";
+import { useState, useEffect } from "react";
 import "./styles/App.css";
 
 // Pages
@@ -33,6 +34,32 @@ import TombPuzzle from "./games/TombPuzzle";
 // Layout component
 function Layout() {
   const location = useLocation();
+
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    // Just verify token exists and isn't expired
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        const parts = token.split(".");
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.exp && payload.exp < Date.now() / 1000) {
+          // Token expired - clear it
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("userData");
+        }
+      } catch {
+        // Invalid token - clear it
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+      }
+    }
+    setAuthChecked(true);
+  }, []);
+
+  if (!authChecked) return null; // or a loading spinner
+
   const hideAllNav =
     location.pathname.startsWith("/games") ||
     location.pathname.startsWith("/dashboard") ||

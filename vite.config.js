@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["app-icon.svg", "fonts/**/*", "sounds/**/*"],
       manifest: {
-        name: "Drago - Dyslexia Learning App",
+        name: "",
         short_name: "Drago",
         description: "AI-powered educational platform for dyslexia support",
         theme_color: "#44958E",
@@ -20,9 +20,10 @@ export default defineConfig({
         start_url: "/",
         icons: [
           {
-            src: "icons/icon-192.png",
-            sizes: "192x192",
-            type: "image/png",
+            src: "app-icon.svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
           },
           {
             src: "icons/icon-512.png",
