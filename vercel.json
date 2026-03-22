@@ -11,9 +11,10 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; connect-src 'self' https://drago-back.runasp.net https://mohamed4111-dyslexia-v2.hf.space"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; media-src 'self' https://assets.mixkit.co https://s3.amazonaws.com; connect-src 'self' https://drago-back.runasp.net https://mohamed4111-dyslexia-v2.hf.space; worker-src 'self'"
         }
       ]
     }
-  ]
+  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
