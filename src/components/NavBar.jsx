@@ -44,7 +44,13 @@ function NavBar() {
     >
       <div className={styles.navContainer}>
         <NavLink to="/" onClick={closeMobileMenu}>
-          <img src={logo} alt="Drago Logo" className={styles.logo} />
+          <img
+            src={logo}
+            alt="Drago Logo"
+            className={styles.logo}
+            width="184"
+            height="50"
+          />
         </NavLink>
 
         <ul className={styles.navList}>
