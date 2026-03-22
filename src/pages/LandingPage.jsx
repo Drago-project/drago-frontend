@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
@@ -10,6 +11,12 @@ function LandingPage() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
   const { canInstall, install } = usePWAInstall();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("install") === "true" && canInstall) {
+      install(); // auto-trigger the prompt
+    }
+  }, [canInstall, install]);
 
   return (
     <div className={styles.landingPage} dir={isRTL ? "rtl" : "ltr"}>
@@ -84,7 +91,8 @@ function HeroSection({ t, i18n, canInstall, install }) {
             src={wave}
             alt="Drago waves"
             className={styles.dragoCharacter}
-            width="500" height="500"
+            width="500"
+            height="500"
           />
         </div>
       </div>
