@@ -2,7 +2,7 @@ import sharp from "sharp";
 
 async function generate() {
   const iconBuffer = await sharp("public/app-icon.svg")
-    .resize(400, 400)
+    .resize(512, 512)
     .toBuffer();
 
   await sharp({
@@ -10,7 +10,7 @@ async function generate() {
       width: 512,
       height: 512,
       channels: 4,
-      background: { r: 239, g: 168, b: 24, alpha: 1 },
+      background: { r: 248, g: 249, b: 250, alpha: 1 },
     },
   })
     .composite([{ input: iconBuffer, gravity: "centre" }])
@@ -20,7 +20,7 @@ async function generate() {
   console.log("512px done");
 
   const iconBuffer2 = await sharp("public/app-icon.svg")
-    .resize(150, 150)
+    .resize(192, 192)
     .toBuffer();
 
   await sharp({
@@ -28,7 +28,7 @@ async function generate() {
       width: 192,
       height: 192,
       channels: 4,
-      background: { r: 239, g: 168, b: 24, alpha: 1 },
+      background: { r: 248, g: 249, b: 250, alpha: 1 },
     },
   })
     .composite([{ input: iconBuffer2, gravity: "centre" }])
