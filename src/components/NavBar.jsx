@@ -50,6 +50,7 @@ function NavBar() {
             className={styles.logo}
             width="184"
             height="50"
+            loading="eager"
           />
         </NavLink>
 

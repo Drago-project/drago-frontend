@@ -80,7 +80,12 @@ function HeroSection({ t, i18n, canInstall, install }) {
           </div>
         </div>
         <div>
-          <img src={wave} alt="Drago waves" className="styles.dragoCharacter" width="400" height="400" />
+          <img
+            src={wave}
+            alt="Drago waves"
+            className={styles.dragoCharacter}
+            width="500" height="500"
+          />
         </div>
       </div>
     </section>
@@ -127,6 +132,9 @@ function FeatureCards({ i18n }) {
   return (
     <section className={styles.featuresSection}>
       <div className={styles.featuresContainer}>
+        <h2 className={styles.featuresTitle}>
+          {i18n.language === "ar" ? "مميزات دراجو" : "Why Drago?"}
+        </h2>
         <div className={styles.featuresGrid}>
           {cards.map((card, index) => (
             <Card
@@ -150,7 +158,9 @@ function Card({ title, description, icon }) {
   return (
     <div className={styles.featureCard}>
       <div className={styles.featureIcon}>{icon}</div>
-      <h3 className={styles.featureTitle}>{title}</h3>
+      <h3 className={styles.featureTitle} style={{ color: " #44958E" }}>
+        {title}
+      </h3>
       <p className={styles.featureDescription}>{description}</p>
     </div>
   );
