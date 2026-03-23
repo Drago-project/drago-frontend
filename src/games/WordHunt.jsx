@@ -16,7 +16,8 @@ import celebrationAnimation from "../assets/animation/celebration drago.json";
 const playSystemSound = (type) => {
   const sounds = {
     win: "/sounds/win.mp3",
-    lose: "/sounds/lose.mp3",
+    // مسار صوت الخسارة الجديد
+    lose: "/sounds/hut_lose.mp3",
   };
   const soundPath = sounds[type];
   if (soundPath) {
@@ -93,13 +94,13 @@ const LoseModal = ({ score, restartGame, children }) => {
 // --- كود اللعبة الأساسي ---
 const gameSounds = {
   correct: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
   ),
   wrong: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3",
   ),
   click: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
   ),
 };
 
@@ -197,12 +198,14 @@ const WordHuntGame = () => {
     }
   };
 
-  const speakHint = (text) => {
+  // الدالة الجديدة لنطق الحرف لما الطفل يدوس على السماعة
+  const speakLetter = (e, letter) => {
+    e.stopPropagation(); // عشان ميحسبش الإجابة لو داس على السماعة بس
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(letter);
       utterance.lang = "ar-SA";
-      utterance.rate = 0.9;
+      utterance.rate = 0.7; // تبطيء الصوت عشان الحرف يكون واضح
       window.speechSynthesis.speak(utterance);
     }
   };
@@ -269,7 +272,7 @@ const WordHuntGame = () => {
   const currentData = gameQuestions[currentQuestion] || originalWordData[0];
   const progressPercentage = (currentQuestion / gameQuestions.length) * 100;
 
-  // 👇 Wrapper عشان الخلفية تظهر في كل الصفحات
+  // Wrapper عشان الخلفية تظهر في كل الصفحات
   const PageWrapper = ({ children }) => (
     <div className="wh-full-page">
       <div className="wh-wrapper">{children}</div>
@@ -353,23 +356,7 @@ const WordHuntGame = () => {
             justifyContent: "center",
           }}
         >
-          <div className="wh-hint-box">
-            <p className="wh-hint-text">تلميح: {currentData.hint}</p>
-            <button
-              onClick={() => speakHint(currentData.hint)}
-              style={{
-                background: "#3b82f6",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                padding: "8px",
-                cursor: "pointer",
-              }}
-            >
-              <Volume2 size={24} />
-            </button>
-          </div>
-
+          {/* تم إزالة جزء التلميح (Hint) من هنا بناءً على طلبك */}
           <div className="wh-word-display">
             <div className="wh-word-text">
               <span>{currentData.wordBefore}</span>
@@ -386,8 +373,27 @@ const WordHuntGame = () => {
               onClick={() => handleAnswer(letter)}
               disabled={showFeedback || selectedOption !== null}
               className={getButtonClass(letter)}
+              style={{ position: "relative" }}
             >
-              {letter}
+              {/* الحرف المعروض للطفل */}
+              <span>{letter}</span>
+
+              {/* زرار السماعة الصغير جوه المربع لنطق الحرف */}
+              <span
+                onClick={(e) => speakLetter(e, letter)}
+                style={{
+                  position: "absolute",
+                  top: "8px",
+                  right: "8px",
+                  background: "rgba(255, 255, 255, 0.4)",
+                  borderRadius: "50%",
+                  padding: "4px",
+                  display: "flex",
+                  cursor: "pointer",
+                }}
+              >
+                <Volume2 size={18} color="#2563eb" />
+              </span>
             </button>
           ))}
         </div>

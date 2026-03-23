@@ -110,9 +110,9 @@ function Layout() {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute requiredRole="doctor">
-              <Dashboard />
-            </ProtectedRoute>
+            // <ProtectedRoute requiredRole="doctor">
+            <Dashboard />
+            // </ProtectedRoute>
           }
         />
 

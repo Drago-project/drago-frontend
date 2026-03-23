@@ -1,3 +1,4 @@
+// src/games/TombPuzzle.jsx
 import { useState, useEffect, useRef } from "react";
 import style from "../styles/TombPuzzle.module.css";
 
@@ -33,7 +34,8 @@ function TombPuzzle() {
     if (type === "correct") audioSrc = "/sounds/correct.mp3";
     if (type === "wrong") audioSrc = "/sounds/wrong.mp3";
     if (type === "win") audioSrc = "/sounds/win.mp3";
-    if (type === "gameover") audioSrc = "/sounds/lose.mp3";
+    // 👇 تم التعديل هنا لقراءة ملف الخسارة الجديد الخاص بالمقبرة
+    if (type === "gameover") audioSrc = "/sounds/tomb_lose.mp3";
 
     // باقي الأصوات
     if (type === "click")
@@ -242,8 +244,6 @@ function TombPuzzle() {
 
   const useHint = () => {
     if (hints <= 0 || notification.show) return;
-    // const currentCorrectWord =
-    //   levels[currentLevelIndex].correct[userAnswer.length];
 
     let firstErrorIndex = 0;
     while (
