@@ -12,42 +12,60 @@ function EmailVerification({ email, userType, onClose }) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [successMsg, setSuccessMsg] = useState("");
   const inputRefs = useRef([]);
 
-  // Timer for resend button cooldown
+  // ----------------- Timer -----------------
+  const formatTime = (time) => {
+    const mins = Math.floor(time / 60);
+    const secs = time % 60;
+    return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+  };
+
+  useEffect(() => {
+    setResendTimer(180); // عرض المؤقت عند فتح المودال
+  }, []);
+
   useEffect(() => {
     if (resendTimer > 0) {
-      const timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+      const timer = setTimeout(() => setResendTimer((prev) => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [resendTimer]);
 
+  // ----------------- Handle Change -----------------
   const handleChange = (index, value) => {
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) return;
+    if (!/^\d*$/.test(value)) return; // رقم فقط
 
     const newCode = [...code];
-    newCode[index] = value.slice(-1); // Take only the last digit
+    newCode[index] = value.slice(-1); // آخر رقم فقط
     setCode(newCode);
     setError("");
 
-    // Auto-focus next input
+    // التركيز على الخانة التالية تلقائي
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
   };
 
+  // ----------------- Handle KeyDown -----------------
   const handleKeyDown = (index, e) => {
-    // Handle backspace
+    // Backspace يرجع للخانة السابقة
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
+
+    // Enter للتحقق
+    if (e.key === "Enter") {
+      handleVerify();
+    }
   };
 
+  // ----------------- Handle Paste -----------------
   const handlePaste = (e) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData("text").slice(0, 6);
-    
+
     if (!/^\d+$/.test(pastedData)) return;
 
     const newCode = [...code];
@@ -56,14 +74,21 @@ function EmailVerification({ email, userType, onClose }) {
     }
     setCode(newCode);
 
-    // Focus the next empty input or the last one
     const nextIndex = Math.min(pastedData.length, 5);
     inputRefs.current[nextIndex]?.focus();
   };
 
+  // ----------------- Auto Verify -----------------
+  useEffect(() => {
+    if (code.join("").length === 6 && !code.includes("") && !isVerifying) {
+      handleVerify();
+    }
+  }, [code]);
+
+  // ----------------- Handle Verify -----------------
   const handleVerify = async () => {
     const verificationCode = code.join("");
-    
+
     if (verificationCode.length !== 6) {
       setError(t("verification.codeIncomplete"));
       return;
@@ -73,18 +98,19 @@ function EmailVerification({ email, userType, onClose }) {
     setError("");
 
     try {
-      const endpoint = userType === "doctor" 
-        ? "/api/Doctors/verify-email"
-        : "/api/Users/verify-email";
+      const endpoint =
+        userType === "doctor"
+          ? "/api/Doctors/verify-email"
+          : "/api/Users/verify-email";
 
       const response = await api.post(endpoint, {
         email: email,
         code: verificationCode,
       });
 
-      console.log("✅ Email verified successfully", response.data);
-      
-      // Success! Navigate based on user type
+      console.log("Email verified successfully", response.data);
+
+      // Navigate based on user type
       if (userType === "doctor") {
         navigate("/dashboard", { replace: true });
       } else {
@@ -103,6 +129,7 @@ function EmailVerification({ email, userType, onClose }) {
     }
   };
 
+  // ----------------- Handle Resend -----------------
   const handleResend = async () => {
     if (resendTimer > 0 || isResending) return;
 
@@ -110,14 +137,15 @@ function EmailVerification({ email, userType, onClose }) {
     setError("");
 
     try {
-      const endpoint = userType === "doctor"
-        ? "/api/Doctors/resend-verification"
-        : "/api/Users/resend-verification";
+      const endpoint =
+        userType === "doctor"
+          ? "/api/Doctors/resend-verification"
+          : "/api/Users/resend-verification";
 
       await api.post(endpoint, { email: email });
 
-      setResendTimer(60); // 60 second cooldown
-      alert(t("verification.codeSent"));
+      setResendTimer(240); // 4 دقائق cooldown
+      setSuccessMsg(t("verification.codeSent"));
     } catch (err) {
       console.error("Resend error:", err);
       if (err.response) {
@@ -131,6 +159,7 @@ function EmailVerification({ email, userType, onClose }) {
     }
   };
 
+  // ----------------- Render -----------------
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
@@ -165,7 +194,7 @@ function EmailVerification({ email, userType, onClose }) {
             <input
               key={index}
               ref={(el) => (inputRefs.current[index] = el)}
-              type="text"
+              type="tel" // numeric keyboard
               inputMode="numeric"
               maxLength="1"
               value={digit}
@@ -179,6 +208,7 @@ function EmailVerification({ email, userType, onClose }) {
         </div>
 
         {error && <p className={styles.errorMsg}>{error}</p>}
+        {successMsg && <p className={styles.successMsg}>{successMsg}</p>}
 
         <button
           onClick={handleVerify}
@@ -193,12 +223,14 @@ function EmailVerification({ email, userType, onClose }) {
           <button
             onClick={handleResend}
             disabled={resendTimer > 0 || isResending}
-            className={styles.resendBtn}
+            className={`${styles.resendBtn} ${
+              resendTimer > 0 || isResending ? styles.disabled : ""
+            }`}
           >
             {isResending
               ? t("verification.sending")
               : resendTimer > 0
-                ? `${t("verification.resend")} (${resendTimer}s)`
+                ? `You can resend in ${formatTime(resendTimer)}`
                 : t("verification.resend")}
           </button>
         </div>
