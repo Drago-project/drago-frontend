@@ -199,9 +199,9 @@ const WordHuntGame = () => {
     }
   };
 
-  // الدالة الجديدة لنطق الحرف لما الطفل يدوس على السماعة
+  // دالة نطق الحرف
   const speakLetter = (e, letter) => {
-    e.stopPropagation(); // عشان ميحسبش الإجابة لو داس على السماعة بس
+    e.stopPropagation();
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(letter);
@@ -224,9 +224,6 @@ const WordHuntGame = () => {
       const levelsRes = await api.get("/api/hutgame/levels");
       const levels = levelsRes.data?.data || [];
       const levelNumber = levels.length ? levels[0].levelNumber : 0;
-
-      console.log("Levels:", levels);
-      console.log("Level Number:", levelNumber);
 
       // fetch 5 random words for the level
       const fetches = Array.from({ length: 5 }).map(() =>
@@ -429,7 +426,30 @@ const WordHuntGame = () => {
             justifyContent: "center",
           }}
         >
-          {/* تم إزالة جزء التلميح (Hint) من هنا بناءً على طلبك */}
+          {/* --- إضافة التلميح (Hint) هنا --- */}
+          {currentData.hint && (
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  backgroundColor: "#fffbeb",
+                  color: "#d97706",
+                  padding: "8px 20px",
+                  borderRadius: "9999px",
+                  fontWeight: "bold",
+                  fontSize: "1.2rem",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  border: "1px solid #fde68a",
+                }}
+              >
+                <span>💡</span>
+                <span>{currentData.hint}</span>
+              </div>
+            </div>
+          )}
+
           <div className="wh-word-display">
             <div className="wh-word-text">
               <span>{currentData.wordBefore}</span>
@@ -441,33 +461,70 @@ const WordHuntGame = () => {
 
         <div className="wh-options-grid">
           {currentData.options.map((letter, index) => (
-            <button
+            // تم تغيير الزرار لـ div مقسوم عشان يمنع اللخبطة
+            <div
               key={index}
-              onClick={() => handleAnswer(letter)}
-              disabled={showFeedback || selectedOption !== null}
               className={getButtonClass(letter)}
-              style={{ position: "relative" }}
+              style={{
+                position: "relative",
+                padding: 0, // بنشيل البادينج عشان نقسم الزرار صح
+                display: "flex",
+                overflow: "hidden",
+                cursor:
+                  showFeedback || selectedOption !== null
+                    ? "default"
+                    : "pointer",
+                opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
+              }}
             >
-              {/* الحرف المعروض للطفل */}
-              <span>{letter}</span>
-
-              {/* زرار السماعة الصغير جوه المربع لنطق الحرف */}
-              <span
-                onClick={(e) => speakLetter(e, letter)}
+              {/* مساحة اختيار الحرف - كبيرة وواضحة */}
+              <div
+                onClick={() => {
+                  if (!showFeedback && selectedOption === null)
+                    handleAnswer(letter);
+                }}
                 style={{
-                  position: "absolute",
-                  top: "8px",
-                  right: "8px",
-                  background: "rgba(255, 255, 255, 0.4)",
-                  borderRadius: "50%",
-                  padding: "4px",
+                  flexGrow: 1,
                   display: "flex",
-                  cursor: "pointer",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "16px",
                 }}
               >
-                <Volume2 size={18} color="#2563eb" />
-              </span>
-            </button>
+                <span>{letter}</span>
+              </div>
+
+              {/* خط فاصل بين مساحة الاختيار ومساحة الصوت */}
+              <div
+                style={{ width: "2px", background: "rgba(0,0,0,0.1)" }}
+              ></div>
+
+              {/* مساحة الصوت - مخصصة للصوت بس ومفصولة تماماً */}
+              <div
+                onClick={(e) => {
+                  if (!showFeedback && selectedOption === null)
+                    speakLetter(e, letter);
+                }}
+                style={{
+                  width: "70px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255, 255, 255, 0.4)",
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.6)")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.4)")
+                }
+              >
+                <Volume2 size={24} color="#2563eb" />
+              </div>
+            </div>
           ))}
         </div>
 
