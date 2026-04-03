@@ -4,6 +4,7 @@ import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
 import { Home, CheckCircle, XCircle, Volume2, Play, Heart } from "lucide-react";
+import api from "../server/api";
 
 // استيراد ملف الـ CSS الشامل
 import "../styles/WordHut.css";
@@ -16,7 +17,8 @@ import celebrationAnimation from "../assets/animation/celebration drago.json";
 const playSystemSound = (type) => {
   const sounds = {
     win: "/sounds/win.mp3",
-    lose: "/sounds/lose.mp3",
+    // مسار صوت الخسارة الجديد
+    lose: "/sounds/hut_lose.mp3",
   };
   const soundPath = sounds[type];
   if (soundPath) {
@@ -93,13 +95,13 @@ const LoseModal = ({ score, restartGame, children }) => {
 // --- كود اللعبة الأساسي ---
 const gameSounds = {
   correct: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
   ),
   wrong: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3",
   ),
   click: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"
+    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
   ),
 };
 
@@ -197,26 +199,83 @@ const WordHuntGame = () => {
     }
   };
 
-  const speakHint = (text) => {
+  // دالة نطق الحرف
+  const speakLetter = (e, letter) => {
+    e.stopPropagation();
     if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(letter);
       utterance.lang = "ar-SA";
-      utterance.rate = 0.9;
+      utterance.rate = 0.7; // تبطيء الصوت عشان الحرف يكون واضح
       window.speechSynthesis.speak(utterance);
     }
   };
 
-  const startGame = () => {
-    playSound("click");
-    const shuffled = shuffleArray(originalWordData).slice(0, 5);
-    setGameQuestions(shuffled);
-    setCurrentQuestion(0);
-    setScore(0);
-    setLives(3);
-    setGameState("playing");
-    setShowFeedback(false);
-    setSelectedOption(null);
+  const startGame = async () => {
+    try {
+      playSound("click");
+      setGameState("loading");
+      setShowFeedback(false);
+      setSelectedOption(null);
+      setScore(0);
+      setLives(3);
+
+      // fetch levels
+      const levelsRes = await api.get("/api/hutgame/levels");
+      const levels = levelsRes.data?.data || [];
+      const levelNumber = levels.length ? levels[0].levelNumber : 0;
+
+      // fetch 5 random words for the level
+      const fetches = Array.from({ length: 5 }).map(() =>
+        api.get(`/api/hutgame/levels/${levelNumber}/random-word`),
+      );
+
+      const responses = await Promise.all(fetches);
+
+      const questions = responses
+        .map((res, idx) => {
+          const d = res?.data?.data;
+          if (!d) return null;
+
+          const full = d.fullWord || "";
+          const missing = d.missingLetter || d.missing || "";
+
+          const missIdx = full.indexOf(missing);
+
+          const wordBefore =
+            missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
+
+          const wordAfter =
+            missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
+
+          return {
+            id: idx + 1,
+            wordBefore,
+            wordAfter,
+            missing,
+            options: d.options || [],
+            hint: d.hint || "",
+          };
+        })
+        .filter(Boolean);
+
+      if (questions.length) {
+        setGameQuestions(questions);
+      } else {
+        const shuffled = shuffleArray(originalWordData).slice(0, 5);
+        setGameQuestions(shuffled);
+      }
+
+      setCurrentQuestion(0);
+      setGameState("playing");
+    } catch (err) {
+      console.error("HutGame API error:", err);
+
+      const shuffled = shuffleArray(originalWordData).slice(0, 5);
+      setGameQuestions(shuffled);
+      setCurrentQuestion(0);
+      setGameState("playing");
+    }
   };
 
   const handleAnswer = (selectedLetter) => {
@@ -269,7 +328,7 @@ const WordHuntGame = () => {
   const currentData = gameQuestions[currentQuestion] || originalWordData[0];
   const progressPercentage = (currentQuestion / gameQuestions.length) * 100;
 
-  // 👇 Wrapper عشان الخلفية تظهر في كل الصفحات
+  // Wrapper عشان الخلفية تظهر في كل الصفحات
   const PageWrapper = ({ children }) => (
     <div className="wh-full-page">
       <div className="wh-wrapper">{children}</div>
@@ -289,6 +348,20 @@ const WordHuntGame = () => {
           </p>
           <button onClick={startGame} className="wh-btn wh-btn-start">
             <Play size={28} fill="white" /> ابدأ اللعب
+          </button>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (gameState === "loading") {
+    return (
+      <PageWrapper>
+        <div className="wh-start-screen">
+          <h2 className="wh-title">جارٍ تحضير اللعبة...</h2>
+          <p className="wh-subtitle">جلب كلمات المستوى من الخادم</p>
+          <button className="wh-btn wh-btn-start" disabled>
+            <Play size={28} fill="white" /> تحميل...
           </button>
         </div>
       </PageWrapper>
@@ -353,22 +426,29 @@ const WordHuntGame = () => {
             justifyContent: "center",
           }}
         >
-          <div className="wh-hint-box">
-            <p className="wh-hint-text">تلميح: {currentData.hint}</p>
-            <button
-              onClick={() => speakHint(currentData.hint)}
-              style={{
-                background: "#3b82f6",
-                color: "white",
-                border: "none",
-                borderRadius: "50%",
-                padding: "8px",
-                cursor: "pointer",
-              }}
-            >
-              <Volume2 size={24} />
-            </button>
-          </div>
+          {/* --- إضافة التلميح (Hint) هنا --- */}
+          {currentData.hint && (
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  backgroundColor: "#fffbeb",
+                  color: "#d97706",
+                  padding: "8px 20px",
+                  borderRadius: "9999px",
+                  fontWeight: "bold",
+                  fontSize: "1.2rem",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  border: "1px solid #fde68a",
+                }}
+              >
+                <span>💡</span>
+                <span>{currentData.hint}</span>
+              </div>
+            </div>
+          )}
 
           <div className="wh-word-display">
             <div className="wh-word-text">
@@ -381,14 +461,70 @@ const WordHuntGame = () => {
 
         <div className="wh-options-grid">
           {currentData.options.map((letter, index) => (
-            <button
+            // تم تغيير الزرار لـ div مقسوم عشان يمنع اللخبطة
+            <div
               key={index}
-              onClick={() => handleAnswer(letter)}
-              disabled={showFeedback || selectedOption !== null}
               className={getButtonClass(letter)}
+              style={{
+                position: "relative",
+                padding: 0, // بنشيل البادينج عشان نقسم الزرار صح
+                display: "flex",
+                overflow: "hidden",
+                cursor:
+                  showFeedback || selectedOption !== null
+                    ? "default"
+                    : "pointer",
+                opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
+              }}
             >
-              {letter}
-            </button>
+              {/* مساحة اختيار الحرف - كبيرة وواضحة */}
+              <div
+                onClick={() => {
+                  if (!showFeedback && selectedOption === null)
+                    handleAnswer(letter);
+                }}
+                style={{
+                  flexGrow: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "16px",
+                }}
+              >
+                <span>{letter}</span>
+              </div>
+
+              {/* خط فاصل بين مساحة الاختيار ومساحة الصوت */}
+              <div
+                style={{ width: "2px", background: "rgba(0,0,0,0.1)" }}
+              ></div>
+
+              {/* مساحة الصوت - مخصصة للصوت بس ومفصولة تماماً */}
+              <div
+                onClick={(e) => {
+                  if (!showFeedback && selectedOption === null)
+                    speakLetter(e, letter);
+                }}
+                style={{
+                  width: "70px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(255, 255, 255, 0.4)",
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={(e) =>
+                  (e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.6)")
+                }
+                onMouseOut={(e) =>
+                  (e.currentTarget.style.background =
+                    "rgba(255, 255, 255, 0.4)")
+                }
+              >
+                <Volume2 size={24} color="#2563eb" />
+              </div>
+            </div>
           ))}
         </div>
 

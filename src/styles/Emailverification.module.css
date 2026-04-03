@@ -128,8 +128,7 @@
   text-align: center !important;
   color: var(--text-primary, #212529);
   transition: all 0.3s ease;
-  font-family: 'Courier New', monospace;
-
+  font-family: "Courier New", monospace;
 }
 
 .codeInput:focus {
@@ -153,6 +152,20 @@
   margin-bottom: 20px;
   font-size: 0.95rem;
   text-align: right;
+}
+.successMsg {
+  color: #27ae60;
+  background: rgba(39, 174, 96, 0.05);
+  border-left: 4px solid #27ae60;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  text-align: left;
+}
+.resendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .verifyBtn {
