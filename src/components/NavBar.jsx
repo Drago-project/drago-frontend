@@ -65,7 +65,7 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              <FaHome style={iconStyle} />
+              {/* <FaHome style={iconStyle} /> */}
               <span>{i18n.language === "ar" ? "الرئيسية" : "Home"}</span>
             </NavLink>
           </li>
@@ -76,7 +76,7 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              <FaInfoCircle style={iconStyle} />
+              {/* <FaInfoCircle style={iconStyle} /> */}
               <span>
                 {i18n.language === "ar" ? "عن عسر القراءة" : "About dyslexia"}
               </span>
@@ -89,7 +89,7 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              <FaEnvelope style={iconStyle} />
+              {/* <FaEnvelope style={iconStyle} /> */}
               <span>{i18n.language === "ar" ? "اتصل بنا" : "Contact"}</span>
             </NavLink>
           </li>
@@ -100,7 +100,7 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              <FaSignInAlt style={iconStyle} />
+              {/* <FaSignInAlt style={iconStyle} /> */}
               <span>{i18n.language === "ar" ? "تسجيل دخول" : "Log In"}</span>
             </NavLink>
           </li>
@@ -111,7 +111,7 @@ function NavBar() {
                 `${styles.navLink} ${styles.authButton} ${isActive ? styles.active : ""}`
               }
             >
-              <FaUserPlus style={iconStyle} />
+              {/* <FaUserPlus style={iconStyle} /> */}
               <span>{i18n.language === "ar" ? "اشتراك" : "Sign Up"}</span>
             </NavLink>
           </li>
