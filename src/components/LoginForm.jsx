@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../server/api";
+import { authAPI } from "../server/endpoints";
 import ForgotPassword from "./ForgotPassword";
 import ResetPasswordWithCode from "./ResetPasswordCode";
 
@@ -39,10 +39,7 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await api.post("/api/Auth/login", {
-        email: form.email,
-        password: form.password,
-      });
+      const response = await authAPI.login(form.email, form.password);
 
       const data = response.data || {};
       const token =

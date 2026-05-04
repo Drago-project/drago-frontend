@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link } from "react-router-dom";
-import api from "../server/api";
+import { usersAPI, doctorsAPI } from "../server/endpoints";
 import EmailVerification from "../components/Emailverification";
 
 export default function SignUpForm() {
@@ -209,7 +209,7 @@ export default function SignUpForm() {
         doctorName: studentForm.doctorName || "N/A",
       };
 
-      const response = await api.post("/api/Users/register", payload);
+      const response = await usersAPI.register(payload);
 
       console.log("✅ Student Registered Successfully", response.data);
 
@@ -411,7 +411,7 @@ export default function SignUpForm() {
         confirmPassword: doctorForm.confirmPassword,
       };
 
-      const response = await api.post("/api/Doctors/register", payload);
+      const response = await doctorsAPI.register(payload);
 
       console.log("Doctor Registered Successfully", response.data);
 

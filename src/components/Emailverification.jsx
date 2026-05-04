@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Emailverification.module.css";
-import api from "../server/api";
+import { usersAPI, doctorsAPI } from "../server/endpoints";
 
 function EmailVerification({ email, userType, onClose }) {
   const { t } = useTranslation();
@@ -98,15 +98,9 @@ function EmailVerification({ email, userType, onClose }) {
     setError("");
 
     try {
-      const endpoint =
-        userType === "doctor"
-          ? "/api/Doctors/verify-email"
-          : "/api/Users/verify-email";
-
-      const response = await api.post(endpoint, {
-        email: email,
-        code: verificationCode,
-      });
+      const response = userType === "doctor"
+        ? await doctorsAPI.verifyEmail(email, verificationCode)
+        : await usersAPI.verifyEmail(email, verificationCode);
 
       console.log("Email verified successfully", response.data);
 
@@ -137,12 +131,9 @@ function EmailVerification({ email, userType, onClose }) {
     setError("");
 
     try {
-      const endpoint =
-        userType === "doctor"
-          ? "/api/Doctors/resend-verification"
-          : "/api/Users/resend-verification";
-
-      await api.post(endpoint, { email: email });
+      userType === "doctor"
+        ? await doctorsAPI.resendVerification(email)
+        : await usersAPI.resendVerification(email);
 
       setResendTimer(240); // 4 دقائق cooldown
       setSuccessMsg(t("verification.codeSent"));

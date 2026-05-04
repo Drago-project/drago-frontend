@@ -12,8 +12,11 @@ export const authAPI = {
   forgotPassword: (email) =>
     api.post("/api/Auth/forgot-password", { email }),
 
-  resetPassword: (email, code, newPassword, confirmPassword) =>
-    api.post("/api/Auth/reset-password", { email, code, newPassword, confirmPassword }),
+  resetPassword: (email, token, newPassword, confirmPassword) =>
+    api.post("/api/Auth/reset-password", { email, token, newPassword, confirmPassword }),
+
+  validateResetToken: (email, token) =>
+    api.post("/api/Auth/validate-reset-token", { email, token }),
 };
 
 // ─────────────────────────────────────────

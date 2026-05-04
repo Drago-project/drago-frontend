@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next"; // استيراد Hook الترجمة
 import styles from "../styles/Emailverification.module.css";
-import api from "../server/api";
+import { authAPI } from "../server/endpoints";
 
 function ResetPassword() {
   const { t } = useTranslation(); // تفعيل الترجمة
@@ -36,10 +36,7 @@ function ResetPassword() {
     }
 
     try {
-      const response = await api.post("/api/Auth/validate-reset-token", {
-        email: formData.email,
-        token: formData.token,
-      });
+      const response = await authAPI.validateResetToken(formData.email, formData.token);
 
       setTokenValid(response.data.success);
 
@@ -102,12 +99,7 @@ function ResetPassword() {
     setError("");
 
     try {
-      const response = await api.post("/api/Auth/reset-password", {
-        email: formData.email,
-        token: formData.token,
-        newPassword: formData.newPassword,
-        confirmPassword: formData.confirmPassword,
-      });
+      const response = await authAPI.resetPassword(formData.email, formData.token, formData.newPassword, formData.confirmPassword);
 
       setSuccessMsg(response.data.message || t("resetPassword.successMessage"));
 

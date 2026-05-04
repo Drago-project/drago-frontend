@@ -35,7 +35,7 @@ function NavBar() {
   };
 
   const isRTL = i18n.language === "ar";
-  const iconStyle = { fontSize: "1.2rem", marginBottom: "2px" };
+  // const iconStyle = { fontSize: "1.2rem", marginBottom: "2px" };
 
   return (
     <nav

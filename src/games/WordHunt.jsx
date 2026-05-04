@@ -4,7 +4,7 @@ import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
 import { Home, CheckCircle, XCircle, Volume2, Play, Heart } from "lucide-react";
-import api from "../server/api";
+import { hutGameAPI } from "../server/endpoints";
 
 // استيراد ملف الـ CSS الشامل
 import "../styles/WordHut.css";
@@ -221,13 +221,13 @@ const WordHuntGame = () => {
       setLives(3);
 
       // fetch levels
-      const levelsRes = await api.get("/api/hutgame/levels");
+      const levelsRes = await hutGameAPI.getLevels();
       const levels = levelsRes.data?.data || [];
       const levelNumber = levels.length ? levels[0].levelNumber : 0;
 
       // fetch 5 random words for the level
       const fetches = Array.from({ length: 5 }).map(() =>
-        api.get(`/api/hutgame/levels/${levelNumber}/random-word`),
+        hutGameAPI.getRandomWord(levelNumber),
       );
 
       const responses = await Promise.all(fetches);

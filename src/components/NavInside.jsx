@@ -72,7 +72,7 @@ function NavInside() {
               {i18n.language === "ar" ? "الرئيسية" : "Home"}
             </NavLink>
           </li>
-          <li className={styles.navItem}>
+          {/* <li className={styles.navItem}>
             <NavLink
               to="/dashboard"
               className={({ isActive }) =>
@@ -81,7 +81,7 @@ function NavInside() {
             >
               {i18n.language === "ar" ? "لوحة التحكم" : "Dashboard"}
             </NavLink>
-          </li>
+          </li> */}
 
           <li className={styles.navItem}>
             <NavLink

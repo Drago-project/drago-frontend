@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Emailverification.module.css";
-import api from "../server/api";
+import { authAPI } from "../server/endpoints";
 
 function ForgotPassword({ onClose, onCodeSent }) {
   const { t } = useTranslation();
@@ -23,9 +23,7 @@ function ForgotPassword({ onClose, onCodeSent }) {
     setSuccessMsg("");
 
     try {
-      const response = await api.post("/api/Auth/forgot-password", {
-        email: email.trim(),
-      });
+      const response = await authAPI.forgotPassword(email.trim());
 
       console.log("Password reset code sent successfully", response.data);
 

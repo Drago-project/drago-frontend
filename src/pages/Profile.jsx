@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+import { profileAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
-import dragoAvatar from "../assets/emotions/drago(wave).svg";
+
+// import dragoAvatar from "../assets/emotions/drago(wave).svg";
 
 const getLevelData = (xp) => {
   const levels = [
@@ -15,8 +16,8 @@ const getLevelData = (xp) => {
 };
 
 function Profile() {
-  const navigate = useNavigate();
-  const userId =2; // خليها ديناميكي حسب login
+  // const navigate = useNavigate();
+  const userId = JSON.parse(localStorage.getItem("user"))?.id; // خليها ديناميكي حسب login
   const dailyGoal = 50;
 
   const [userData, setUserData] = useState(null);
@@ -26,8 +27,10 @@ function Profile() {
 
   // 🟢 Fetch profile data
   useEffect(() => {
-    axios
-      .get(`https://drago-back.runasp.net/api/Profile/${userId}`)
+    if (!userId) return;
+
+    profileAPI
+      .get(userId)
       .then((res) => {
         const data = res.data.data;
         setUserData({
@@ -46,7 +49,7 @@ function Profile() {
         console.log(err);
         setUserData({ error: true }); // 👈 مهم
       });
-  }, []);
+  }, [userId]);
   if (!userData) return <p>Loading...</p>;
 
   if (userData.error)
@@ -59,16 +62,13 @@ function Profile() {
 
   const dailyProgress = Math.min(
     ((userData.xp % dailyGoal) / dailyGoal) * 100,
-    100
+    100,
   );
 
   // 🟡 Award XP
   const handleAddXp = () => {
-    axios
-      .put(`https://drago-back.runasp.net/api/Profile/${userId}/award-xp`, {
-        xp: 50,
-        sessionCompleted: true,
-      })
+    profileAPI
+      .awardXP(userId, 50, true)
       .then((res) => {
         const data = res.data.data;
         setUserData((prev) => ({
@@ -83,7 +83,7 @@ function Profile() {
             name: a.name,
             icon: a.icon || "🏆",
             unlocked: a.isUnlocked,
-          }))
+          })),
         );
       })
       .catch((err) => console.log(err));
@@ -91,12 +91,8 @@ function Profile() {
 
   // 🔵 Update Settings
   const handleSaveChanges = () => {
-    axios
-      .put(`https://drago-back.runasp.net/api/Profile/${userId}/settings`, {
-        username: formData.username,
-        avatarUrl: formData.avatarUrl,
-        dailyGoalXp: dailyGoal,
-      })
+    profileAPI
+      .updateSettings(userId, formData.username, formData.avatarUrl, dailyGoal)
       .then((res) => {
         const data = res.data.data;
         setUserData((prev) => ({

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Emailverification.module.css";
-import api from "../server/api";
+import { authAPI } from "../server/endpoints";
 
 function ResetPasswordCode({ email, onClose, onSuccess }) {
   const navigate = useNavigate();
@@ -144,12 +144,7 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
     setError("");
 
     try {
-      const response = await api.post("/api/Auth/reset-password", {
-        email: email,
-        code: resetCode,
-        newPassword: newPassword,
-        confirmPassword: confirmPassword,
-      });
+      const response = await authAPI.resetPassword(email, resetCode, newPassword, confirmPassword);
 
       console.log("Password reset successfully", response.data);
 
@@ -183,7 +178,7 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
     setError("");
 
     try {
-      await api.post("/api/Auth/forgot-password", { email: email });
+      await authAPI.forgotPassword(email);
 
       setResendTimer(240); // 4 minutes cooldown
       setSuccessMsg(t("resetPassword.codeSent"));
