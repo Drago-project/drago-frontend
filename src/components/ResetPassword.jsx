@@ -36,7 +36,10 @@ function ResetPassword() {
     }
 
     try {
-      const response = await authAPI.validateResetToken(formData.email, formData.token);
+      const response = await authAPI.validateResetToken(
+        formData.email,
+        formData.token,
+      );
 
       setTokenValid(response.data.success);
 
@@ -99,7 +102,12 @@ function ResetPassword() {
     setError("");
 
     try {
-      const response = await authAPI.resetPassword(formData.email, formData.token, formData.newPassword, formData.confirmPassword);
+      const response = await authAPI.resetPassword(
+        formData.email,
+        formData.token,
+        formData.newPassword,
+        formData.confirmPassword,
+      );
 
       setSuccessMsg(response.data.message || t("resetPassword.successMessage"));
 

@@ -98,9 +98,10 @@ function EmailVerification({ email, userType, onClose }) {
     setError("");
 
     try {
-      const response = userType === "doctor"
-        ? await doctorsAPI.verifyEmail(email, verificationCode)
-        : await usersAPI.verifyEmail(email, verificationCode);
+      const response =
+        userType === "doctor"
+          ? await doctorsAPI.verifyEmail(email, verificationCode)
+          : await usersAPI.verifyEmail(email, verificationCode);
 
       console.log("Email verified successfully", response.data);
 

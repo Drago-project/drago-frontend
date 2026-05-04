@@ -144,7 +144,12 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
     setError("");
 
     try {
-      const response = await authAPI.resetPassword(email, resetCode, newPassword, confirmPassword);
+      const response = await authAPI.resetPassword(
+        email,
+        resetCode,
+        newPassword,
+        confirmPassword,
+      );
 
       console.log("Password reset successfully", response.data);
 

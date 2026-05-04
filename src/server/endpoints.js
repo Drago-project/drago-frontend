@@ -6,14 +6,17 @@ import api from "./api";
 // AUTH
 // ─────────────────────────────────────────
 export const authAPI = {
-  login: (email, password) =>
-    api.post("/api/Auth/login", { email, password }),
+  login: (email, password) => api.post("/api/Auth/login", { email, password }),
 
-  forgotPassword: (email) =>
-    api.post("/api/Auth/forgot-password", { email }),
+  forgotPassword: (email) => api.post("/api/Auth/forgot-password", { email }),
 
   resetPassword: (email, token, newPassword, confirmPassword) =>
-    api.post("/api/Auth/reset-password", { email, token, newPassword, confirmPassword }),
+    api.post("/api/Auth/reset-password", {
+      email,
+      token,
+      newPassword,
+      confirmPassword,
+    }),
 
   validateResetToken: (email, token) =>
     api.post("/api/Auth/validate-reset-token", { email, token }),
@@ -24,8 +27,10 @@ export const authAPI = {
 // ─────────────────────────────────────────
 export const usersAPI = {
   register: (data) => api.post("/api/Users/register", data),
-  verifyEmail: (email, code) => api.post("/api/Users/verify-email", { email, code }),
-  resendVerification: (email) => api.post("/api/Users/resend-verification", { email }),
+  verifyEmail: (email, code) =>
+    api.post("/api/Users/verify-email", { email, code }),
+  resendVerification: (email) =>
+    api.post("/api/Users/resend-verification", { email }),
   getById: (id) => api.get(`/api/Users/${id}`),
 };
 
@@ -34,8 +39,10 @@ export const usersAPI = {
 // ─────────────────────────────────────────
 export const doctorsAPI = {
   register: (data) => api.post("/api/Doctors/register", data),
-  verifyEmail: (email, code) => api.post("/api/Doctors/verify-email", { email, code }),
-  resendVerification: (email) => api.post("/api/Doctors/resend-verification", { email }),
+  verifyEmail: (email, code) =>
+    api.post("/api/Doctors/verify-email", { email, code }),
+  resendVerification: (email) =>
+    api.post("/api/Doctors/resend-verification", { email }),
   getById: (id) => api.get(`/api/Doctors/${id}`),
 };
 
@@ -124,7 +131,11 @@ export const profileAPI = {
   awardXP: (userId, xp, sessionCompleted = false) =>
     api.put(`/api/Profile/${userId}/award-xp`, { xp, sessionCompleted }),
   updateSettings: (userId, username, avatarUrl, dailyGoalXp) =>
-    api.put(`/api/Profile/${userId}/settings`, { username, avatarUrl, dailyGoalXp }),
+    api.put(`/api/Profile/${userId}/settings`, {
+      username,
+      avatarUrl,
+      dailyGoalXp,
+    }),
 };
 
 // ─────────────────────────────────────────
