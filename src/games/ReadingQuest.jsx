@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/ReadingQuest.module.css";
 import { WinModal, LoseModal } from "../components/WinLose";
 import { BoatSVG, TornadoSVG } from "../components/GameIcons";
-import { shalalAPI } from "../server/endpoints";
+import { shalalAPI, profileAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 
 function ReadingQuest() {
   const navigate = useNavigate();
@@ -25,24 +26,10 @@ function ReadingQuest() {
   const [feedback, setFeedback] = useState(null);
   const [gameStatus, setGameStatus] = useState("playing");
 
-  // get userId from localStorage token
+  // get userId from auth helper
   const getUserId = () => {
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) return null;
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      return (
-        payload.userId ||
-        payload.sub ||
-        payload.nameid ||
-        payload[
-          "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-        ] ||
-        null
-      );
-    } catch {
-      return null;
-    }
+    const authUser = getAuthUser();
+    return authUser?.userId || null;
   };
 
   // ── Load levels on mount ───────────────────────────────────────────────────
@@ -104,13 +91,26 @@ function ReadingQuest() {
     }
   };
 
-  const finishSession = async () => {
+  const finishSession = async (won = false) => {
     if (!sessionId) return;
     try {
       const timeSeconds = sessionStartTime
         ? Math.floor((Date.now() - sessionStartTime) / 1000)
         : 0;
       await shalalAPI.finishSession(sessionId, timeSeconds);
+
+      // Award XP if game was won
+      if (won) {
+        const userId = getUserId();
+        if (userId) {
+          const xpEarned = Math.floor(score / 10) * 5; // 5 XP per level completed
+          try {
+            await profileAPI.awardXP(userId, xpEarned, true);
+          } catch (xpErr) {
+            console.warn("Could not award XP:", xpErr);
+          }
+        }
+      }
     } catch (e) {
       console.error("Failed to finish session:", e);
     }
@@ -176,7 +176,7 @@ function ReadingQuest() {
           setShowQuestion(false);
           setFeedback(null);
         } else {
-          await finishSession();
+          await finishSession(true); // Game won
           setGameStatus("won");
         }
       }, 1500);
@@ -186,7 +186,7 @@ function ReadingQuest() {
       setWaterLevel((w) => {
         const newLevel = Math.min(100, w + 25);
         if (newLevel >= 100) {
-          finishSession().then(() => setGameStatus("lost"));
+          finishSession(false).then(() => setGameStatus("lost")); // Game lost
         }
         return newLevel;
       });

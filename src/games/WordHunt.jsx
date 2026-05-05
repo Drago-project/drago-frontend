@@ -4,7 +4,8 @@ import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
 import { Home, CheckCircle, XCircle, Volume2, Play, Heart } from "lucide-react";
-import { hutGameAPI } from "../server/endpoints";
+import { hutGameAPI, profileAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 
 // استيراد ملف الـ CSS الشامل
 import "../styles/WordHut.css";
@@ -182,6 +183,11 @@ const WordHuntGame = () => {
   const [gameState, setGameState] = useState("start");
   const [selectedOption, setSelectedOption] = useState(null);
 
+  // Session tracking
+  const [sessionId, setSessionId] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [userId, setUserId] = useState(null);
+
   const shuffleArray = (array) => {
     const newArray = [...array];
     for (let i = newArray.length - 1; i > 0; i--) {
@@ -219,6 +225,30 @@ const WordHuntGame = () => {
       setSelectedOption(null);
       setScore(0);
       setLives(3);
+
+      // Get user info
+      const authUser = getAuthUser();
+      if (authUser?.userId) {
+        setUserId(authUser.userId);
+      }
+
+      // Start session
+      try {
+        const levelsRes = await hutGameAPI.getLevels();
+        const levels = levelsRes.data?.data || [];
+        const levelNumber = levels.length ? levels[0].levelNumber : 1;
+
+        if (authUser?.userId) {
+          const sessionRes = await hutGameAPI.startSession(
+            authUser.userId,
+            levelNumber,
+          );
+          setSessionId(sessionRes.data?.data?.sessionId);
+          setStartTime(Date.now());
+        }
+      } catch (sessionErr) {
+        console.warn("Could not start session:", sessionErr);
+      }
 
       // fetch levels
       const levelsRes = await hutGameAPI.getLevels();
@@ -283,8 +313,18 @@ const WordHuntGame = () => {
 
     setSelectedOption(selectedLetter);
     const currentWord = gameQuestions[currentQuestion];
+    const isAnswerCorrect = selectedLetter === currentWord.missing;
 
-    if (selectedLetter === currentWord.missing) {
+    // Track answer in session
+    if (sessionId) {
+      try {
+        hutGameAPI.submitAnswer(sessionId, isAnswerCorrect);
+      } catch (err) {
+        console.warn("Could not submit answer:", err);
+      }
+    }
+
+    if (isAnswerCorrect) {
       setIsCorrect(true);
       setScore(score + 1);
       playSound("correct");
@@ -296,7 +336,7 @@ const WordHuntGame = () => {
           setShowFeedback(false);
           setSelectedOption(null);
         } else {
-          setGameState("won");
+          finishGame(true); // Won
         }
       }, 1800);
     } else {
@@ -307,7 +347,7 @@ const WordHuntGame = () => {
       setLives(newLives);
       if (newLives === 0) {
         setTimeout(() => {
-          setGameState("lost");
+          finishGame(false); // Lost
         }, 1500);
       } else {
         setTimeout(() => {
@@ -323,6 +363,31 @@ const WordHuntGame = () => {
     return isCorrect
       ? "wh-option-btn wh-opt-correct"
       : "wh-option-btn wh-opt-wrong";
+  };
+
+  const finishGame = async (won) => {
+    try {
+      // Finish session
+      if (sessionId && startTime) {
+        const timeSeconds = Math.floor((Date.now() - startTime) / 1000);
+        await hutGameAPI.finishSession(sessionId, timeSeconds);
+      }
+
+      // Award XP if user is authenticated and game was completed
+      if (userId && won) {
+        const xpEarned = score * 10; // 10 XP per correct answer
+        try {
+          await profileAPI.awardXP(userId, xpEarned, true);
+        } catch (xpErr) {
+          console.warn("Could not award XP:", xpErr);
+        }
+      }
+
+      setGameState(won ? "won" : "lost");
+    } catch (err) {
+      console.error("Error finishing game:", err);
+      setGameState(won ? "won" : "lost");
+    }
   };
 
   const currentData = gameQuestions[currentQuestion] || originalWordData[0];

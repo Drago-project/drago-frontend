@@ -98,6 +98,14 @@ body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 
 .primary-btn:hover { background: #d69515; transform: translateY(-1px); }
 .action-btn { background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); padding: 0.4rem 1rem; border-radius: 2rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; font-family: inherit; }
 .action-btn:hover { background: var(--color-primary); color: white; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-content { background: var(--bg-white); border-radius: var(--radius); padding: 2rem; max-width: 500px; width: 90%; box-shadow: 0 20px 25px rgba(0,0,0,0.15); }
+.modal-header { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--color-primary); }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--color-text-main); font-size: 0.95rem; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 0.5rem; font-family: inherit; font-size: 0.95rem; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(55,124,118,0.1); }
+.modal-footer { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem; }
+.modal-footer button { padding: 0.6rem 1.5rem; border-radius: 0.5rem; border: none; font-weight: 600; cursor: pointer; font-family: inherit; }
 .progress-bar-bg { width: 100px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
 .progress-bar-fill { height: 100%; border-radius: 4px; }
 .chat-window { background: #f8fafc; border-radius: var(--radius); padding: 1.5rem; height: 400px; display: flex; flex-direction: column; }
@@ -135,40 +143,110 @@ body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 
 // ─── Translations ──────────────────────────────────────────────────────────────
 const translations = {
   en: {
-    home: "Home", students: "Students", sessions: "Sessions", reports: "Reports",
-    assessments: "Assessments", messages: "Messages", settings: "Settings",
-    logout: "Log Out", search: "Search...", totalStudents: "Total Students",
-    upcoming: "Upcoming Sessions", pending: "Pending Reports", progress: "Avg Progress",
-    addNew: "+ New Student", name: "Name", age: "Age", level: "Level",
-    diagnosis: "Diagnosis", prog: "Progress", action: "Action", view: "View",
-    start: "Start", download: "Download", drName: "Dr. Rania", role: "Specialist",
-    week: "Week", score: "Score %", type: "Type", date: "Date", status: "Status",
-    profile: "Profile Settings", fullName: "Full Name", email: "Email Address",
-    phone: "Phone Number", save: "Save Changes", send: "Send", writeMsg: "Write a message...",
-    unreviewed: "Unreviewed", loading: "Loading...", error: "Failed to load data",
-    retry: "Retry", noData: "No data available", activeStudents: "Active Students",
-    pendingAssessments: "Pending Assessments", weeklyProgress: "Weekly Progress",
-    recentActivity: "Recent Activity", progressAnalytics: "Progress Analytics",
-    noMessages: "No conversations yet", noStudents: "No students found",
-    noSessions: "No sessions scheduled", noAssessments: "No assessments found",
+    home: "Home",
+    students: "Students",
+    sessions: "Sessions",
+    reports: "Reports",
+    assessments: "Assessments",
+    messages: "Messages",
+    settings: "Settings",
+    logout: "Log Out",
+    search: "Search...",
+    totalStudents: "Total Students",
+    upcoming: "Upcoming Sessions",
+    pending: "Pending Reports",
+    progress: "Avg Progress",
+    addNew: "+ New Student",
+    name: "Name",
+    age: "Age",
+    level: "Level",
+    diagnosis: "Diagnosis",
+    prog: "Progress",
+    action: "Action",
+    view: "View",
+    start: "Start",
+    download: "Download",
+    drName: "Dr. Rania",
+    role: "Specialist",
+    week: "Week",
+    score: "Score %",
+    type: "Type",
+    date: "Date",
+    status: "Status",
+    profile: "Profile Settings",
+    fullName: "Full Name",
+    email: "Email Address",
+    phone: "Phone Number",
+    save: "Save Changes",
+    send: "Send",
+    writeMsg: "Write a message...",
+    unreviewed: "Unreviewed",
+    loading: "Loading...",
+    error: "Failed to load data",
+    retry: "Retry",
+    noData: "No data available",
+    activeStudents: "Active Students",
+    pendingAssessments: "Pending Assessments",
+    weeklyProgress: "Weekly Progress",
+    recentActivity: "Recent Activity",
+    progressAnalytics: "Progress Analytics",
+    noMessages: "No conversations yet",
+    noStudents: "No students found",
+    noSessions: "No sessions scheduled",
+    noAssessments: "No assessments found",
   },
   ar: {
-    home: "الرئيسية", students: "الطلاب", sessions: "الجلسات", reports: "التقارير",
-    assessments: "التقييمات", messages: "الرسائل", settings: "الإعدادات",
-    logout: "خروج", search: "بحث...", totalStudents: "إجمالي الطلاب",
-    upcoming: "الجلسات القادمة", pending: "تقارير معلقة", progress: "معدل التقدم",
-    addNew: "+ طالب جديد", name: "الاسم", age: "العمر", level: "المستوى",
-    diagnosis: "التشخيص", prog: "التقدم", action: "إجراء", view: "عرض",
-    start: "بدء", download: "تحميل", drName: "د. رانيا", role: "أخصائية نطق",
-    week: "أسبوع", score: "النتيجة %", type: "النوع", date: "التاريخ", status: "الحالة",
-    profile: "إعدادات الملف الشخصي", fullName: "الاسم الكامل", email: "البريد الإلكتروني",
-    phone: "رقم الهاتف", save: "حفظ التغييرات", send: "إرسال", writeMsg: "اكتب رسالة...",
-    unreviewed: "غير مراجع", loading: "جاري التحميل...", error: "فشل تحميل البيانات",
-    retry: "إعادة المحاولة", noData: "لا توجد بيانات", activeStudents: "الطلاب النشطون",
-    pendingAssessments: "التقييمات المعلقة", weeklyProgress: "التقدم الأسبوعي",
-    recentActivity: "النشاط الأخير", progressAnalytics: "تحليلات التقدم",
-    noMessages: "لا توجد محادثات", noStudents: "لا يوجد طلاب",
-    noSessions: "لا توجد جلسات", noAssessments: "لا توجد تقييمات",
+    home: "الرئيسية",
+    students: "الطلاب",
+    sessions: "الجلسات",
+    reports: "التقارير",
+    assessments: "التقييمات",
+    messages: "الرسائل",
+    settings: "الإعدادات",
+    logout: "خروج",
+    search: "بحث...",
+    totalStudents: "إجمالي الطلاب",
+    upcoming: "الجلسات القادمة",
+    pending: "تقارير معلقة",
+    progress: "معدل التقدم",
+    addNew: "+ طالب جديد",
+    name: "الاسم",
+    age: "العمر",
+    level: "المستوى",
+    diagnosis: "التشخيص",
+    prog: "التقدم",
+    action: "إجراء",
+    view: "عرض",
+    start: "بدء",
+    download: "تحميل",
+    drName: "د. رانيا",
+    role: "أخصائية نطق",
+    week: "أسبوع",
+    score: "النتيجة %",
+    type: "النوع",
+    date: "التاريخ",
+    status: "الحالة",
+    profile: "إعدادات الملف الشخصي",
+    fullName: "الاسم الكامل",
+    email: "البريد الإلكتروني",
+    phone: "رقم الهاتف",
+    save: "حفظ التغييرات",
+    send: "إرسال",
+    writeMsg: "اكتب رسالة...",
+    unreviewed: "غير مراجع",
+    loading: "جاري التحميل...",
+    error: "فشل تحميل البيانات",
+    retry: "إعادة المحاولة",
+    noData: "لا توجد بيانات",
+    activeStudents: "الطلاب النشطون",
+    pendingAssessments: "التقييمات المعلقة",
+    weeklyProgress: "التقدم الأسبوعي",
+    recentActivity: "النشاط الأخير",
+    progressAnalytics: "تحليلات التقدم",
+    noMessages: "لا توجد محادثات",
+    noStudents: "لا يوجد طلاب",
+    noSessions: "لا توجد جلسات",
+    noAssessments: "لا توجد تقييمات",
   },
 };
 
@@ -192,7 +270,9 @@ function useApiData(fetchFn, deps = []) {
     }
   }, deps); // eslint-disable-line
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return { data, loading, error, refetch: load };
 }
@@ -212,7 +292,11 @@ function ErrorState({ t, onRetry }) {
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
       <div className="error-banner">{t("error")}</div>
-      <button className="primary-btn" onClick={onRetry} style={{ margin: "0 auto" }}>
+      <button
+        className="primary-btn"
+        onClick={onRetry}
+        style={{ margin: "0 auto" }}
+      >
         <RefreshCw size={16} /> {t("retry")}
       </button>
     </div>
@@ -225,27 +309,38 @@ function ProgressChart({ lang, stats }) {
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const values = stats?.weeklyData || defaultData;
 
-  const width = 600, height = 220, paddingX = 40, paddingY = 30;
+  const width = 600,
+    height = 220,
+    paddingX = 40,
+    paddingY = 30;
   const chartHeight = height - paddingY * 2;
   const chartWidth = width - paddingX * 2;
   const barWidth = 30;
 
   return (
     <div style={{ overflowX: "auto", padding: "1rem 0" }}>
-      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: "100%", minWidth: "500px" }}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        style={{ width: "100%", minWidth: "500px" }}
+      >
         {[0, 25, 50, 75, 100].map((val) => (
           <g key={val}>
             <line
-              x1={paddingX} y1={height - paddingY - (val / 100) * chartHeight}
-              x2={width - paddingX} y2={height - paddingY - (val / 100) * chartHeight}
+              x1={paddingX}
+              y1={height - paddingY - (val / 100) * chartHeight}
+              x2={width - paddingX}
+              y2={height - paddingY - (val / 100) * chartHeight}
               stroke="#eee"
             />
             <text
               x={lang === "ar" ? width - paddingX + 10 : paddingX - 10}
               y={height - paddingY - (val / 100) * chartHeight + 4}
-              fontSize="10" fill="#94a3b8"
+              fontSize="10"
+              fill="#94a3b8"
               textAnchor={lang === "ar" ? "start" : "end"}
-            >{val}</text>
+            >
+              {val}
+            </text>
           </g>
         ))}
         {values.map((d, i) => {
@@ -255,10 +350,24 @@ function ProgressChart({ lang, stats }) {
           const barY = height - paddingY - barHeight;
           return (
             <g key={i}>
-              <rect x={barX} y={barY} width={barWidth} height={barHeight}
-                fill="#44958E" rx="4" className="bar" />
-              <text x={barX + barWidth / 2} y={height - 10} fontSize="12"
-                fill="#64748b" textAnchor="middle">{labels[i]}</text>
+              <rect
+                x={barX}
+                y={barY}
+                width={barWidth}
+                height={barHeight}
+                fill="#44958E"
+                rx="4"
+                className="bar"
+              />
+              <text
+                x={barX + barWidth / 2}
+                y={height - 10}
+                fontSize="12"
+                fill="#64748b"
+                textAnchor="middle"
+              >
+                {labels[i]}
+              </text>
             </g>
           );
         })}
@@ -267,78 +376,516 @@ function ProgressChart({ lang, stats }) {
   );
 }
 
+// ─── MODALS ───────────────────────────────────────────────────────────────────────
+
+function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    age: "",
+    diagnosis: "",
+    level: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.firstName || !form.lastName || !form.email) {
+      setError("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await studentsAPI.create(form);
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        age: "",
+        diagnosis: "",
+        level: "",
+      });
+      onStudentAdded();
+      onClose();
+    } catch (err) {
+      setError(err?.response?.data?.message || "فشل إضافة الطالب");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-header">إضافة طالب جديد</h2>
+        {error && (
+          <div
+            style={{
+              background: "#fee2e2",
+              color: "#dc2626",
+              padding: "0.75rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>الاسم الأول *</label>
+            <input
+              type="text"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>الاسم الأخير *</label>
+            <input
+              type="text"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>البريد الإلكتروني *</label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>العمر</label>
+            <input
+              type="number"
+              name="age"
+              value={form.age}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>التشخيص</label>
+            <input
+              type="text"
+              name="diagnosis"
+              value={form.diagnosis}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="form-group">
+            <label>المستوى</label>
+            <select name="level" value={form.level} onChange={handleChange}>
+              <option value="">اختر مستوى</option>
+              <option value="Beginner">مبتدئ</option>
+              <option value="Intermediate">متوسط</option>
+              <option value="Advanced">متقدم</option>
+            </select>
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              style={{ background: "#e2e8f0", color: "var(--color-text-main)" }}
+              onClick={onClose}
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              style={{ background: "var(--color-secondary)", color: "white" }}
+              disabled={loading}
+            >
+              {loading ? "جاري الإضافة..." : "إضافة الطالب"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AddSessionModal({ isOpen, onClose, onSessionAdded, students }) {
+  const [form, setForm] = useState({
+    studentId: "",
+    dateTime: "",
+    type: "Online",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.studentId || !form.dateTime) {
+      setError("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await sessionsAPI.create(form.studentId, form.dateTime, form.type);
+      setForm({ studentId: "", dateTime: "", type: "Online" });
+      onSessionAdded();
+      onClose();
+    } catch (err) {
+      setError(err?.response?.data?.message || "فشل إضافة الجلسة");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-header">إضافة جلسة جديدة</h2>
+        {error && (
+          <div
+            style={{
+              background: "#fee2e2",
+              color: "#dc2626",
+              padding: "0.75rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>اختر الطالب *</label>
+            <select
+              name="studentId"
+              value={form.studentId}
+              onChange={handleChange}
+              required
+            >
+              <option value="">-- اختر طالب --</option>
+              {Array.isArray(students) &&
+                students.map((s) => (
+                  <option key={s.userId || s.id} value={s.userId || s.id}>
+                    {s.firstName} {s.lastName}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>التاريخ والوقت *</label>
+            <input
+              type="datetime-local"
+              name="dateTime"
+              value={form.dateTime}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>نوع الجلسة</label>
+            <select name="type" value={form.type} onChange={handleChange}>
+              <option value="Online">أونلاين</option>
+              <option value="InPerson">حضوري</option>
+              <option value="Hybrid">هجين</option>
+            </select>
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              style={{ background: "#e2e8f0", color: "var(--color-text-main)" }}
+              onClick={onClose}
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              style={{ background: "var(--color-secondary)", color: "white" }}
+              disabled={loading}
+            >
+              {loading ? "جاري الإضافة..." : "إضافة الجلسة"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function AddAssessmentModal({ isOpen, onClose, onAssessmentAdded, students }) {
+  const [form, setForm] = useState({
+    studentId: "",
+    type: "ReadingComprehension",
+    date: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.studentId || !form.date) {
+      setError("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      await assessmentsAPI.create(form.studentId, form.type, form.date);
+      setForm({ studentId: "", type: "ReadingComprehension", date: "" });
+      onAssessmentAdded();
+      onClose();
+    } catch (err) {
+      setError(err?.response?.data?.message || "فشل إضافة التقييم");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2 className="modal-header">إضافة تقييم جديد</h2>
+        {error && (
+          <div
+            style={{
+              background: "#fee2e2",
+              color: "#dc2626",
+              padding: "0.75rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1rem",
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>اختر الطالب *</label>
+            <select
+              name="studentId"
+              value={form.studentId}
+              onChange={handleChange}
+              required
+            >
+              <option value="">-- اختر طالب --</option>
+              {Array.isArray(students) &&
+                students.map((s) => (
+                  <option key={s.userId || s.id} value={s.userId || s.id}>
+                    {s.firstName} {s.lastName}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>نوع التقييم</label>
+            <select name="type" value={form.type} onChange={handleChange}>
+              <option value="ReadingComprehension">فهم القراءة</option>
+              <option value="Phonics">تحليل الصوتيات</option>
+              <option value="Fluency">الطلاقة</option>
+              <option value="Vocabulary">المفردات</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label>التاريخ *</label>
+            <input
+              type="date"
+              name="date"
+              value={form.date}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="modal-footer">
+            <button
+              type="button"
+              style={{ background: "#e2e8f0", color: "var(--color-text-main)" }}
+              onClick={onClose}
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              style={{ background: "var(--color-secondary)", color: "white" }}
+              disabled={loading}
+            >
+              {loading ? "جاري الإضافة..." : "إضافة التقييم"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── VIEWS ─────────────────────────────────────────────────────────────────────
 function HomeView({ t, lang }) {
-  const { data: stats, loading, error, refetch } = useApiData(
-    () => dashboardAPI.getStats(),
-    []
-  );
+  const {
+    data: stats,
+    loading,
+    error,
+    refetch,
+  } = useApiData(() => dashboardAPI.getStats(), []);
 
   const statCards = [
     {
       title: t("totalStudents"),
       value: stats?.totalStudents ?? stats?.studentsCount ?? "—",
-      icon: Users, color: "#377C76",
+      icon: Users,
+      color: "#377C76",
     },
     {
       title: t("upcoming"),
       value: stats?.upcomingSessions ?? stats?.sessionsCount ?? "—",
-      icon: Calendar, color: "#EFA818",
+      icon: Calendar,
+      color: "#EFA818",
     },
     {
       title: t("pending"),
       value: stats?.pendingReports ?? stats?.pendingAssessments ?? "—",
-      icon: FileText, color: "#ef4444",
+      icon: FileText,
+      color: "#ef4444",
     },
     {
       title: t("progress"),
       value: stats?.averageProgress != null ? `${stats.averageProgress}%` : "—",
-      icon: TrendingUp, color: "#3b82f6",
+      icon: TrendingUp,
+      color: "#3b82f6",
     },
   ];
 
   return (
     <div>
-      {error && <div className="error-banner">{error} <button className="action-btn" onClick={refetch}>{t("retry")}</button></div>}
+      {error && (
+        <div className="error-banner">
+          {error}{" "}
+          <button className="action-btn" onClick={refetch}>
+            {t("retry")}
+          </button>
+        </div>
+      )}
 
       <div className="grid-4">
         {statCards.map((s, i) => (
           <div key={i} className="card">
-            {loading
-              ? <div style={{ height: 60, background: "#f1f5f9", borderRadius: 8, animation: "pulse 1.5s infinite" }} />
-              : <>
+            {loading ? (
+              <div
+                style={{
+                  height: 60,
+                  background: "#f1f5f9",
+                  borderRadius: 8,
+                  animation: "pulse 1.5s infinite",
+                }}
+              />
+            ) : (
+              <>
                 <div className="stat-title">{s.title}</div>
                 <div className="stat-value">{s.value}</div>
-                <div className="stat-icon-bg" style={{ background: s.color, opacity: 0.15, borderRadius: 12, padding: "0.75rem" }}>
+                <div
+                  className="stat-icon-bg"
+                  style={{
+                    background: s.color,
+                    opacity: 0.15,
+                    borderRadius: 12,
+                    padding: "0.75rem",
+                  }}
+                >
                   <s.icon size={24} color={s.color} />
                 </div>
               </>
-            }
+            )}
           </div>
         ))}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          gap: "1.5rem",
+        }}
+      >
         <div className="table-card" style={{ padding: "1.5rem" }}>
-          <h3 className="table-title" style={{ marginBottom: "1rem" }}>{t("progressAnalytics")}</h3>
+          <h3 className="table-title" style={{ marginBottom: "1rem" }}>
+            {t("progressAnalytics")}
+          </h3>
           <ProgressChart t={t} lang={lang} stats={stats} />
         </div>
         <div className="table-card" style={{ padding: "1.5rem" }}>
-          <h3 className="table-title" style={{ marginBottom: "1rem" }}>{t("recentActivity")}</h3>
-          {loading
-            ? <LoadingState t={t} />
-            : (stats?.recentActivity || []).length > 0
-              ? stats.recentActivity.map((a, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.5rem", background: "#f8fafc", borderRadius: "0.5rem", marginBottom: "0.75rem" }}>
-                  <div style={{ padding: "0.5rem", background: "white", borderRadius: "50%", color: "#377C76", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}><Bell size={16} /></div>
-                  <div>
-                    <div style={{ fontSize: "0.9rem", fontWeight: "600" }}>{a.text || a.description}</div>
-                    <div style={{ fontSize: "0.75rem", color: "#999" }}>{a.time || a.date}</div>
+          <h3 className="table-title" style={{ marginBottom: "1rem" }}>
+            {t("recentActivity")}
+          </h3>
+          {loading ? (
+            <LoadingState t={t} />
+          ) : (stats?.recentActivity || []).length > 0 ? (
+            stats.recentActivity.map((a, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  padding: "0.5rem",
+                  background: "#f8fafc",
+                  borderRadius: "0.5rem",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "0.5rem",
+                    background: "white",
+                    borderRadius: "50%",
+                    color: "#377C76",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <Bell size={16} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.9rem", fontWeight: "600" }}>
+                    {a.text || a.description}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#999" }}>
+                    {a.time || a.date}
                   </div>
                 </div>
-              ))
-              : <p style={{ color: "#94a3b8", textAlign: "center" }}>{t("noData")}</p>
-          }
+              </div>
+            ))
+          ) : (
+            <p style={{ color: "#94a3b8", textAlign: "center" }}>
+              {t("noData")}
+            </p>
+          )}
         </div>
       </div>
       <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }`}</style>
@@ -347,38 +894,57 @@ function HomeView({ t, lang }) {
 }
 
 function StudentsView({ t }) {
-  const { data: students, loading, error, refetch } = useApiData(
-    () => studentsAPI.getAll(),
-    []
-  );
+  const {
+    data: students,
+    loading,
+    error,
+    refetch,
+  } = useApiData(() => studentsAPI.getAll(), []);
   const [search, setSearch] = useState("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const filtered = (Array.isArray(students) ? students : [])
-    .filter((s) =>
-      `${s.firstName} ${s.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-      (s.diagnosis || "").toLowerCase().includes(search.toLowerCase())
-    );
+  const filtered = (Array.isArray(students) ? students : []).filter(
+    (s) =>
+      `${s.firstName} ${s.lastName}`
+        .toLowerCase()
+        .includes(search.toLowerCase()) ||
+      (s.diagnosis || "").toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
-    <div className="table-card">
-      <div className="table-header">
-        <h2 className="table-title">{t("students")}</h2>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <div className="search-bar" style={{ width: 200 }}>
-            <Search size={16} color="#94a3b8" />
-            <input
-              placeholder={t("search")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <>
+      <AddStudentModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onStudentAdded={refetch}
+        t={t}
+      />
+      <div className="table-card">
+        <div className="table-header">
+          <h2 className="table-title">{t("students")}</h2>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <div className="search-bar" style={{ width: 200 }}>
+              <Search size={16} color="#94a3b8" />
+              <input
+                placeholder={t("search")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <button
+              className="primary-btn"
+              onClick={() => setShowAddModal(true)}
+            >
+              <Plus size={16} /> {t("addNew")}
+            </button>
           </div>
-          <button className="primary-btn"><Plus size={16} /> {t("addNew")}</button>
         </div>
-      </div>
 
-      {loading ? <LoadingState t={t} />
-        : error ? <ErrorState t={t} onRetry={refetch} />
-        : (
+        {loading ? (
+          <LoadingState t={t} />
+        ) : error ? (
+          <ErrorState t={t} onRetry={refetch} />
+        ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="data-table">
               <thead>
@@ -391,48 +957,114 @@ function StudentsView({ t }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0
-                  ? <tr><td colSpan={5} style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}>{t("noStudents")}</td></tr>
-                  : filtered.map((s) => {
-                    const initials = `${(s.firstName || "?")[0]}${(s.lastName || "?")[0]}`.toUpperCase();
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: "center",
+                        color: "#94a3b8",
+                        padding: "2rem",
+                      }}
+                    >
+                      {t("noStudents")}
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((s) => {
+                    const initials =
+                      `${(s.firstName || "?")[0]}${(s.lastName || "?")[0]}`.toUpperCase();
                     const progress = s.progress ?? 0;
                     return (
                       <tr key={s.userId || s.id}>
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                            <div className="profile-pic" style={{ width: 32, height: 32, fontSize: "0.8rem", background: "#E8F4F3", color: "#377C76" }}>{initials}</div>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.75rem",
+                            }}
+                          >
+                            <div
+                              className="profile-pic"
+                              style={{
+                                width: 32,
+                                height: 32,
+                                fontSize: "0.8rem",
+                                background: "#E8F4F3",
+                                color: "#377C76",
+                              }}
+                            >
+                              {initials}
+                            </div>
                             {s.firstName} {s.lastName}
                           </div>
                         </td>
-                        <td><span style={{ background: "#f1f5f9", padding: "4px 8px", borderRadius: 4, fontSize: "0.85rem" }}>{s.level || "—"}</span></td>
+                        <td>
+                          <span
+                            style={{
+                              background: "#f1f5f9",
+                              padding: "4px 8px",
+                              borderRadius: 4,
+                              fontSize: "0.85rem",
+                            }}
+                          >
+                            {s.level || "—"}
+                          </span>
+                        </td>
                         <td>{s.diagnosis || "—"}</td>
                         <td>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.5rem",
+                            }}
+                          >
                             <div className="progress-bar-bg">
-                              <div className="progress-bar-fill" style={{ width: `${progress}%`, background: progress > 75 ? "#377C76" : "#EFA818" }} />
+                              <div
+                                className="progress-bar-fill"
+                                style={{
+                                  width: `${progress}%`,
+                                  background:
+                                    progress > 75 ? "#377C76" : "#EFA818",
+                                }}
+                              />
                             </div>
-                            <span style={{ fontSize: "0.8rem", fontWeight: "bold" }}>{progress}%</span>
+                            <span
+                              style={{ fontSize: "0.8rem", fontWeight: "bold" }}
+                            >
+                              {progress}%
+                            </span>
                           </div>
                         </td>
-                        <td><button className="action-btn"><Eye size={14} /> {t("view")}</button></td>
+                        <td>
+                          <button className="action-btn">
+                            <Eye size={14} /> {t("view")}
+                          </button>
+                        </td>
                       </tr>
                     );
                   })
-                }
+                )}
               </tbody>
             </table>
           </div>
-        )
-      }
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 
 function SessionsView({ t }) {
-  const { data: sessions, loading, error, refetch } = useApiData(
-    () => sessionsAPI.getAll(),
-    []
-  );
+  const {
+    data: sessions,
+    loading,
+    error,
+    refetch,
+  } = useApiData(() => sessionsAPI.getAll(), []);
+  const { data: students } = useApiData(() => studentsAPI.getAll(), []);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const handleStart = async (id) => {
     try {
@@ -446,51 +1078,137 @@ function SessionsView({ t }) {
   const list = Array.isArray(sessions) ? sessions : [];
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-        <h2 className="table-title">{t("upcoming")}</h2>
-        <button className="primary-btn"><Plus size={16} /> {t("addNew")}</button>
-      </div>
+    <>
+      <AddSessionModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSessionAdded={refetch}
+        t={t}
+        students={students}
+      />
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1.5rem",
+          }}
+        >
+          <h2 className="table-title">{t("upcoming")}</h2>
+          <button className="primary-btn" onClick={() => setShowAddModal(true)}>
+            <Plus size={16} /> {t("addNew")}
+          </button>
+        </div>
 
-      {loading ? <LoadingState t={t} />
-        : error ? <ErrorState t={t} onRetry={refetch} />
-        : list.length === 0
-          ? <div className="card" style={{ textAlign: "center", color: "#94a3b8" }}>{t("noSessions")}</div>
-          : list.map((s) => (
-            <div key={s.sessionId || s.id} className="card" style={{ display: "flex", alignItems: "center", gap: "1.5rem", marginBottom: "1rem", padding: "1rem" }}>
-              <div style={{ background: "#FFF8E6", color: "#EFA818", padding: "0.5rem 1rem", borderRadius: "0.5rem", textAlign: "center", fontWeight: "bold", minWidth: 60 }}>
-                <div style={{ fontSize: "1.2rem" }}>{s.dateTime ? new Date(s.dateTime).getDate() : "—"}</div>
-                <div style={{ fontSize: "0.7rem" }}>{s.dateTime ? new Date(s.dateTime).toLocaleString("en", { month: "short" }) : ""}</div>
+        {loading ? (
+          <LoadingState t={t} />
+        ) : error ? (
+          <ErrorState t={t} onRetry={refetch} />
+        ) : list.length === 0 ? (
+          <div
+            className="card"
+            style={{ textAlign: "center", color: "#94a3b8" }}
+          >
+            {t("noSessions")}
+          </div>
+        ) : (
+          list.map((s) => (
+            <div
+              key={s.sessionId || s.id}
+              className="card"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1.5rem",
+                marginBottom: "1rem",
+                padding: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  background: "#FFF8E6",
+                  color: "#EFA818",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  textAlign: "center",
+                  fontWeight: "bold",
+                  minWidth: 60,
+                }}
+              >
+                <div style={{ fontSize: "1.2rem" }}>
+                  {s.dateTime ? new Date(s.dateTime).getDate() : "—"}
+                </div>
+                <div style={{ fontSize: "0.7rem" }}>
+                  {s.dateTime
+                    ? new Date(s.dateTime).toLocaleString("en", {
+                        month: "short",
+                      })
+                    : ""}
+                </div>
               </div>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: "0 0 0.25rem 0" }}>
-                  {s.student?.firstName} {s.student?.lastName} {!s.student && `Student #${s.studentId}`}
+                  {s.student?.firstName} {s.student?.lastName}{" "}
+                  {!s.student && `Student #${s.studentId}`}
                 </h3>
-                <div style={{ color: "#666", fontSize: "0.9rem", display: "flex", gap: "1rem" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <div
+                  style={{
+                    color: "#666",
+                    fontSize: "0.9rem",
+                    display: "flex",
+                    gap: "1rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                    }}
+                  >
                     <Clock size={14} />
-                    {s.dateTime ? new Date(s.dateTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
+                    {s.dateTime
+                      ? new Date(s.dateTime).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "—"}
                   </span>
-                  <span style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.3rem",
+                    }}
+                  >
                     <Video size={14} /> {s.type || "Online"}
                   </span>
                 </div>
               </div>
-              <button className="action-btn" onClick={() => handleStart(s.sessionId || s.id)}>
+              <button
+                className="action-btn"
+                onClick={() => handleStart(s.sessionId || s.id)}
+              >
                 {t("start")}
               </button>
             </div>
           ))
-      }
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 
 function AssessmentsView({ t }) {
-  const { data: assessments, loading, error, refetch } = useApiData(
-    () => assessmentsAPI.getAll(),
-    []
-  );
+  const {
+    data: assessments,
+    loading,
+    error,
+    refetch,
+  } = useApiData(() => assessmentsAPI.getAll(), []);
+  const { data: students } = useApiData(() => studentsAPI.getAll(), []);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const list = Array.isArray(assessments) ? assessments : [];
 
@@ -506,15 +1224,27 @@ function AssessmentsView({ t }) {
   };
 
   return (
-    <div className="table-card">
-      <div className="table-header">
-        <h2 className="table-title">{t("assessments")}</h2>
-        <button className="primary-btn"><Plus size={16} /> {t("addNew")}</button>
-      </div>
+    <>
+      <AddAssessmentModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAssessmentAdded={refetch}
+        t={t}
+        students={students}
+      />
+      <div className="table-card">
+        <div className="table-header">
+          <h2 className="table-title">{t("assessments")}</h2>
+          <button className="primary-btn" onClick={() => setShowAddModal(true)}>
+            <Plus size={16} /> {t("addNew")}
+          </button>
+        </div>
 
-      {loading ? <LoadingState t={t} />
-        : error ? <ErrorState t={t} onRetry={refetch} />
-        : (
+        {loading ? (
+          <LoadingState t={t} />
+        ) : error ? (
+          <ErrorState t={t} onRetry={refetch} />
+        ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="data-table">
               <thead>
@@ -528,47 +1258,78 @@ function AssessmentsView({ t }) {
                 </tr>
               </thead>
               <tbody>
-                {list.length === 0
-                  ? <tr><td colSpan={6} style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}>{t("noAssessments")}</td></tr>
-                  : list.map((a) => {
+                {list.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      style={{
+                        textAlign: "center",
+                        color: "#94a3b8",
+                        padding: "2rem",
+                      }}
+                    >
+                      {t("noAssessments")}
+                    </td>
+                  </tr>
+                ) : (
+                  list.map((a) => {
                     const isCompleted = a.score != null;
                     return (
                       <tr key={a.assessmentId || a.id}>
                         <td style={{ fontWeight: 600, color: "#377C76" }}>
-                          {a.student?.firstName} {a.student?.lastName} {!a.student && `Student #${a.studentId}`}
+                          {a.student?.firstName} {a.student?.lastName}{" "}
+                          {!a.student && `Student #${a.studentId}`}
                         </td>
                         <td>{a.type}</td>
-                        <td>{a.date ? new Date(a.date).toLocaleDateString() : "—"}</td>
                         <td>
-                          <span className={`status-badge ${isCompleted ? "status-completed" : "status-pending"}`}>
+                          {a.date ? new Date(a.date).toLocaleDateString() : "—"}
+                        </td>
+                        <td>
+                          <span
+                            className={`status-badge ${isCompleted ? "status-completed" : "status-pending"}`}
+                          >
                             {isCompleted ? "Completed" : "Pending"}
                           </span>
                         </td>
-                        <td style={{ fontWeight: "bold" }}>{a.score != null ? `${a.score}%` : "—"}</td>
+                        <td style={{ fontWeight: "bold" }}>
+                          {a.score != null ? `${a.score}%` : "—"}
+                        </td>
                         <td>
-                          {!isCompleted
-                            ? <button className="action-btn" onClick={() => handleComplete(a.assessmentId || a.id)}><CheckCircle size={14} /> Complete</button>
-                            : <button className="action-btn"><Eye size={14} /> {t("view")}</button>
-                          }
+                          {!isCompleted ? (
+                            <button
+                              className="action-btn"
+                              onClick={() =>
+                                handleComplete(a.assessmentId || a.id)
+                              }
+                            >
+                              <CheckCircle size={14} /> Complete
+                            </button>
+                          ) : (
+                            <button className="action-btn">
+                              <Eye size={14} /> {t("view")}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );
                   })
-                }
+                )}
               </tbody>
             </table>
           </div>
-        )
-      }
-    </div>
+        )}
+      </div>
+    </>
   );
 }
 
 function MessagesView({ t }) {
-  const { data: conversations, loading, error, refetch } = useApiData(
-    () => messagesAPI.getConversations(),
-    []
-  );
+  const {
+    data: conversations,
+    loading,
+    error,
+    refetch,
+  } = useApiData(() => messagesAPI.getConversations(), []);
   const [selected, setSelected] = useState(null);
   const [messages, setMessages] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
@@ -605,81 +1366,171 @@ function MessagesView({ t }) {
   };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "1.5rem", height: "calc(100vh - 180px)" }}>
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "320px 1fr",
+        gap: "1.5rem",
+        height: "calc(100vh - 180px)",
+      }}
+    >
       {/* Conversations list */}
-      <div className="card" style={{ padding: 0, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ padding: "1.5rem", borderBottom: "1px solid #e2e8f0", fontWeight: 700, fontSize: "1.1rem" }}>
+      <div
+        className="card"
+        style={{
+          padding: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "1.5rem",
+            borderBottom: "1px solid #e2e8f0",
+            fontWeight: 700,
+            fontSize: "1.1rem",
+          }}
+        >
           {t("messages")}
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
-          {loading ? <LoadingState t={t} />
-            : error ? <ErrorState t={t} onRetry={refetch} />
-            : list.length === 0
-              ? <p style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}>{t("noMessages")}</p>
-              : list.map((conv) => (
+          {loading ? (
+            <LoadingState t={t} />
+          ) : error ? (
+            <ErrorState t={t} onRetry={refetch} />
+          ) : list.length === 0 ? (
+            <p
+              style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}
+            >
+              {t("noMessages")}
+            </p>
+          ) : (
+            list.map((conv) => (
+              <div
+                key={conv.studentId || conv.id}
+                className={`message-item ${!conv.isRead ? "message-unread" : ""}`}
+                style={{
+                  background:
+                    selected === (conv.studentId || conv.id)
+                      ? "#e8f4f3"
+                      : undefined,
+                }}
+                onClick={() => loadMessages(conv.studentId || conv.id)}
+              >
                 <div
-                  key={conv.studentId || conv.id}
-                  className={`message-item ${!conv.isRead ? "message-unread" : ""}`}
-                  style={{ background: selected === (conv.studentId || conv.id) ? "#e8f4f3" : undefined }}
-                  onClick={() => loadMessages(conv.studentId || conv.id)}
+                  className="profile-pic"
+                  style={{
+                    background: "#cbd5e1",
+                    fontSize: "0.9rem",
+                    flexShrink: 0,
+                  }}
                 >
-                  <div className="profile-pic" style={{ background: "#cbd5e1", fontSize: "0.9rem", flexShrink: 0 }}>
-                    {(conv.studentName || conv.name || "?")[0]}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.2rem" }}>
-                      <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>{conv.studentName || conv.name || `Student #${conv.studentId}`}</span>
-                      <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>{conv.lastMessageTime ? new Date(conv.lastMessageTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                    </div>
-                    <div style={{ fontSize: "0.85rem", color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                      {conv.lastMessage || conv.preview || "..."}
-                    </div>
-                  </div>
-                  {!conv.isRead && <div className="unread-dot" />}
+                  {(conv.studentName || conv.name || "?")[0]}
                 </div>
-              ))
-          }
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      marginBottom: "0.2rem",
+                    }}
+                  >
+                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
+                      {conv.studentName ||
+                        conv.name ||
+                        `Student #${conv.studentId}`}
+                    </span>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
+                      {conv.lastMessageTime
+                        ? new Date(conv.lastMessageTime).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" },
+                          )
+                        : ""}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#64748b",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {conv.lastMessage || conv.preview || "..."}
+                  </div>
+                </div>
+                {!conv.isRead && <div className="unread-dot" />}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       {/* Chat window */}
-      <div className="card" style={{ padding: 0, display: "flex", flexDirection: "column" }}>
-        {!selected
-          ? <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8" }}>Select a conversation</div>
-          : (
-            <div className="chat-window" style={{ height: "100%" }}>
-              <div className="chat-messages">
-                {msgLoading
-                  ? <LoadingState t={t} />
-                  : (Array.isArray(messages) ? messages : []).map((m, i) => (
-                    <div key={i} className={`chat-bubble ${m.senderId === selected ? "received" : "sent"}`}>
-                      {m.content || m.message || m.text}
-                    </div>
-                  ))
-                }
-              </div>
-              <div style={{ padding: "1rem", borderTop: "1px solid #e2e8f0" }}>
-                <div className="chat-input-area">
-                  <input
-                    className="chat-input"
-                    placeholder={t("writeMsg")}
-                    value={newMsg}
-                    onChange={(e) => setNewMsg(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-                  />
-                  <button
-                    className="primary-btn"
-                    style={{ borderRadius: "50%", width: 45, height: 45, padding: 0, justifyContent: "center" }}
-                    onClick={handleSend}
-                    disabled={sending}
+      <div
+        className="card"
+        style={{ padding: 0, display: "flex", flexDirection: "column" }}
+      >
+        {!selected ? (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#94a3b8",
+            }}
+          >
+            Select a conversation
+          </div>
+        ) : (
+          <div className="chat-window" style={{ height: "100%" }}>
+            <div className="chat-messages">
+              {msgLoading ? (
+                <LoadingState t={t} />
+              ) : (
+                (Array.isArray(messages) ? messages : []).map((m, i) => (
+                  <div
+                    key={i}
+                    className={`chat-bubble ${m.senderId === selected ? "received" : "sent"}`}
                   >
-                    {sending ? <Loader size={18} /> : <Send size={20} />}
-                  </button>
-                </div>
+                    {m.content || m.message || m.text}
+                  </div>
+                ))
+              )}
+            </div>
+            <div style={{ padding: "1rem", borderTop: "1px solid #e2e8f0" }}>
+              <div className="chat-input-area">
+                <input
+                  className="chat-input"
+                  placeholder={t("writeMsg")}
+                  value={newMsg}
+                  onChange={(e) => setNewMsg(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && !e.shiftKey && handleSend()
+                  }
+                />
+                <button
+                  className="primary-btn"
+                  style={{
+                    borderRadius: "50%",
+                    width: 45,
+                    height: 45,
+                    padding: 0,
+                    justifyContent: "center",
+                  }}
+                  onClick={handleSend}
+                  disabled={sending}
+                >
+                  {sending ? <Loader size={18} /> : <Send size={20} />}
+                </button>
               </div>
             </div>
-          )
-        }
+          </div>
+        )}
       </div>
     </div>
   );
@@ -688,20 +1539,56 @@ function MessagesView({ t }) {
 function ReportsView({ t }) {
   return (
     <div>
-      <h2 className="table-title" style={{ marginBottom: "1.5rem" }}>{t("reports")}</h2>
+      <h2 className="table-title" style={{ marginBottom: "1.5rem" }}>
+        {t("reports")}
+      </h2>
       <div className="grid-4">
         {[
           { title: "Progress Report", date: "Jan 15", type: "PDF" },
           { title: "Assessment Summary", date: "Jan 10", type: "DOCX" },
         ].map((r, i) => (
           <div key={i} className="card" style={{ border: "1px solid #e2e8f0" }}>
-            <div style={{ position: "absolute", top: 10, right: 10, background: "#f1f5f9", padding: "2px 6px", borderRadius: 4, fontSize: "0.7rem", fontWeight: "bold" }}>{r.type}</div>
-            <div style={{ background: "#E8F4F3", width: 40, height: 40, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "#377C76", marginBottom: "1rem" }}>
+            <div
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                background: "#f1f5f9",
+                padding: "2px 6px",
+                borderRadius: 4,
+                fontSize: "0.7rem",
+                fontWeight: "bold",
+              }}
+            >
+              {r.type}
+            </div>
+            <div
+              style={{
+                background: "#E8F4F3",
+                width: 40,
+                height: 40,
+                borderRadius: 8,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#377C76",
+                marginBottom: "1rem",
+              }}
+            >
               <FileText size={20} />
             </div>
             <h4 style={{ margin: "0 0 0.5rem 0" }}>{r.title}</h4>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "#999" }}>{r.date}</p>
-            <button className="action-btn" style={{ marginTop: "1rem", width: "100%", justifyContent: "center" }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#999" }}>
+              {r.date}
+            </p>
+            <button
+              className="action-btn"
+              style={{
+                marginTop: "1rem",
+                width: "100%",
+                justifyContent: "center",
+              }}
+            >
               <Download size={14} /> {t("download")}
             </button>
           </div>
@@ -715,32 +1602,97 @@ function SettingsView({ t }) {
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto" }}>
       <div className="card">
-        <h3 style={{ marginBottom: "2rem", fontSize: "1.2rem", color: "#377C76" }}>{t("profile")}</h3>
-        <div style={{ display: "flex", alignItems: "center", gap: "2rem", marginBottom: "2rem" }}>
-          <div style={{ width: 100, height: 100, borderRadius: "50%", background: "#377C76", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "2rem", fontWeight: "bold" }}>DR</div>
+        <h3
+          style={{ marginBottom: "2rem", fontSize: "1.2rem", color: "#377C76" }}
+        >
+          {t("profile")}
+        </h3>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "2rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <div
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: "50%",
+              background: "#377C76",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              fontSize: "2rem",
+              fontWeight: "bold",
+            }}
+          >
+            DR
+          </div>
           <div>
-            <button className="action-btn" style={{ marginBottom: "0.5rem" }}>Change Photo</button>
-            <div style={{ fontSize: "0.9rem", color: "#94a3b8" }}>JPG, GIF or PNG. Max size of 800K</div>
+            <button className="action-btn" style={{ marginBottom: "0.5rem" }}>
+              Change Photo
+            </button>
+            <div style={{ fontSize: "0.9rem", color: "#94a3b8" }}>
+              JPG, GIF or PNG. Max size of 800K
+            </div>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "1rem",
+          }}
+        >
           {[
             { label: t("fullName"), icon: User, value: "Dr. Rania" },
-            { label: "Role", icon: User, value: "Speech Specialist", disabled: true },
+            {
+              label: "Role",
+              icon: User,
+              value: "Speech Specialist",
+              disabled: true,
+            },
             { label: t("email"), icon: Mail, value: "rania@drago.com" },
             { label: t("phone"), icon: Phone, value: "+20 123 456 7890" },
           ].map((f, i) => (
             <div key={i} className="form-group">
               <label className="form-label">{f.label}</label>
               <div style={{ position: "relative" }}>
-                <f.icon size={18} style={{ position: "absolute", left: 12, top: 12, color: "#94a3b8" }} />
-                <input className="form-input" defaultValue={f.value} disabled={f.disabled} style={{ paddingLeft: "2.5rem", background: f.disabled ? "#f1f5f9" : undefined }} />
+                <f.icon
+                  size={18}
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: 12,
+                    color: "#94a3b8",
+                  }}
+                />
+                <input
+                  className="form-input"
+                  defaultValue={f.value}
+                  disabled={f.disabled}
+                  style={{
+                    paddingLeft: "2.5rem",
+                    background: f.disabled ? "#f1f5f9" : undefined,
+                  }}
+                />
               </div>
             </div>
           ))}
         </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
-          <button className="primary-btn"><Save size={18} /> {t("save")}</button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "1rem",
+          }}
+        >
+          <button className="primary-btn">
+            <Save size={18} /> {t("save")}
+          </button>
         </div>
       </div>
     </div>
@@ -769,42 +1721,66 @@ export default function Dashboard() {
   return (
     <>
       <style>{cssStyles}</style>
-      <div className={`app-container ${lang === "ar" ? "rtl" : "ltr"}`} dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div
+        className={`app-container ${lang === "ar" ? "rtl" : "ltr"}`}
+        dir={lang === "ar" ? "rtl" : "ltr"}
+      >
         <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
           <div className="logo-area">Drago</div>
           <nav className="nav-links">
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => { setActiveTab(item.id); setSidebarOpen(false); }}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSidebarOpen(false);
+                }}
                 className={`nav-item ${activeTab === item.id ? "active" : ""}`}
               >
                 <item.icon size={20} />
                 <span>{t(item.label)}</span>
-                {activeTab === item.id && (lang === "ar"
-                  ? <ChevronLeft size={16} style={{ marginRight: "auto" }} />
-                  : <ChevronRight size={16} style={{ marginLeft: "auto" }} />
-                )}
+                {activeTab === item.id &&
+                  (lang === "ar" ? (
+                    <ChevronLeft size={16} style={{ marginRight: "auto" }} />
+                  ) : (
+                    <ChevronRight size={16} style={{ marginLeft: "auto" }} />
+                  ))}
               </button>
             ))}
           </nav>
           <div className="sidebar-footer">
-            <button className="nav-item" style={{ color: "#fca5a5" }} onClick={() => { localStorage.removeItem("authToken"); localStorage.removeItem("userData"); window.location.href = "/"; }}>
-              <LogOut size={20} /><span>{t("logout")}</span>
+            <button
+              className="nav-item"
+              style={{ color: "#fca5a5" }}
+              onClick={() => {
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("userData");
+                window.location.href = "/";
+              }}
+            >
+              <LogOut size={20} />
+              <span>{t("logout")}</span>
             </button>
           </div>
         </aside>
 
         <main className="main-content">
           <header className="top-header">
-            <div className="header-left"><h2>{t(activeTab)}</h2></div>
+            <div className="header-left">
+              <h2>{t(activeTab)}</h2>
+            </div>
             <div className="header-right">
               <div className="search-bar">
                 <Search size={18} color="#94a3b8" />
                 <input placeholder={t("search")} />
               </div>
-              <button onClick={toggleLang} className="icon-btn"><Languages size={20} /></button>
-              <button className="icon-btn"><Bell size={20} /><span className="badge-dot" /></button>
+              <button onClick={toggleLang} className="icon-btn">
+                <Languages size={20} />
+              </button>
+              <button className="icon-btn">
+                <Bell size={20} />
+                <span className="badge-dot" />
+              </button>
               <div className="profile-pic">DR</div>
             </div>
           </header>
@@ -819,7 +1795,15 @@ export default function Dashboard() {
         </main>
 
         {sidebarOpen && (
-          <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 40 }} />
+          <div
+            onClick={() => setSidebarOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.5)",
+              zIndex: 40,
+            }}
+          />
         )}
       </div>
     </>
