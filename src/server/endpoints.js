@@ -47,6 +47,27 @@ export const doctorsAPI = {
 };
 
 // ─────────────────────────────────────────
+// DOCTOR SETTINGS
+// ─────────────────────────────────────────
+export const doctorSettingsAPI = {
+  get: () => api.get("/api/DoctorSettings/settings"),
+  update: (data) => api.put("/api/DoctorSettings/settings", data),
+  changePassword: (oldPassword, newPassword, confirmPassword) =>
+    api.post("/api/DoctorSettings/change-password", {
+      oldPassword,
+      newPassword,
+      confirmPassword,
+    }),
+  uploadPhoto: (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post("/api/DoctorSettings/upload-photo", form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
+// ─────────────────────────────────────────
 // DASHBOARD
 // ─────────────────────────────────────────
 export const dashboardAPI = {
@@ -59,10 +80,12 @@ export const dashboardAPI = {
 export const studentsAPI = {
   getAll: () => api.get("/api/Students"),
   getById: (id) => api.get(`/api/Students/${id}`),
+  search: (query) => api.get(`/api/Students/search?q=${query}`),
   create: (data) => api.post("/api/Students", data),
   update: (id, data) => api.put(`/api/Students/${id}`, data),
+  assignByEmail: (email) =>
+    api.post("/api/Students/assign-by-email", { email }),
 };
-
 // ─────────────────────────────────────────
 // SESSIONS
 // ─────────────────────────────────────────

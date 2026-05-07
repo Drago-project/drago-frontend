@@ -31,6 +31,9 @@ import {
   RefreshCw,
   Loader,
 } from "lucide-react";
+import EmailVerification from "../components/Emailverification";
+import ResetPasswordCode from "../components/ResetPasswordCode";
+import ForgotPassword from "../components/ForgotPassword";
 import {
   dashboardAPI,
   studentsAPI,
@@ -39,6 +42,8 @@ import {
   messagesAPI,
   // recommendationsAPI,
   // exercisesAPI,
+  // doctorsAPI,
+  doctorSettingsAPI,
 } from "../server/endpoints";
 
 // ─── CSS Styles ───────────────────────────────────────────────────────────────
@@ -378,46 +383,37 @@ function ProgressChart({ lang, stats }) {
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────────
 
-function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    age: "",
-    diagnosis: "",
-    level: "",
-  });
+function AssignStudentModal({ isOpen, onClose, onStudentAdded }) {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.firstName || !form.lastName || !form.email) {
-      setError("الرجاء ملء جميع الحقول المطلوبة");
+    if (!email) {
+      setError("أدخل الإيميل");
       return;
     }
-
     setLoading(true);
     setError("");
     try {
-      await studentsAPI.create(form);
-      setForm({
-        firstName: "",
-        lastName: "",
-        email: "",
-        age: "",
-        diagnosis: "",
-        level: "",
-      });
+      await studentsAPI.assignByEmail(email);
+      setEmail("");
       onStudentAdded();
       onClose();
     } catch (err) {
-      setError(err?.response?.data?.message || "فشل إضافة الطالب");
+      const status = err?.response?.status;
+      const msg = err?.response?.data;
+
+      if (status === 404) {
+        setError("الطالب غير موجود — تأكدي إن الإيميل مسجل في التطبيق");
+      } else if (status === 409) {
+        setError("هذا الطالب مرتبط بدكتور آخر بالفعل");
+      } else {
+        setError(
+          typeof msg === "string" ? msg : msg?.message || "فشل ربط الطالب",
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -427,93 +423,89 @@ function AddStudentModal({ isOpen, onClose, onStudentAdded }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2 className="modal-header">إضافة طالب جديد</h2>
-        {error && (
-          <div
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 400, textAlign: "center" }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            background: "none",
+            border: "none",
+            fontSize: "1.2rem",
+            cursor: "pointer",
+          }}
+        >
+          ✕
+        </button>
+        <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>👤</div>
+        <h2 className="modal-header">ربط طالب موجود</h2>
+        <p
+          style={{
+            color: "#64748b",
+            fontSize: "0.9rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          أدخل إيميل الطالب المسجل مسبقاً
+        </p>
+        <form onSubmit={handleSubmit}>
+          <input
+            type="email"
+            placeholder="إيميل الطالب"
+            value={email}
+            autoFocus
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setError("");
+            }}
             style={{
-              background: "#fee2e2",
-              color: "#dc2626",
-              padding: "0.75rem",
+              width: "100%",
+              padding: "0.75rem 1rem",
+              border: "1px solid #e2e8f0",
               borderRadius: "0.5rem",
+              fontFamily: "inherit",
+              fontSize: "0.95rem",
               marginBottom: "1rem",
             }}
-          >
-            {error}
-          </div>
-        )}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>الاسم الأول *</label>
-            <input
-              type="text"
-              name="firstName"
-              value={form.firstName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>الاسم الأخير *</label>
-            <input
-              type="text"
-              name="lastName"
-              value={form.lastName}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>البريد الإلكتروني *</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>العمر</label>
-            <input
-              type="number"
-              name="age"
-              value={form.age}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="form-group">
-            <label>التشخيص</label>
-            <input
-              type="text"
-              name="diagnosis"
-              value={form.diagnosis}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="form-group">
-            <label>المستوى</label>
-            <select name="level" value={form.level} onChange={handleChange}>
-              <option value="">اختر مستوى</option>
-              <option value="Beginner">مبتدئ</option>
-              <option value="Intermediate">متوسط</option>
-              <option value="Advanced">متقدم</option>
-            </select>
-          </div>
+            required
+          />
+          {error && (
+            <div
+              style={{
+                background: "#fee2e2",
+                color: "#dc2626",
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                marginBottom: "1rem",
+                fontSize: "0.9rem",
+              }}
+            >
+              {error}
+            </div>
+          )}
           <div className="modal-footer">
             <button
               type="button"
-              style={{ background: "#e2e8f0", color: "var(--color-text-main)" }}
+              style={{
+                background: "#e2e8f0",
+                color: "#374151",
+                borderRadius: "0.5rem",
+                padding: "0.6rem 1.5rem",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
               onClick={onClose}
             >
               إلغاء
             </button>
-            <button
-              type="submit"
-              style={{ background: "var(--color-secondary)", color: "white" }}
-              disabled={loading}
-            >
-              {loading ? "جاري الإضافة..." : "إضافة الطالب"}
+            <button type="submit" className="primary-btn" disabled={loading}>
+              {loading ? "جاري الربط..." : "ربط الطالب"}
             </button>
           </div>
         </form>
@@ -913,11 +905,10 @@ function StudentsView({ t }) {
 
   return (
     <>
-      <AddStudentModal
+      <AssignStudentModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onStudentAdded={refetch}
-        t={t}
       />
       <div className="table-card">
         <div className="table-header">
@@ -1599,102 +1590,609 @@ function ReportsView({ t }) {
 }
 
 function SettingsView({ t }) {
+  const [form, setForm] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    specialist: "",
+  });
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [error, setError] = useState("");
+
+  const [showEmailInput, setShowEmailInput] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [showEmailVerify, setShowEmailVerify] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState("");
+
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+
+  useEffect(() => {
+    doctorSettingsAPI
+      .get()
+      .then((res) => {
+        const d = res.data?.data ?? res.data;
+        setForm({
+          fullName: d.fullName || "",
+          email: d.email || "",
+          phoneNumber: d.phoneNumber || "",
+          specialist: d.specialist || "",
+        });
+        if (d.photoUrl) setPhotoUrl(d.photoUrl);
+      })
+      .catch(() => setError("فشل تحميل البيانات"))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError("");
+    setSuccessMsg("");
+    try {
+      await doctorSettingsAPI.update({
+        fullName: form.fullName,
+        phoneNumber: form.phoneNumber,
+        specialist: form.specialist,
+        email: form.email,
+        password: "", // بعتي string فاضي مش null
+      });
+      setSuccessMsg("تم حفظ التغييرات بنجاح ✓");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      // حولي الـ error لـ string صح
+      const errData = err?.response?.data;
+      const msg =
+        typeof errData === "string"
+          ? errData
+          : errData?.message ||
+            errData?.title ||
+            (errData?.errors
+              ? Object.values(errData.errors).flat().join(" | ")
+              : null) ||
+            "فشل الحفظ";
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const res = await doctorSettingsAPI.uploadPhoto(file);
+      const d = res.data?.data ?? res.data;
+      if (d?.photoUrl) setPhotoUrl(d.photoUrl);
+      setPhotoUrl(URL.createObjectURL(file));
+    } catch (error) {
+      console.error(error);
+      setError("فشل رفع الصورة");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleEmailChange = async () => {
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      setEmailError("أدخل إيميل صحيح");
+      return;
+    }
+    setEmailLoading(true);
+    setEmailError("");
+    try {
+      await doctorSettingsAPI.update({
+        fullName: form.fullName,
+        phoneNumber: form.phoneNumber,
+        specialist: form.specialist,
+        email: newEmail,
+        password: "", // ← زي ما عملنا في handleSave
+      });
+      setShowEmailInput(false);
+      setShowEmailVerify(true);
+    } catch (err) {
+      const errData = err?.response?.data;
+      const msg =
+        typeof errData === "string"
+          ? errData
+          : errData?.message ||
+            errData?.title ||
+            (errData?.errors
+              ? Object.values(errData.errors).flat().join(" | ")
+              : null) ||
+            "فشل إرسال الكود";
+      setEmailError(msg);
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordError("الباسورد أقل من 8 أحرف");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("كلمتا المرور غير متطابقتين");
+      return;
+    }
+    setPasswordLoading(true);
+    setPasswordError("");
+    try {
+      await doctorSettingsAPI.changePassword(
+        passwordForm.oldPassword,
+        passwordForm.newPassword,
+        passwordForm.confirmPassword,
+      );
+      setShowPasswordModal(false);
+      setPasswordForm({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setSuccessMsg("تم تغيير كلمة المرور بنجاح ✓");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      setPasswordError(err?.response?.data?.message || "فشل تغيير الباسورد");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const initials = form.fullName
+    ? form.fullName
+        .split(" ")
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "DR";
+
+  if (loading) return <LoadingState t={t} />;
+
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+    <div style={{ maxWidth: 600, margin: "0 auto" }}>
       <div className="card">
         <h3
           style={{ marginBottom: "2rem", fontSize: "1.2rem", color: "#377C76" }}
         >
           {t("profile")}
         </h3>
+
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "2rem",
+            gap: "1.5rem",
             marginBottom: "2rem",
           }}
         >
-          <div
-            style={{
-              width: 100,
-              height: 100,
-              borderRadius: "50%",
-              background: "#377C76",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: "2rem",
-              fontWeight: "bold",
-            }}
-          >
-            DR
-          </div>
-          <div>
-            <button className="action-btn" style={{ marginBottom: "0.5rem" }}>
-              Change Photo
-            </button>
-            <div style={{ fontSize: "0.9rem", color: "#94a3b8" }}>
-              JPG, GIF or PNG. Max size of 800K
-            </div>
-          </div>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "1rem",
-          }}
-        >
-          {[
-            { label: t("fullName"), icon: User, value: "Dr. Rania" },
-            {
-              label: "Role",
-              icon: User,
-              value: "Speech Specialist",
-              disabled: true,
-            },
-            { label: t("email"), icon: Mail, value: "rania@drago.com" },
-            { label: t("phone"), icon: Phone, value: "+20 123 456 7890" },
-          ].map((f, i) => (
-            <div key={i} className="form-group">
-              <label className="form-label">{f.label}</label>
-              <div style={{ position: "relative" }}>
-                <f.icon
-                  size={18}
-                  style={{
-                    position: "absolute",
-                    left: 12,
-                    top: 12,
-                    color: "#94a3b8",
-                  }}
-                />
-                <input
-                  className="form-input"
-                  defaultValue={f.value}
-                  disabled={f.disabled}
-                  style={{
-                    paddingLeft: "2.5rem",
-                    background: f.disabled ? "#f1f5f9" : undefined,
-                  }}
+          <div style={{ position: "relative" }}>
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt="profile"
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "3px solid #377C76",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: "50%",
+                  background: "#377C76",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "white",
+                  fontSize: "1.8rem",
+                  fontWeight: "bold",
+                }}
+              >
+                {initials}
+              </div>
+            )}
+            {uploadingPhoto && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  borderRadius: "50%",
+                  background: "rgba(0,0,0,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Loader
+                  size={20}
+                  color="white"
+                  style={{ animation: "spin 1s linear infinite" }}
                 />
               </div>
+            )}
+          </div>
+          <div>
+            <label style={{ cursor: "pointer" }}>
+              <span
+                className="action-btn"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.4rem",
+                }}
+              >
+                تغيير الصورة
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoChange}
+                style={{ display: "none" }}
+              />
+            </label>
+            <p
+              style={{
+                fontSize: "0.8rem",
+                color: "#94a3b8",
+                marginTop: "0.4rem",
+              }}
+            >
+              JPG أو PNG — أقل من 2MB
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSave}>
+          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
+            <label className="form-label">{t("fullName")}</label>
+            <input
+              className="form-input"
+              type="text"
+              value={form.fullName}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, fullName: e.target.value }))
+              }
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
+            <label className="form-label">{t("email")}</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input
+                className="form-input"
+                type="email"
+                value={form.email}
+                readOnly
+                style={{ background: "#f8fafc", color: "#64748b" }}
+              />
+              <button
+                type="button"
+                className="action-btn"
+                onClick={() => {
+                  setShowEmailInput(true);
+                  setEmailError("");
+                  setNewEmail("");
+                }}
+              >
+                تغيير
+              </button>
             </div>
-          ))}
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "1rem",
-          }}
-        >
-          <button className="primary-btn">
-            <Save size={18} /> {t("save")}
-          </button>
-        </div>
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
+            <label className="form-label">{t("phone")}</label>
+            <input
+              className="form-input"
+              type="tel"
+              value={form.phoneNumber}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))
+              }
+            />
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label className="form-label">التخصص</label>
+            <input
+              className="form-input"
+              type="text"
+              value={form.specialist}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, specialist: e.target.value }))
+              }
+            />
+          </div>
+
+          {error && (
+            <div
+              style={{
+                background: "#fee2e2",
+                color: "#dc2626",
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                marginBottom: "1rem",
+                fontSize: "0.9rem",
+              }}
+            >
+              {error}
+            </div>
+          )}
+          {successMsg && (
+            <div
+              style={{
+                background: "#dcfce7",
+                color: "#16a34a",
+                padding: "0.75rem",
+                borderRadius: "0.5rem",
+                marginBottom: "1rem",
+                fontSize: "0.9rem",
+              }}
+            >
+              {successMsg}
+            </div>
+          )}
+
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <button
+              type="button"
+              className="action-btn"
+              style={{ color: "#ef4444", borderColor: "#ef4444" }}
+              onClick={() => {
+                setShowPasswordModal(true);
+                setPasswordError("");
+                setPasswordForm({
+                  oldPassword: "",
+                  newPassword: "",
+                  confirmPassword: "",
+                });
+              }}
+            >
+              🔒 تغيير كلمة المرور
+            </button>
+            <button type="submit" className="primary-btn" disabled={saving}>
+              <Save size={16} />
+              {saving ? "جاري الحفظ..." : t("save")}
+            </button>
+          </div>
+        </form>
       </div>
+
+      {showEmailInput && (
+        <div className="modal-overlay" onClick={() => setShowEmailInput(false)}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 420, textAlign: "center" }}
+          >
+            <button
+              onClick={() => setShowEmailInput(false)}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                background: "none",
+                border: "none",
+                fontSize: "1.2rem",
+                cursor: "pointer",
+              }}
+            >
+              ✕
+            </button>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.5rem" }}>✉️</div>
+            <h3 style={{ color: "#377C76", marginBottom: "0.5rem" }}>
+              تغيير الإيميل
+            </h3>
+            <p
+              style={{
+                color: "#64748b",
+                fontSize: "0.9rem",
+                marginBottom: "1.5rem",
+              }}
+            >
+              أدخل الإيميل الجديد وهنبعتلك كود تأكيد
+            </p>
+            <input
+              style={{
+                width: "100%",
+                padding: "0.7rem 1rem",
+                border: "1px solid #e2e8f0",
+                borderRadius: "0.5rem",
+                fontFamily: "inherit",
+                fontSize: "0.95rem",
+                marginBottom: "1rem",
+              }}
+              type="email"
+              placeholder="الإيميل الجديد"
+              value={newEmail}
+              autoFocus
+              onChange={(e) => {
+                setNewEmail(e.target.value);
+                setEmailError("");
+              }}
+            />
+            {emailError && (
+              <p
+                style={{
+                  color: "#dc2626",
+                  fontSize: "0.85rem",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {emailError}
+              </p>
+            )}
+            <button
+              className="primary-btn"
+              style={{ width: "100%" }}
+              onClick={handleEmailChange}
+              disabled={emailLoading}
+            >
+              {emailLoading ? "جاري الإرسال..." : "إرسال كود التأكيد"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showEmailVerify && (
+        <EmailVerification
+          email={newEmail}
+          userType="doctor"
+          onClose={() => setShowEmailVerify(false)}
+          onVerified={() => {
+            setForm((prev) => ({ ...prev, email: newEmail }));
+            setShowEmailVerify(false);
+            setNewEmail("");
+            setSuccessMsg("تم تغيير الإيميل بنجاح ✓");
+            setTimeout(() => setSuccessMsg(""), 3000);
+          }}
+        />
+      )}
+
+      {showPasswordModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowPasswordModal(false)}
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: 420 }}
+          >
+            <button
+              onClick={() => setShowPasswordModal(false)}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                background: "none",
+                border: "none",
+                fontSize: "1.2rem",
+                cursor: "pointer",
+              }}
+            >
+              ✕
+            </button>
+            <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
+              <div style={{ fontSize: "2.5rem" }}>🔒</div>
+              <h3 style={{ color: "#377C76", margin: "0.5rem 0" }}>
+                تغيير كلمة المرور
+              </h3>
+            </div>
+            <form onSubmit={handleChangePassword}>
+              {[
+                { label: "كلمة المرور الحالية", name: "oldPassword" },
+                { label: "كلمة المرور الجديدة", name: "newPassword" },
+                { label: "تأكيد كلمة المرور الجديدة", name: "confirmPassword" },
+              ].map((f) => (
+                <div
+                  key={f.name}
+                  className="form-group"
+                  style={{ marginBottom: "1rem" }}
+                >
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "0.4rem",
+                      fontWeight: "600",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {f.label}
+                  </label>
+                  <input
+                    type="password"
+                    style={{
+                      width: "100%",
+                      padding: "0.7rem 1rem",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "0.5rem",
+                      fontFamily: "inherit",
+                    }}
+                    value={passwordForm[f.name]}
+                    onChange={(e) =>
+                      setPasswordForm((p) => ({
+                        ...p,
+                        [f.name]: e.target.value,
+                      }))
+                    }
+                    required
+                  />
+                </div>
+              ))}
+              {passwordError && (
+                <div
+                  style={{
+                    background: "#fee2e2",
+                    color: "#dc2626",
+                    padding: "0.75rem",
+                    borderRadius: "0.5rem",
+                    marginBottom: "1rem",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  {passwordError}
+                </div>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <button
+                  type="button"
+                  style={{
+                    padding: "0.6rem 1.5rem",
+                    borderRadius: "0.5rem",
+                    border: "1px solid #e2e8f0",
+                    background: "white",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                  }}
+                  onClick={() => setShowPasswordModal(false)}
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="primary-btn"
+                  disabled={passwordLoading}
+                >
+                  {passwordLoading ? "جاري التغيير..." : "تغيير الباسورد"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

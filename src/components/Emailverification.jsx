@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/Emailverification.module.css";
 import { usersAPI, doctorsAPI } from "../server/endpoints";
 
-function EmailVerification({ email, userType, onClose }) {
+function EmailVerification({ email, userType, onClose, onVerified }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -23,7 +23,7 @@ function EmailVerification({ email, userType, onClose }) {
   };
 
   useEffect(() => {
-    setResendTimer(180); // عرض المؤقت عند فتح المودال
+    setResendTimer(180);
   }, []);
 
   useEffect(() => {
@@ -35,14 +35,13 @@ function EmailVerification({ email, userType, onClose }) {
 
   // ----------------- Handle Change -----------------
   const handleChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return; // رقم فقط
+    if (!/^\d*$/.test(value)) return;
 
     const newCode = [...code];
-    newCode[index] = value.slice(-1); // آخر رقم فقط
+    newCode[index] = value.slice(-1);
     setCode(newCode);
     setError("");
 
-    // التركيز على الخانة التالية تلقائي
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
@@ -50,12 +49,9 @@ function EmailVerification({ email, userType, onClose }) {
 
   // ----------------- Handle KeyDown -----------------
   const handleKeyDown = (index, e) => {
-    // Backspace يرجع للخانة السابقة
     if (e.key === "Backspace" && !code[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
-
-    // Enter للتحقق
     if (e.key === "Enter") {
       handleVerify();
     }
@@ -105,11 +101,14 @@ function EmailVerification({ email, userType, onClose }) {
 
       console.log("Email verified successfully", response.data);
 
-      // Navigate based on user type
-      if (userType === "doctor") {
-        navigate("/dashboard", { replace: true });
+      if (onVerified) {
+        onVerified();
       } else {
-        navigate("/home", { replace: true });
+        if (userType === "doctor") {
+          navigate("/dashboard", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
       }
     } catch (err) {
       console.error("Verification error:", err);
@@ -136,7 +135,7 @@ function EmailVerification({ email, userType, onClose }) {
         ? await doctorsAPI.resendVerification(email)
         : await usersAPI.resendVerification(email);
 
-      setResendTimer(240); // 4 دقائق cooldown
+      setResendTimer(240);
       setSuccessMsg(t("verification.codeSent"));
     } catch (err) {
       console.error("Resend error:", err);
@@ -186,7 +185,7 @@ function EmailVerification({ email, userType, onClose }) {
             <input
               key={index}
               ref={(el) => (inputRefs.current[index] = el)}
-              type="tel" // numeric keyboard
+              type="tel"
               inputMode="numeric"
               maxLength="1"
               value={digit}

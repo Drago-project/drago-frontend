@@ -155,12 +155,12 @@ function ResetPasswordCode({ email, onClose, onSuccess }) {
 
       setSuccessMsg(t("resetPassword.successMessage"));
 
-      // Redirect to login after 2 seconds
       setTimeout(() => {
         if (onSuccess) {
           onSuccess();
+        } else {
+          navigate("/auth/login", { replace: true });
         }
-        navigate("/auth/login", { replace: true });
       }, 2000);
     } catch (err) {
       console.error("Reset password error:", err);
