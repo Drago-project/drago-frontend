@@ -1,5 +1,5 @@
 .footerSection {
-  background: linear-gradient(135deg, var(--color-avatar) 0%, var(--color-accent) 100%);
+  background: var(--color-avatar);
   padding: var(--spacing-lg) var(--spacing-sm);
   text-align: center;
 }

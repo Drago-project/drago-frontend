@@ -4,8 +4,15 @@ import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 import styles from "../styles/LandingPage.module.css";
 import wave from "../assets/emotions/drago(wave).svg";
+import Interactive from "../assets/animation/celebration drago.json";
+import Dyslexic from "../assets/emotions/drago(reading).svg";
+import Tracker from "../assets/animation/writting.json";
+import Separator1 from "../assets/backgrunds/wave-haikei.svg";
+import Separator2 from "../assets/backgrunds/wave-haikei (1).svg";
 
 import { usePWAInstall } from "../hooks/usePWAInstall";
+import { BsAspectRatio } from "react-icons/bs";
+import Lottie from "lottie-react";
 
 function LandingPage() {
   const { t, i18n } = useTranslation();
@@ -26,7 +33,30 @@ function LandingPage() {
         canInstall={canInstall}
         install={install}
       />
+
+      <img
+        src={Separator1}
+        alt=""
+        style={{
+          display: "block",
+          width: "100%",
+          aspectRatio: "960 / 200",
+          objectFit: "cover",
+        }}
+      />
+
       <FeatureCards i18n={i18n} />
+
+      <img
+        src={Separator2}
+        alt=""
+        style={{
+          display: "block",
+          width: "100%",
+          aspectRatio: "960 / 200",
+          objectFit: "cover",
+        }}
+      />
 
       {/* Call to Action Section */}
       <Footer>
@@ -110,7 +140,10 @@ const cards = [
       en: "Specifically designed for children with dyslexia using appropriate fonts and visual aids",
       ar: "مصمم خصيصاً للأطفال المصابين بعسر القراءة مع خطوط ومساعدات بصرية مناسبة",
     },
-    icon: "🎯",
+    icon: {
+      src: Dyslexic,
+      alt: "Dyslexia friendly illustration",
+    },
   },
   {
     title: {
@@ -121,7 +154,10 @@ const cards = [
       en: "Engaging games and interactive activities that make learning fun and exciting",
       ar: "العاب وأنشطة تفاعلية تجعل التعلم ممتعاً ومشوقاً",
     },
-    icon: "🎮",
+    icon: {
+      animationData: Interactive,
+      alt: "Interactive learning illustration",
+    },
   },
   {
     title: {
@@ -132,7 +168,10 @@ const cards = [
       en: "Track your child's progress and get detailed reports on their performance",
       ar: "تتبع تقدم طفلك وحصل على تقارير مفصلة عن أدائه",
     },
-    icon: "📈",
+    icon: {
+      animationData: Tracker,
+      alt: "Progress tracking illustration",
+    },
   },
 ];
 
@@ -154,6 +193,7 @@ function FeatureCards({ i18n }) {
                   : card.description.en
               }
               icon={card.icon}
+              bounce={index === 0}
             />
           ))}
         </div>
@@ -162,14 +202,43 @@ function FeatureCards({ i18n }) {
   );
 }
 
-function Card({ title, description, icon }) {
+function Card({ title, description, icon, bounce }) {
+  const isSvgIcon = icon && typeof icon === "object" && icon.src;
+  const isLottieIcon = icon && typeof icon === "object" && icon.animationData;
+
   return (
     <div className={styles.featureCard}>
-      <div className={styles.featureIcon}>{icon}</div>
-      <h3 className={styles.featureTitle} style={{ color: " #44958E" }}>
-        {title}
-      </h3>
-      <p className={styles.featureDescription}>{description}</p>
+      <div className={styles.featureCardInner}>
+        {/* Front */}
+        <div className={styles.featureCardFront}>
+          <div className={styles.featureIcon} style={bounce ? { animation: "bounce 2s infinite" } : {}}>
+            {isLottieIcon ? (
+              <Lottie
+                animationData={icon.animationData}
+                loop
+                autoplay
+                style={{ width: "100%", height: "100%" }}
+              />
+            ) : isSvgIcon ? (
+              <img src={icon.src} alt={icon.alt || title} />
+            ) : (
+              icon
+            )}
+          </div>
+
+          <h3 className={styles.featureTitle}>{title}</h3>
+
+          {/* يظهر فقط في الموبايل */}
+          <p className={styles.mobileDescription}>{description}</p>
+        </div>
+
+        {/* Back */}
+        <div className={styles.featureCardBack}>
+          <h3>{title}</h3>
+
+          <p className={styles.featureDescription}>{description}</p>
+        </div>
+      </div>
     </div>
   );
 }
