@@ -14,12 +14,21 @@ export const authAPI = {
     api.post("/api/Auth/reset-password", {
       email,
       token,
+      code: token,
+      resetCode: token,
       newPassword,
+      password: newPassword,
       confirmPassword,
+      passwordConfirmation: confirmPassword,
     }),
 
   validateResetToken: (email, token) =>
-    api.post("/api/Auth/validate-reset-token", { email, token }),
+    api.post("/api/Auth/validate-reset-token", {
+      email,
+      token,
+      code: token,
+      resetCode: token,
+    }),
 };
 
 // ─────────────────────────────────────────
