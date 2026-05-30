@@ -234,8 +234,6 @@ function Card({ title, description, icon, bounce }) {
 
         {/* Back */}
         <div className={styles.featureCardBack}>
-          <h3>{title}</h3>
-
           <p className={styles.featureDescription}>{description}</p>
         </div>
       </div>

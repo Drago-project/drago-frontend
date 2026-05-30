@@ -21,7 +21,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-2xl);
-  max-width: 1200px;
+  max-width: 1600px;
   width: 100%;
   align-items: center;
 }
