@@ -12,6 +12,7 @@ export default function SignUpForm() {
   const [userType, setUserType] = useState(null);
   const [error, setError] = useState("");
   const [invalidFields, setInvalidFields] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Email Verification State
   const [showVerification, setShowVerification] = useState(false);
@@ -112,6 +113,7 @@ export default function SignUpForm() {
     e.preventDefault();
     setError("");
     setInvalidFields([]);
+    setIsLoading(true);
 
     // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -126,6 +128,7 @@ export default function SignUpForm() {
       setStudentValidFields((prev) => prev.filter((f) => f !== "email"));
       setInvalidFields(["email"]);
       setError(t("signup.invalidEmail"));
+      setIsLoading(false);
       return;
     }
 
@@ -138,6 +141,7 @@ export default function SignUpForm() {
       setStudentValidFields((prev) => prev.filter((f) => f !== "password"));
       setInvalidFields(["password"]);
       setError(t("signup.passwordTooShort"));
+      setIsLoading(false);
       return;
     }
 
@@ -150,6 +154,7 @@ export default function SignUpForm() {
       setStudentValidFields((prev) => prev.filter((f) => f !== "password"));
       setInvalidFields(["password"]);
       setError(t("signup.passwordTooShort"));
+      setIsLoading(false);
       return;
     }
 
@@ -164,6 +169,7 @@ export default function SignUpForm() {
       );
       setInvalidFields(["confirmPassword"]);
       setError(t("signup.passwordsMismatch"));
+      setIsLoading(false);
       return;
     }
 
@@ -185,6 +191,7 @@ export default function SignUpForm() {
 
     if (!studentForm.dobDay || !studentForm.dobMonth || !studentForm.dobYear) {
       setError("Please select a valid date of birth");
+      setIsLoading(false);
       return;
     }
 
@@ -218,12 +225,20 @@ export default function SignUpForm() {
       setShowVerification(true);
     } catch (err) {
       console.error("Signup (student) error:", err);
-      if (err.response) {
-        const data = err.response.data;
-        setError(data?.message || JSON.stringify(data));
-      } else {
-        setError("تعذر الاتصال بالخادم (Connection Error).");
-      }
+      console.error("Status:", err.response?.status);
+      console.error("Data:", JSON.stringify(err.response?.data, null, 2));
+
+      const data = err.response?.data;
+      const errorMessage =
+        data?.message ||
+        data?.title ||
+        (data?.errors ? Object.values(data.errors).flat().join(", ") : null) ||
+        (typeof data === "string" ? data : null) ||
+        "Registration failed. Please try again.";
+
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -301,6 +316,7 @@ export default function SignUpForm() {
     e.preventDefault();
     setError("");
     setInvalidFields([]);
+    setIsLoading(true);
 
     // 1. Validation - check one field at a time, stop at first error
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -315,6 +331,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "email"));
       setInvalidFields(["email"]);
       setError(t("signup.invalidEmail"));
+      setIsLoading(false);
       return;
     }
 
@@ -327,6 +344,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "phoneNumber"));
       setInvalidFields(["phoneNumber"]);
       setError(t("signup.invalidPhoneNumber"));
+      setIsLoading(false);
       return;
     }
 
@@ -339,6 +357,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "licenseNumber"));
       setInvalidFields(["licenseNumber"]);
       setError(t("signup.invalidLicenseNumber"));
+      setIsLoading(false);
       return;
     }
 
@@ -354,6 +373,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "clinicPhone"));
       setInvalidFields(["clinicPhone"]);
       setError(t("signup.invalidPhoneNumber"));
+      setIsLoading(false);
       return;
     }
 
@@ -366,6 +386,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "password"));
       setInvalidFields(["password"]);
       setError(t("signup.passwordTooShort"));
+      setIsLoading(false);
       return;
     }
 
@@ -378,6 +399,7 @@ export default function SignUpForm() {
       setDoctorValidFields((prev) => prev.filter((f) => f !== "password"));
       setInvalidFields(["password"]);
       setError(t("signup.passwordTooShort"));
+      setIsLoading(false);
       return;
     }
 
@@ -392,6 +414,7 @@ export default function SignUpForm() {
       );
       setInvalidFields(["confirmPassword"]);
       setError(t("signup.passwordsMismatch"));
+      setIsLoading(false);
       return;
     }
 
@@ -420,12 +443,20 @@ export default function SignUpForm() {
       setShowVerification(true);
     } catch (err) {
       console.error("Signup (doctor) error:", err);
-      if (err.response) {
-        const data = err.response.data;
-        setError(data?.message || JSON.stringify(data));
-      } else {
-        setError("تعذر الاتصال بالخادم (Connection Error).");
-      }
+      console.error("Status:", err.response?.status);
+      console.error("Data:", JSON.stringify(err.response?.data, null, 2));
+
+      const data = err.response?.data;
+      const errorMessage =
+        data?.message ||
+        data?.title ||
+        (data?.errors ? Object.values(data.errors).flat().join(", ") : null) ||
+        (typeof data === "string" ? data : null) ||
+        "Registration failed. Please try again.";
+
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -697,8 +728,12 @@ export default function SignUpForm() {
             </div>
           )}
 
-          <button type="submit" className={styles["auth-btn"]}>
-            {t("signup.signUpButton")}
+          <button
+            type="submit"
+            className={styles["auth-btn"]}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : t("signup.signUpButton")}
           </button>
         </form>
 
@@ -963,8 +998,12 @@ export default function SignUpForm() {
             )}
           </div>
 
-          <button type="submit" className={styles["auth-btn"]}>
-            {t("signup.signUpButton")}
+          <button
+            type="submit"
+            className={styles["auth-btn"]}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : t("signup.signUpButton")}
           </button>
         </form>
         <p className={styles["auth-link"]}>
