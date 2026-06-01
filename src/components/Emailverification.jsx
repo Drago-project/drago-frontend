@@ -101,6 +101,27 @@ function EmailVerification({ email, userType, onClose, onVerified }) {
 
       console.log("Email verified successfully", response.data);
 
+      // Extract and store the authentication token from the response
+      const data = response.data || {};
+      const token =
+        data.token || data.accessToken || data.jwt || data?.data?.token || null;
+
+      if (token) {
+        try {
+          localStorage.setItem("authToken", token);
+        } catch (e) {
+          console.warn("Could not persist token:", e);
+        }
+      }
+
+      // Store user data if provided
+      try {
+        const userObj = data.user || data || {};
+        localStorage.setItem("userData", JSON.stringify(userObj));
+      } catch (e) {
+        console.warn("Could not persist user data:", e);
+      }
+
       if (onVerified) {
         onVerified();
       } else {
