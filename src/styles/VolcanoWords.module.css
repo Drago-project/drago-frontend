@@ -206,6 +206,9 @@ body {
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
   transition: width 0.3s ease;
 }
+.dragonImageMobile {
+  display: none;
+}
 
 .volcanoContainer {
   position: relative;
@@ -461,13 +464,14 @@ body {
 
   /* Drago must be small and positioned next to the tiny volcano */
   .dragonContainer {
-    top: 75%;
-    /* Position Drago relative to the tiny Volcano */
-    left: calc(50% + 5px);
+    display: none;
   }
-
-  .dragonImage {
-    width: 150px; /* Smallest functional size for Drago */
+  .dragonImageMobile {
+    display: block;
+    width: 150px;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+    transition: width 0.3s ease;
   }
 
   /* Hide markers on tiny screens to save space */

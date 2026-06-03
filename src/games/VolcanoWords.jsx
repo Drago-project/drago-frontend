@@ -70,7 +70,9 @@ function VolcanoWords() {
         const first = data["1"] ? "1" : Object.keys(data)[0];
         setLevelId(first);
 
-        const list = Array.isArray(data[first]?.content) ? data[first].content : [];
+        const list = Array.isArray(data[first]?.content)
+          ? data[first].content
+          : [];
         setWords(shuffle(list));
         setCurrentWordIndex(0);
       } catch (e) {
@@ -98,7 +100,7 @@ function VolcanoWords() {
         animationDelay: `${i * 0.4}s`,
         animationDuration: `${2 + Math.random() * 2}s`,
       })),
-    []
+    [],
   );
 
   // Helpers
@@ -121,15 +123,31 @@ function VolcanoWords() {
   function renderMistakes(analysisJson) {
     if (!analysisJson?.mistakes?.length) {
       return (
-        <div style={{ marginTop: 12, fontSize: 14, color: "#2e7d32", fontWeight: 700 }}>
+        <div
+          style={{
+            marginTop: 12,
+            fontSize: 14,
+            color: "#2e7d32",
+            fontWeight: 700,
+          }}
+        >
           {t("volcanoWords.feedback.noMistakes")}
         </div>
       );
     }
 
     return (
-      <div style={{ marginTop: 12, textAlign: "left", fontSize: 14, lineHeight: 1.6 }}>
-        <div style={{ fontWeight: 800, marginBottom: 6 }}>{t("volcanoWords.mistakes.title")}</div>
+      <div
+        style={{
+          marginTop: 12,
+          textAlign: "left",
+          fontSize: 14,
+          lineHeight: 1.6,
+        }}
+      >
+        <div style={{ fontWeight: 800, marginBottom: 6 }}>
+          {t("volcanoWords.mistakes.title")}
+        </div>
 
         {analysisJson.mistakes.map((m, idx) => {
           if (m.type === "missing") {
@@ -152,8 +170,8 @@ function VolcanoWords() {
             const edits = m?.char_detail?.char_edits || [];
             return (
               <div key={idx} style={{ color: "#e53935" }}>
-                • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b> {t("volcanoWords.mistakes.insteadOf")}{" "}
-                <b>{m.expected}</b>
+                • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b>{" "}
+                {t("volcanoWords.mistakes.insteadOf")} <b>{m.expected}</b>
                 {edits.length > 0 && (
                   <div style={{ marginLeft: 10, marginTop: 4, color: "#444" }}>
                     {t("volcanoWords.mistakes.letters")}
@@ -166,10 +184,18 @@ function VolcanoWords() {
                           </>
                         )}
                         {e.type === "missing_char" && (
-                          <> {t("volcanoWords.mistakes.missingChar")} "{e.expected_char}" </>
+                          <>
+                            {" "}
+                            {t("volcanoWords.mistakes.missingChar")} "
+                            {e.expected_char}"{" "}
+                          </>
                         )}
                         {e.type === "extra_char" && (
-                          <> {t("volcanoWords.mistakes.extraChar")} "{e.spoken_char}" </>
+                          <>
+                            {" "}
+                            {t("volcanoWords.mistakes.extraChar")} "
+                            {e.spoken_char}"{" "}
+                          </>
                         )}
                       </span>
                     ))}
@@ -267,7 +293,9 @@ function VolcanoWords() {
     setHints((prev) => prev - 1);
 
     try {
-      const audio = new Audio(`${API_BASE}/tts?word=${encodeURIComponent(activeWord)}&t=${Date.now()}`);
+      const audio = new Audio(
+        `${API_BASE}/tts?word=${encodeURIComponent(activeWord)}&t=${Date.now()}`,
+      );
       await audio.play();
     } catch (e) {
       console.error(e);
@@ -306,10 +334,13 @@ function VolcanoWords() {
     }
   };
 
-
   async function startRecording(wordAtStart) {
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
     });
 
     const recorder = new MediaRecorder(stream); // let browser choose best
@@ -364,7 +395,9 @@ function VolcanoWords() {
 
         if (check.status === "error") {
           setPhase("idle");
-          setLastError(check.message || t("volcanoWords.errors.checkWordError"));
+          setLastError(
+            check.message || t("volcanoWords.errors.checkWordError"),
+          );
           return;
         }
 
@@ -401,7 +434,9 @@ function VolcanoWords() {
     setTimeout(() => {
       try {
         recorder.requestData();
-      } catch { }
+      } catch {
+        console.log();
+      }
     }, 150);
 
     // OPTIONAL safety max: auto-stop after 15s if user forgets
@@ -409,11 +444,12 @@ function VolcanoWords() {
       if (recorderRef.current?.state === "recording") {
         try {
           recorderRef.current.stop();
-        } catch { }
+        } catch {
+          console.log();
+        }
       }
     }, 15000);
   }
-
 
   // Helper: fetch with timeout
   async function fetchWithTimeout(url, options, timeout = API_TIMEOUT_MS) {
@@ -471,7 +507,11 @@ function VolcanoWords() {
 
         <div className={styles.heartsContainer}>
           {[...Array(INITIAL_HINTS)].map((_, i) => (
-            <span key={i} className={styles.heart} style={{ opacity: i < hints ? 1 : 0.3 }}>
+            <span
+              key={i}
+              className={styles.heart}
+              style={{ opacity: i < hints ? 1 : 0.3 }}
+            >
               💛
             </span>
           ))}
@@ -487,10 +527,10 @@ function VolcanoWords() {
           >
             {levels
               ? Object.keys(levels).map((id) => (
-                <option key={id} value={id}>
-                  {levels[id]?.name || `Level ${id}`}
-                </option>
-              ))
+                  <option key={id} value={id}>
+                    {levels[id]?.name || `Level ${id}`}
+                  </option>
+                ))
               : null}
           </select>
         </div>
@@ -521,6 +561,7 @@ function VolcanoWords() {
           similarity={similarity}
           analysis={analysis}
           renderMistakes={renderMistakes}
+          // dragoPose={dragoPose}
         />
 
         <div className={styles.dragonContainer}>
@@ -532,6 +573,7 @@ function VolcanoWords() {
           lavaBubbles={lavaBubbles}
           feedback={feedback}
           showFeedbackIndicator={showFeedbackIndicator}
+          dragoPose={dragoPose}
         />
       </div>
 
@@ -550,18 +592,32 @@ function VolcanoWords() {
 
 // Sub-Components
 
-function VolcanoPanel({ lavaLevel, lavaBubbles, feedback, showFeedbackIndicator }) {
+function VolcanoPanel({
+  lavaLevel,
+  lavaBubbles,
+  feedback,
+  showFeedbackIndicator,
+  dragoPose,
+}) {
   return (
     <div className={styles.volcanoPanel}>
       <div style={{ position: "relative" }}>
+        <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} />
         <div className={styles.volcanoContainer}>
           <div className={styles.volcanoTop}></div>
 
           <div className={styles.lavaContainer}>
-            <div className={styles.lavaLevel} style={{ height: `${lavaLevel}%` }}>
+            <div
+              className={styles.lavaLevel}
+              style={{ height: `${lavaLevel}%` }}
+            >
               <div className={styles.lavaSurface}></div>
               {lavaBubbles.map((bubble) => (
-                <div key={bubble.key} className={styles.lavaBubble} style={bubble} />
+                <div
+                  key={bubble.key}
+                  className={styles.lavaBubble}
+                  style={bubble}
+                />
               ))}
             </div>
           </div>
@@ -574,7 +630,11 @@ function VolcanoPanel({ lavaLevel, lavaBubbles, feedback, showFeedbackIndicator 
         </div>
 
         <div className={styles.percentageMarkers}>
-          <div className={`${styles.marker} ${lavaLevel >= 100 ? styles.critical : ""}`}>100%</div>
+          <div
+            className={`${styles.marker} ${lavaLevel >= 100 ? styles.critical : ""}`}
+          >
+            100%
+          </div>
           <div className={styles.marker}>75%</div>
           <div className={styles.marker}>50%</div>
           <div className={styles.marker}>25%</div>
@@ -612,7 +672,11 @@ function WordPanal({
   return (
     <div className={styles.wordPanel}>
       <div className={styles.wordCard}>
-        <div className={styles.wordDisplay} style={{ direction: isArabic ? "rtl" : "ltr" }}>
+        {/* <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} /> */}
+        <div
+          className={styles.wordDisplay}
+          style={{ direction: isArabic ? "rtl" : "ltr" }}
+        >
           {word || "..."}
         </div>
 
@@ -626,18 +690,31 @@ function WordPanal({
 
         {feedback && (
           <div
-            className={`${styles.feedbackMessage} ${feedback === "correct" ? styles.feedbackCorrect : styles.feedbackWrong
-              }`}
+            className={`${styles.feedbackMessage} ${
+              feedback === "correct"
+                ? styles.feedbackCorrect
+                : styles.feedbackWrong
+            }`}
           >
-            {feedback === "correct" ? t("volcanoWords.feedback.correct") : t("volcanoWords.feedback.wrong")}
+            {feedback === "correct"
+              ? t("volcanoWords.feedback.correct")
+              : t("volcanoWords.feedback.wrong")}
           </div>
         )}
 
-        {isRecording && <div className={styles.feedbackMessage}>{t("volcanoWords.phases.listening")}</div>}
+        {isRecording && (
+          <div className={styles.feedbackMessage}>
+            {t("volcanoWords.phases.listening")}
+          </div>
+        )}
 
         {transcript && (
-          <div className={styles.transcriptText} style={{ direction: isArabic ? "rtl" : "ltr" }}>
-            {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>"
+          <div
+            className={styles.transcriptText}
+            style={{ direction: isArabic ? "rtl" : "ltr" }}
+          >
+            {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>
+            "
           </div>
         )}
 
@@ -649,7 +726,12 @@ function WordPanal({
 
         {diffHtml && (
           <div
-            style={{ marginTop: 10, fontSize: 16, direction: "rtl", lineHeight: 1.7 }}
+            style={{
+              marginTop: 10,
+              fontSize: 16,
+              direction: "rtl",
+              lineHeight: 1.7,
+            }}
             dangerouslySetInnerHTML={{ __html: diffHtml }}
           />
         )}
@@ -658,22 +740,32 @@ function WordPanal({
 
         {counts && (
           <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>
-            الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words}, مستبدل {counts.substitute_words}
+            الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words},
+            مستبدل {counts.substitute_words}
           </div>
         )}
 
         {lastError && (
-          <div style={{ marginTop: 10, fontSize: 12, color: "#f44336", fontWeight: 600 }}>
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 12,
+              color: "#f44336",
+              fontWeight: 600,
+            }}
+          >
             {lastError}
           </div>
         )}
 
         <div className={styles.wordCounter}>
-          {t("volcanoWords.word")} {Math.min(wordIndex + 1, numWords || 1)} {t("volcanoWords.of")} {numWords || 1}
+          {t("volcanoWords.word")} {Math.min(wordIndex + 1, numWords || 1)}{" "}
+          {t("volcanoWords.of")} {numWords || 1}
         </div>
       </div>
 
       <div className={styles.actionButtons}>
+<<<<<<< HEAD
         {feedback === "correct" ? (
           <ActionBtn icon="➡️" primary onClick={handleNextWord} />
         ) : (
@@ -687,6 +779,24 @@ function WordPanal({
             <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
           </>
         )}
+=======
+        <ActionBtn
+          icon={isRecording ? "🛑" : "🎤"}
+          primary
+          disabled={isGameOver || (!isRecording && phase !== "idle")}
+          onClick={handleStartRecording}
+        />
+        <ActionBtn
+          icon="💡"
+          disabled={hints <= 0 || isRecording || isGameOver}
+          onClick={handleUseHint}
+        />
+        <ActionBtn
+          icon="➡️"
+          disabled={isRecording || isGameOver}
+          onClick={handleSkipWord}
+        />
+>>>>>>> dev
       </div>
     </div>
   );
@@ -694,7 +804,11 @@ function WordPanal({
 
 function ActionBtn({ icon, onClick, disabled = false, primary = false }) {
   return (
-    <button className={`${styles.actionBtn} ${primary ? styles.primary : ""}`} disabled={disabled} onClick={onClick}>
+    <button
+      className={`${styles.actionBtn} ${primary ? styles.primary : ""}`}
+      disabled={disabled}
+      onClick={onClick}
+    >
       {icon}
     </button>
   );

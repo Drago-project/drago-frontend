@@ -9,7 +9,7 @@
   background-size: cover;
   background-position: center;  
 
-  font-family: "Verdana", sans-serif;
+  /* font-family: "Verdana", sans-serif; */
   display: flex;
   flex-direction: column;
   overflow: hidden;

@@ -1,22 +1,45 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/app-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Drago - AI-powered learning platform for children with dyslexia"
+    />
+    <meta name="keywords" content="dyslexia, learning, children, reading" />
+
+    <!-- Open Graph (for sharing on social media) -->
+    <meta property="og:title" content="Drago - Dyslexia Learning Platform" />
+    <meta
+      property="og:description"
+      content="Fun learning for dyslexic children"
+    />
+    <meta property="og:image" content="/app-icon.png" />
+    <meta property="og:url" content="https://your-domain.com" />
+    <link rel="icon" type="image/svg+xml" href="/app-icon.svg" />
+    <link
+      rel="preload"
+      href="/fonts/open-dyslexic-font/OpendyslexicRegular-nRLZ0.otf"
+      as="font"
+      type="font/otf"
+      crossorigin
+    />
     <title>Drago</title>
 
     <style>
       @font-face {
         font-family: "OpenDyslexic";
-        src: url("public/fonts/open-dyslexic-font/OpendyslexicRegular-nRLZ0.otf")
+        src: url("/fonts/open-dyslexic-font/OpendyslexicRegular-nRLZ0.otf")
           format("opentype");
+        font-display: swap; /* ← add this */
       }
       @font-face {
         font-family: "Maqroo";
-        src: url("public/fonts/maqroo-font/Maqroo-Regular.ttf")
-          format("truetype");
+        src: url("/fonts/maqroo-font/Maqroo-Regular.ttf") format("truetype");
+        font-display: swap; /* ← add this */
       }
+
       /* Dyslexia-friendly base styles */
       * {
         margin: 0;

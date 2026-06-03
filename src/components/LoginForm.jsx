@@ -2,7 +2,9 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link, useNavigate } from "react-router-dom";
-import api from "../server/api";
+import { authAPI } from "../server/endpoints";
+import ForgotPassword from "./ForgotPassword";
+import ResetPasswordWithCode from "./ResetPasswordCode";
 
 export default function LoginForm() {
   const { t } = useTranslation();
@@ -12,19 +14,22 @@ export default function LoginForm() {
     password: "",
   });
 
-  // NEW: State for the error message
+  // State for forgot password flow
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    // Clear error when user starts typing again
     if (errorMessage) setErrorMessage("");
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage(""); // Reset error on new attempt
+    setErrorMessage("");
 
     if (!form.email || !form.password) {
       setErrorMessage(t("login.missingFields"));
@@ -34,10 +39,7 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await api.post("/api/Auth/login", {
-        email: form.email,
-        password: form.password,
-      });
+      const response = await authAPI.login(form.email, form.password);
 
       const data = response.data || {};
       const token =
@@ -102,7 +104,6 @@ export default function LoginForm() {
       }
     } catch (err) {
       console.error("Login error:", err);
-      // Replace alert with setErrorMessage
       if (err.response) {
         setErrorMessage(
           err.response.data?.message || t("login.failed") || "Login failed",
@@ -115,12 +116,28 @@ export default function LoginForm() {
     }
   };
 
+  // Handle forgot password flow
+  const handleForgotPasswordClick = () => {
+    setShowForgotPassword(true);
+  };
+
+  const handleCodeSent = (email) => {
+    setResetEmail(email);
+    setShowForgotPassword(false);
+    setShowResetPassword(true);
+  };
+
+  const handleResetSuccess = () => {
+    setShowResetPassword(false);
+    setResetEmail("");
+    // Optionally show a success message
+  };
+
   return (
     <>
       <h2 className={styles["title"]}>{t("login.title")}</h2>
       <p className={styles["subtitle"]}>{t("login.subtitle")}</p>
 
-      {/* NEW: Conditional Error Message Container */}
       {errorMessage && (
         <div className={styles["error-banner"]}>{errorMessage}</div>
       )}
@@ -145,6 +162,31 @@ export default function LoginForm() {
           style={{ fontFamily: "monospace" }}
         />
 
+        {/* Forgot Password Link */}
+        <div
+          style={{
+            textAlign: "center",
+
+            marginBottom: "12px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleForgotPasswordClick}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#1877f2",
+              fontSize: "14px",
+              cursor: "pointer",
+              textDecoration: "underline",
+              padding: 0,
+            }}
+          >
+            {t("login.forgotPassword") || "Forgot password?"}
+          </button>
+        </div>
+
         <button type="submit" className={styles["auth-btn"]} disabled={loading}>
           {loading ? "..." : t("login.loginButton")}
         </button>
@@ -153,6 +195,26 @@ export default function LoginForm() {
       <p className={styles["auth-link"]}>
         <Link to="/auth/signup">{t("login.createAccount")}</Link>
       </p>
+
+      {/* Forgot Password Modal - Step 1: Enter Email */}
+      {showForgotPassword && (
+        <ForgotPassword
+          onClose={() => setShowForgotPassword(false)}
+          onCodeSent={handleCodeSent}
+        />
+      )}
+
+      {/* Reset Password Modal - Step 2: Enter Code + New Password */}
+      {showResetPassword && (
+        <ResetPasswordWithCode
+          email={resetEmail}
+          onClose={() => {
+            setShowResetPassword(false);
+            setResetEmail("");
+          }}
+          onSuccess={handleResetSuccess}
+        />
+      )}
     </>
   );
 }
