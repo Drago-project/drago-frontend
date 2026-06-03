@@ -765,7 +765,6 @@ function WordPanal({
       </div>
 
       <div className={styles.actionButtons}>
-<<<<<<< HEAD
         {feedback === "correct" ? (
           <ActionBtn icon="➡️" primary onClick={handleNextWord} />
         ) : (
@@ -779,24 +778,6 @@ function WordPanal({
             <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
           </>
         )}
-=======
-        <ActionBtn
-          icon={isRecording ? "🛑" : "🎤"}
-          primary
-          disabled={isGameOver || (!isRecording && phase !== "idle")}
-          onClick={handleStartRecording}
-        />
-        <ActionBtn
-          icon="💡"
-          disabled={hints <= 0 || isRecording || isGameOver}
-          onClick={handleUseHint}
-        />
-        <ActionBtn
-          icon="➡️"
-          disabled={isRecording || isGameOver}
-          onClick={handleSkipWord}
-        />
->>>>>>> dev
       </div>
     </div>
   );
