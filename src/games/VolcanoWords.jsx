@@ -193,13 +193,17 @@ function VolcanoWords() {
     setLavaLevel((prev) => Math.max(0, prev - 10));
 
     setTimeout(() => {
-      if (currentWordIndex < words.length - 1) {
-        setCurrentWordIndex((prev) => prev + 1);
-        resetPerWordUI();
-      } else {
-        setGameStatus("won");
-      }
+      setShowFeedbackIndicator(false);
     }, 1200);
+  };
+
+  const handleNextWord = () => {
+    if (currentWordIndex < words.length - 1) {
+      setCurrentWordIndex((prev) => prev + 1);
+      resetPerWordUI();
+    } else {
+      setGameStatus("won");
+    }
   };
 
   const handleWrongAnswer = () => {
@@ -509,6 +513,7 @@ function VolcanoWords() {
           handleStartRecording={handleStartRecording}
           handleUseHint={handleUseHint}
           handleSkipWord={handleSkipWord}
+          handleNextWord={handleNextWord}
           isGameOver={isGameOver}
           diffHtml={diffHtml}
           counts={counts}
@@ -592,6 +597,7 @@ function WordPanal({
   handleStartRecording,
   handleUseHint,
   handleSkipWord,
+  handleNextWord,
   isGameOver,
   diffHtml,
   counts,
@@ -668,13 +674,19 @@ function WordPanal({
       </div>
 
       <div className={styles.actionButtons}>
-        <ActionBtn
-          icon={isRecording ? "🛑" : "🎤"}
-          primary
-          disabled={isGameOver || (!isRecording && phase !== "idle")}
-          onClick={handleStartRecording} />
-        <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
-        <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+        {feedback === "correct" ? (
+          <ActionBtn icon="➡️" primary onClick={handleNextWord} />
+        ) : (
+          <>
+            <ActionBtn
+              icon={isRecording ? "🛑" : "🎤"}
+              primary
+              disabled={isGameOver || (!isRecording && phase !== "idle")}
+              onClick={handleStartRecording} />
+            <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
+            <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+          </>
+        )}
       </div>
     </div>
   );
