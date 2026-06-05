@@ -1,12 +1,15 @@
+import { useTranslation } from "react-i18next";
+import React, { useState, useEffect, useMemo, Suspense  } from "react";
+import { Link } from "react-router-dom";
+
 import volcano from "../assets/islands/Adventure Games Island.svg";
 import pyramids from "../assets/islands/History Stories Island.svg";
 import writing from "../assets/islands/Writing Workshop Island.svg";
 import books from "../assets/islands/Reading Quest Island.svg";
 import styles from "../styles/Home.module.css";
-import Lottie from "lottie-react";
-import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+// import Lottie from "lottie-react";
+
+const Lottie = React.lazy(() => import("lottie-react"));
 
 const Island = React.memo(function Island({ to, label, img, alt, children }) {
   return (
@@ -43,13 +46,15 @@ function Home() {
       writing: isRTL ? "جزيرة الكتابة" : "Writing Workshop Island",
       reading: isRTL ? "جزيرة القراءة" : "Reading Quest Island",
     }),
-    [isRTL]
+    [isRTL],
   );
 
   const animationNode = useMemo(() => {
     if (animationData) {
       return (
-        <Lottie animationData={animationData} loop={true} autoplay={true} />
+        <Suspense fallback={<div style={{ width: 250, height: 250 }} />}>
+          <Lottie animationData={animationData} loop autoplay />
+        </Suspense>
       );
     }
     return (

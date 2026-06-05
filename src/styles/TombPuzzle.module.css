@@ -17,7 +17,7 @@
 
   /* تنسيقات النصوص */
   color: #ffffff;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  /* font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; */
   direction: rtl;
   text-align: center;
   padding: 20px;
@@ -176,7 +176,7 @@
   border-radius: 50px;
   cursor: pointer;
   margin-top: 20px;
-  font-family: inherit;
+  /* font-family: inherit; */
   transition: all 0.2s;
   box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
   border: 2px solid #ffd700;

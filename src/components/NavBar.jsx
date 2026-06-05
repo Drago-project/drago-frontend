@@ -1,7 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
-import { FaEnvelope } from "react-icons/fa"; // السطر ده كان متكرر، خليته مرة واحدة بس
+import {
+  FaHome,
+  FaInfoCircle,
+  FaEnvelope,
+  FaSignInAlt,
+  FaUserPlus,
+} from "react-icons/fa";
 import LanguageToggle from "./LanguageToggle";
 import styles from "../styles/NavBar.module.css";
 import logo from "../assets/backgrunds/web-logo.png";
@@ -11,7 +17,6 @@ function NavBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 500);
@@ -30,6 +35,7 @@ function NavBar() {
   };
 
   const isRTL = i18n.language === "ar";
+  // const iconStyle = { fontSize: "1.2rem", marginBottom: "2px" };
 
   return (
     <nav
@@ -38,10 +44,16 @@ function NavBar() {
     >
       <div className={styles.navContainer}>
         <NavLink to="/" onClick={closeMobileMenu}>
-          <img src={logo} alt="Drago Logo" className={styles.logo} />
+          <img
+            src={logo}
+            alt="Drago Logo"
+            className={styles.logo}
+            width="184"
+            height="50"
+            loading="eager"
+          />
         </NavLink>
 
-        {/* Desktop Navigation */}
         <ul className={styles.navList}>
           <li className={styles.navItem}>
             <LanguageToggle />
@@ -53,7 +65,8 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              {i18n.language === "ar" ? "الرئيسية" : "Home"}
+              {/* <FaHome style={iconStyle} /> */}
+              <span>{i18n.language === "ar" ? "الرئيسية" : "Home"}</span>
             </NavLink>
           </li>
           <li className={styles.navItem}>
@@ -63,11 +76,12 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              {i18n.language === "ar" ? "عن عسر القراءة" : "About dyslexia"}
+              {/* <FaInfoCircle style={iconStyle} /> */}
+              <span>
+                {i18n.language === "ar" ? "عن عسر القراءة" : "About dyslexia"}
+              </span>
             </NavLink>
           </li>
-
-          {/* --- لينك Contact --- */}
           <li className={styles.navItem}>
             <NavLink
               to="/contact-us"
@@ -75,15 +89,10 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              {/* الأيقونة فوق */}
-              <FaEnvelope style={{ fontSize: "1.2rem", marginBottom: "2px" }} />
-
-              {/* الكلمة تحت */}
+              {/* <FaEnvelope style={iconStyle} /> */}
               <span>{i18n.language === "ar" ? "اتصل بنا" : "Contact"}</span>
             </NavLink>
           </li>
-          {/* ------------------- */}
-
           <li className={styles.navItem}>
             <NavLink
               to="/auth/login"
@@ -91,7 +100,8 @@ function NavBar() {
                 `${styles.navLink} ${isActive ? styles.active : ""}`
               }
             >
-              {i18n.language === "ar" ? "تسجيل دخول" : "Log In"}
+              {/* <FaSignInAlt style={iconStyle} /> */}
+              <span>{i18n.language === "ar" ? "تسجيل دخول" : "Log In"}</span>
             </NavLink>
           </li>
           <li className={styles.navItem}>
@@ -101,12 +111,12 @@ function NavBar() {
                 `${styles.navLink} ${styles.authButton} ${isActive ? styles.active : ""}`
               }
             >
-              {i18n.language === "ar" ? "اشتراك" : "SignUp"}
+              {/* <FaUserPlus style={iconStyle} /> */}
+              <span>{i18n.language === "ar" ? "اشتراك" : "Sign Up"}</span>
             </NavLink>
           </li>
         </ul>
 
-        {/* Mobile Menu Button */}
         <button
           className={styles.mobileMenuButton}
           onClick={toggleMobileMenu}
@@ -115,7 +125,6 @@ function NavBar() {
           {isMobileMenuOpen ? "✕" : "☰"}
         </button>
 
-        {/* Mobile Navigation */}
         <div
           className={`${styles.mobileMenu} ${isMobileMenuOpen ? styles.open : ""}`}
         >
