@@ -16,13 +16,106 @@ const INITIAL_HINTS = 5;
 // Recording settings
 const API_TIMEOUT_MS = 30000; // 30 second timeout for API calls
 
+const defaultProgress = {
+  unlockedLevel: 1,
+  completedStages: {
+    "1": [false, false, false, false, false],
+    "2": [false, false, false, false, false],
+    "3": [false, false, false, false, false],
+    "4": [false, false, false, false, false],
+    "5": [false, false, false, false, false],
+    "6": [false, false, false, false, false]
+  },
+  stars: {
+    "1": [0, 0, 0, 0, 0],
+    "2": [0, 0, 0, 0, 0],
+    "3": [0, 0, 0, 0, 0],
+    "4": [0, 0, 0, 0, 0],
+    "5": [0, 0, 0, 0, 0],
+    "6": [0, 0, 0, 0, 0]
+  }
+};
+
+const LEVEL_METADATA_EN = {
+  "1": {
+    name: "Level 1: Short Vowels",
+    focus: "Three-letter words with short vowels"
+  },
+  "2": {
+    name: "Level 2: Long Vowels (Mudood)",
+    focus: "Alif, Waw, and Yaa"
+  },
+  "3": {
+    name: "Level 3: Sukoon & Tanween",
+    focus: "Double vowels and silent marks"
+  },
+  "4": {
+    name: "Level 4: Shaddah & Ta Marbutah",
+    focus: "Doubled sounds & feminine endings"
+  },
+  "5": {
+    name: "Level 5: Solar & Lunar Articles",
+    focus: "Definite articles (Al-)"
+  },
+  "6": {
+    name: "Level 6: Simple Sentences",
+    focus: "Simple sentences & reading fluency"
+  }
+};
+
+const LEVEL_METADATA_AR = {
+  "1": {
+    name: "المستوى 1: الحركات القصيرة",
+    focus: "الكلمات الثلاثية بالحركات القصيرة"
+  },
+  "2": {
+    name: "المستوى 2: المدود الطويلة",
+    focus: "الألف والواو والياء"
+  },
+  "3": {
+    name: "المستوى 3: المقطع الساكن والتنوين",
+    focus: "الساكن والتنوين بالضم والفتح والكسر"
+  },
+  "4": {
+    name: "المستوى 4: الشدة والتاء المربوطة",
+    focus: "الحروف المشددة والتاء المربوطة"
+  },
+  "5": {
+    name: "المستوى 5: اللام الشمسية والقمرية",
+    focus: "ال التعريف الشمسية والقمرية"
+  },
+  "6": {
+    name: "المستوى 6: الجمل البسيطة",
+    focus: "الجمل البسيطة والطلاقة القرائية"
+  }
+};
+
 function VolcanoWords() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  // Levels
+  // Levels & Progress States
   const [levels, setLevels] = useState(null);
   const [levelId, setLevelId] = useState("1");
+  const [view, setView] = useState("levels"); // 'levels', 'stages', 'game'
+  const [selectedLevelId, setSelectedLevelId] = useState(null);
+  const [selectedStageIndex, setSelectedStageIndex] = useState(null);
+  const [progress, setProgress] = useState(() => {
+    try {
+      const stored = localStorage.getItem("volcano_words_progress");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const newProgress = { ...defaultProgress, ...parsed };
+        newProgress.completedStages = { ...defaultProgress.completedStages, ...parsed.completedStages };
+        newProgress.stars = { ...defaultProgress.stars, ...parsed.stars };
+        return newProgress;
+      }
+    } catch (e) {
+      console.error("Failed to parse progress", e);
+    }
+    return defaultProgress;
+  });
+
   const [words, setWords] = useState([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
@@ -69,12 +162,6 @@ function VolcanoWords() {
 
         const first = data["1"] ? "1" : Object.keys(data)[0];
         setLevelId(first);
-
-        const list = Array.isArray(data[first]?.content)
-          ? data[first].content
-          : [];
-        setWords(shuffle(list));
-        setCurrentWordIndex(0);
       } catch (e) {
         console.error(e);
         setLastError(t("volcanoWords.errors.loadLevelsFailed"));
@@ -119,6 +206,82 @@ function VolcanoWords() {
     setLastError("");
     setPhase("idle");
   }
+
+  const handleSelectLevel = (levelId) => {
+    const levelNum = parseInt(levelId, 10);
+    if (levelNum > progress.unlockedLevel) return;
+    setSelectedLevelId(levelId);
+    setView("stages");
+  };
+
+  const handleSelectStage = (stageIndex) => {
+    const isStageUnlocked = stageIdx => stageIdx === 0 || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+    if (!isStageUnlocked(stageIndex)) return;
+
+    setSelectedStageIndex(stageIndex);
+
+    const levelData = levels[selectedLevelId];
+    if (!levelData || !levelData.content) return;
+
+    const totalWords = levelData.content;
+    const numStages = 5;
+    const stageSize = Math.ceil(totalWords.length / numStages);
+
+    let stageWords = totalWords.slice(stageIndex * stageSize, (stageIndex + 1) * stageSize);
+    if (stageWords.length === 0) {
+      stageWords = totalWords.slice(0, 5);
+    }
+
+    setLevelId(selectedLevelId);
+    setWords(shuffle(stageWords));
+    setCurrentWordIndex(0);
+
+    setLavaLevel(INITIAL_LAVA_LEVEL);
+    setHints(INITIAL_HINTS);
+    setScore(0);
+    setGameStatus("playing");
+    resetPerWordUI();
+    setView("game");
+  };
+
+  const handleStageCompleted = (finalLavaLevel) => {
+    let earnedStars = 1;
+    if (finalLavaLevel <= 40) {
+      earnedStars = 3;
+    } else if (finalLavaLevel <= 75) {
+      earnedStars = 2;
+    }
+
+    setProgress((prev) => {
+      const completedStages = { ...prev.completedStages };
+      const stars = { ...prev.stars };
+
+      const currentLevelStages = [...(completedStages[selectedLevelId] || [false, false, false, false, false])];
+      currentLevelStages[selectedStageIndex] = true;
+      completedStages[selectedLevelId] = currentLevelStages;
+
+      const currentLevelStars = [...(stars[selectedLevelId] || [0, 0, 0, 0, 0])];
+      currentLevelStars[selectedStageIndex] = Math.max(currentLevelStars[selectedStageIndex] || 0, earnedStars);
+      stars[selectedLevelId] = currentLevelStars;
+
+      // Check if all 5 stages of the current level are completed
+      const allCompleted = currentLevelStages.every(Boolean);
+      let unlockedLevel = prev.unlockedLevel;
+      if (allCompleted) {
+        unlockedLevel = Math.min(6, Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1));
+      }
+
+      const updatedProgress = {
+        ...prev,
+        unlockedLevel,
+        completedStages,
+        stars
+      };
+
+      localStorage.setItem("volcano_words_progress", JSON.stringify(updatedProgress));
+      return updatedProgress;
+    });
+  };
 
   function renderMistakes(analysisJson) {
     if (!analysisJson?.mistakes?.length) {
@@ -219,13 +382,18 @@ function VolcanoWords() {
     setLavaLevel((prev) => Math.max(0, prev - 10));
 
     setTimeout(() => {
-      if (currentWordIndex < words.length - 1) {
-        setCurrentWordIndex((prev) => prev + 1);
-        resetPerWordUI();
-      } else {
-        setGameStatus("won");
-      }
+      setShowFeedbackIndicator(false);
     }, 1200);
+  };
+
+  const handleNextWord = () => {
+    if (currentWordIndex < words.length - 1) {
+      setCurrentWordIndex((prev) => prev + 1);
+      resetPerWordUI();
+    } else {
+      setGameStatus("won");
+      handleStageCompleted(lavaLevel);
+    }
   };
 
   const handleWrongAnswer = () => {
@@ -251,37 +419,24 @@ function VolcanoWords() {
       setCurrentWordIndex((prev) => prev + 1);
       resetPerWordUI();
     } else {
-      setGameStatus(score > (words.length / 2) * 10 ? "won" : "lost");
+      const finalStatus = score > (words.length / 2) * 10 ? "won" : "lost";
+      setGameStatus(finalStatus);
+      if (finalStatus === "won") {
+        handleStageCompleted(lavaLevel);
+      }
     }
   };
 
   const restartGame = () => {
-    setCurrentWordIndex(0);
-    setLavaLevel(INITIAL_LAVA_LEVEL);
-    setHints(INITIAL_HINTS);
-    setScore(0);
-    setIsRecording(false);
-    resetPerWordUI();
-    setGameStatus("playing");
-    setDragoPose(reading);
-
-    if (levels?.[levelId]?.content) {
-      setWords(shuffle(levels[levelId].content));
+    if (gameStatus === "won") {
+      setView("stages");
+      setGameStatus("playing");
+      resetPerWordUI();
+    } else {
+      handleSelectStage(selectedStageIndex);
     }
   };
 
-  const handleChangeLevel = (newLevelId) => {
-    if (!levels?.[newLevelId]) return;
-    setLevelId(newLevelId);
-    setWords(shuffle(levels[newLevelId].content || []));
-    setCurrentWordIndex(0);
-
-    setLavaLevel(INITIAL_LAVA_LEVEL);
-    setHints(INITIAL_HINTS);
-    setScore(0);
-    setGameStatus("playing");
-    resetPerWordUI();
-  };
 
   // TTS Hint
   const handleUseHint = async () => {
@@ -494,11 +649,161 @@ function VolcanoWords() {
   }
 
   // Render
+  if (!levels) {
+    return (
+      <div className={styles.gameContainer} style={{ justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <div style={{ color: "#fff", fontSize: 24, fontWeight: 700 }}>
+          {t("volcanoWords.loading", "جاري تحميل المستويات...")}
+        </div>
+      </div>
+    );
+  }
+
+  // Level Selection view
+  if (view === "levels") {
+    return (
+      <div className={styles.gameContainer}>
+        <nav className={styles.headerNav}>
+          <button className={styles.exitBtn} onClick={() => navigate("/home")}>
+            {t("volcanoWords.exit", "خروج")}
+          </button>
+          <div className={styles.scoreBoard}>
+            {t("volcanoWords.mapTitle", "خريطة المغامرة")}
+          </div>
+        </nav>
+
+        <div className={styles.selectionContainer}>
+          <div className={styles.mapTitleContainer}>
+            <h1 className={styles.mapTitle}>{t("volcanoWords.mapTitle", "خريطة المغامرة")}</h1>
+            <p className={styles.mapSubtitle}>{t("volcanoWords.mapSubtitle", "اختر مستوى لتبدأ مغامرة دراغو!")}</p>
+          </div>
+
+          <div className={styles.levelsGrid}>
+            {Object.keys(defaultProgress.completedStages).map((id) => {
+              const levelNum = parseInt(id, 10);
+              const isUnlocked = levelNum <= progress.unlockedLevel;
+              const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[id] : LEVEL_METADATA_AR[id];
+              const levelName = levels?.[id]?.name || levelMeta?.name || `Level ${id}`;
+              const levelFocus = levelMeta?.focus || levels?.[id]?.focus || "";
+
+              const completedCount = progress.completedStages[id]?.filter(Boolean).length || 0;
+              const progressPercent = (completedCount / 5) * 100;
+
+              return (
+                <div
+                  key={id}
+                  className={`${styles.levelCard} ${!isUnlocked ? styles.levelCardLocked : ""}`}
+                  onClick={() => isUnlocked && handleSelectLevel(id)}
+                >
+                  {!isUnlocked && (
+                    <div className={styles.lockOverlay}>
+                      🔒
+                    </div>
+                  )}
+                  <div className={styles.levelCardContent}>
+                    <span className={styles.levelNum}>
+                      {t("volcanoWords.level", "المستوى")} {id}
+                    </span>
+                    <h3 className={styles.levelName}>{levelName}</h3>
+                    <p className={styles.levelFocus}>{levelFocus}</p>
+                  </div>
+
+                  <div className={styles.levelFooter}>
+                    <div className={styles.levelProgressText}>
+                      <span>{completedCount}/5</span>
+                      <span>{t("volcanoWords.progressLabel", "المراحل المكتملة")}</span>
+                    </div>
+                    <div className={styles.progressBarBg}>
+                      <div
+                        className={styles.progressBarFill}
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Stage Selection view
+  if (view === "stages") {
+    const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[selectedLevelId] : LEVEL_METADATA_AR[selectedLevelId];
+    const levelName = levels?.[selectedLevelId]?.name || levelMeta?.name || `Level ${selectedLevelId}`;
+
+    return (
+      <div className={styles.gameContainer}>
+        <nav className={styles.headerNav}>
+          <button className={styles.exitBtn} onClick={() => setView("levels")}>
+            {t("volcanoWords.back", "رجوع")}
+          </button>
+          <div className={styles.scoreBoard}>
+            {levelName}
+          </div>
+        </nav>
+
+        <div className={styles.selectionContainer}>
+          <div className={styles.stagesContainer}>
+            <div className={styles.stagesHeader}>
+              <button className={styles.backBtn} onClick={() => setView("levels")}>
+                {t("volcanoWords.backToLevels", "◀ العودة للمستويات")}
+              </button>
+              <h2 className={styles.stagesHeaderTitle}>
+                {levelName}
+              </h2>
+            </div>
+
+            <div className={styles.stagesGrid}>
+              {[...Array(5)].map((_, stageIdx) => {
+                const isStageUnlocked = stageIdx === 0 || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+                const earnedStars = progress.stars[selectedLevelId]?.[stageIdx] || 0;
+
+                return (
+                  <div key={stageIdx} className={styles.stageNodeWrapper}>
+                    <div
+                      className={`${styles.stageNode} ${!isStageUnlocked ? styles.stageNodeLocked : ""}`}
+                      onClick={() => isStageUnlocked && handleSelectStage(stageIdx)}
+                    >
+                      {isStageUnlocked ? stageIdx + 1 : "🔒"}
+                    </div>
+                    <div className={styles.stageLabel}>
+                      {t("volcanoWords.stageLabel", "المرحلة")} {stageIdx + 1}
+                    </div>
+                    <div className={styles.stageStars}>
+                      {[...Array(3)].map((_, starIdx) => {
+                        const isActive = starIdx < earnedStars;
+                        return (
+                          <span
+                            key={starIdx}
+                            className={`${styles.star} ${isActive ? styles.starActive : styles.starInactive}`}
+                          >
+                            ★
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Active Game View
+  const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[levelId] : LEVEL_METADATA_AR[levelId];
+  const levelName = levels?.[levelId]?.name || levelMeta?.name || `Level ${levelId}`;
+
   return (
     <div className={styles.gameContainer}>
       <nav className={styles.headerNav}>
-        <button className={styles.exitBtn} onClick={() => navigate("/home")}>
-          {t("volcanoWords.exit")}
+        <button className={styles.exitBtn} onClick={() => setView("stages")}>
+          {t("volcanoWords.back", "رجوع")}
         </button>
 
         <div className={styles.heartsContainer}>
@@ -513,22 +818,10 @@ function VolcanoWords() {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <span style={{ fontWeight: 700 }}>{t("volcanoWords.level")}:</span>
-          <select
-            value={levelId}
-            onChange={(e) => handleChangeLevel(e.target.value)}
-            disabled={!levels || isRecording}
-            style={{ padding: "6px 10px", borderRadius: 10 }}
-          >
-            {levels
-              ? Object.keys(levels).map((id) => (
-                  <option key={id} value={id}>
-                    {levels[id]?.name || `Level ${id}`}
-                  </option>
-                ))
-              : null}
-          </select>
+        <div style={{ display: "flex", gap: 8, alignItems: "center", color: "#fff", fontWeight: 700 }}>
+          <span>{levelName}</span>
+          <span>•</span>
+          <span>{t("volcanoWords.stageLabel", "المرحلة")} {selectedStageIndex + 1}</span>
         </div>
 
         <div className={styles.scoreBoard}>
@@ -549,6 +842,7 @@ function VolcanoWords() {
           handleStartRecording={handleStartRecording}
           handleUseHint={handleUseHint}
           handleSkipWord={handleSkipWord}
+          handleNextWord={handleNextWord}
           isGameOver={isGameOver}
           diffHtml={diffHtml}
           counts={counts}
@@ -556,7 +850,6 @@ function VolcanoWords() {
           similarity={similarity}
           analysis={analysis}
           renderMistakes={renderMistakes}
-          // dragoPose={dragoPose}
         />
 
         <div className={styles.dragonContainer}>
@@ -652,6 +945,7 @@ function WordPanal({
   handleStartRecording,
   handleUseHint,
   handleSkipWord,
+  handleNextWord,
   isGameOver,
   diffHtml,
   counts,
@@ -759,22 +1053,19 @@ function WordPanal({
       </div>
 
       <div className={styles.actionButtons}>
-        <ActionBtn
-          icon={isRecording ? "🛑" : "🎤"}
-          primary
-          disabled={isGameOver || (!isRecording && phase !== "idle")}
-          onClick={handleStartRecording}
-        />
-        <ActionBtn
-          icon="💡"
-          disabled={hints <= 0 || isRecording || isGameOver}
-          onClick={handleUseHint}
-        />
-        <ActionBtn
-          icon="➡️"
-          disabled={isRecording || isGameOver}
-          onClick={handleSkipWord}
-        />
+        {feedback === "correct" ? (
+          <ActionBtn icon="➡️" primary onClick={handleNextWord} />
+        ) : (
+          <>
+            <ActionBtn
+              icon={isRecording ? "🛑" : "🎤"}
+              primary
+              disabled={isGameOver || (!isRecording && phase !== "idle")}
+              onClick={handleStartRecording} />
+            <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
+            <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+          </>
+        )}
       </div>
     </div>
   );
