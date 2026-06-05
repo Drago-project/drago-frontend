@@ -3,74 +3,99 @@ import React, { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
-import { Home, CheckCircle, XCircle, Volume2, Play, Heart } from "lucide-react";
+import { CheckCircle, XCircle, Volume2, Heart, Home, ChevronRight } from "lucide-react";
 import { hutGameAPI, profileAPI } from "../server/endpoints";
 import { getAuthUser } from "../server/auth";
 
-// استيراد ملف الـ CSS الشامل
 import "../styles/WordHut.css";
 
-// استدعاء الموارد (تأكد إن الملفات دي عندك)
 import sad from "../assets/emotions/drago(crying).svg";
 import celebrationAnimation from "../assets/animation/celebration drago.json";
 
-// --- كود المودال (Win/Lose) مدمج هنا ---
+// ─── Constants ───────────────────────────────────────────────
+const STAGES_PER_LEVEL = 5;
+const WORDS_PER_STAGE = 5;
+const STORAGE_KEY = "word_hunt_progress";
+
+const defaultProgress = {
+  unlockedLevel: 1,
+  completedStages: {
+    "1": [false, false, false, false, false],
+    "2": [false, false, false, false, false],
+    "3": [false, false, false, false, false],
+    "4": [false, false, false, false, false],
+    "5": [false, false, false, false, false],
+    "6": [false, false, false, false, false],
+  },
+  stars: {
+    "1": [0, 0, 0, 0, 0],
+    "2": [0, 0, 0, 0, 0],
+    "3": [0, 0, 0, 0, 0],
+    "4": [0, 0, 0, 0, 0],
+    "5": [0, 0, 0, 0, 0],
+    "6": [0, 0, 0, 0, 0],
+  },
+};
+
+// ─── Sound helpers ────────────────────────────────────────────
+const gameSounds = {
+  correct: new Audio("https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"),
+  wrong:   new Audio("https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"),
+  click:   new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"),
+};
+
 const playSystemSound = (type) => {
-  const sounds = {
-    win: "/sounds/win.mp3",
-    // مسار صوت الخسارة الجديد
-    lose: "/sounds/hut_lose.mp3",
-  };
-  const soundPath = sounds[type];
-  if (soundPath) {
-    const audio = new Audio(soundPath);
-    audio.play().catch((e) => console.log(`Sound error:`, e));
+  const sounds = { win: "/sounds/win.mp3", lose: "/sounds/hut_lose.mp3" };
+  if (sounds[type]) new Audio(sounds[type]).play().catch(() => {});
+};
+
+const playSound = (type) => {
+  const audio = gameSounds[type];
+  if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+};
+
+const speakLetter = (e, letter) => {
+  e.stopPropagation();
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(letter);
+    utterance.lang = "ar-SA";
+    utterance.rate = 0.7;
+    window.speechSynthesis.speak(utterance);
   }
 };
 
-const WinModal = ({ score, restartGame, children }) => {
+// ─── Win / Lose Modals ─────────────────────────────────────────
+const WinModal = ({ score, starsEarned, onContinue, onReplay }) => {
   const navigate = useNavigate();
-  useEffect(() => {
-    playSystemSound("win");
-  }, []);
-
+  useEffect(() => { playSystemSound("win"); }, []);
   return (
     <div className="wh-modal-overlay">
-      <Confetti
-        width={window.innerWidth}
-        height={window.innerHeight}
-        recycle={true}
-      />
+      <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} />
       <div className="wh-modal win">
         <div className="wh-modal-emoji">
-          <Lottie
-            animationData={celebrationAnimation}
-            loop={true}
-            autoplay={true}
-          />
+          <Lottie animationData={celebrationAnimation} loop={true} autoplay={true} />
         </div>
         <h2 className="wh-modal-title">!أنت بطل</h2>
-        <p className="wh-modal-subtitle">{children}</p>
-        <p className="wh-modal-score">النتيجة النهائية: {score}</p>
+        <div style={{ fontSize: "2rem", margin: "8px 0" }}>
+          {[1, 2, 3].map((s) => (
+            <span key={s} style={{ color: s <= starsEarned ? "#ffd700" : "rgba(255,255,255,0.3)", textShadow: s <= starsEarned ? "0 0 10px #ffd700" : "none" }}>★</span>
+          ))}
+        </div>
+        <p className="wh-modal-score">النتيجة: {score} / {WORDS_PER_STAGE}</p>
         <div className="wh-btn-container">
-          <button className="wh-modal-btn" onClick={restartGame}>
-            العب مجدداً
-          </button>
-          <button className="wh-exit-btn" onClick={() => navigate("/home")}>
-            خروج
-          </button>
+          <button className="wh-modal-btn" onClick={onContinue}>التالي</button>
+          <button className="wh-modal-btn" onClick={onReplay}>إعادة</button>
+          <button className="wh-exit-btn" onClick={() => navigate("/home")}>خروج</button>
         </div>
       </div>
     </div>
   );
 };
 
-const LoseModal = ({ score, restartGame, children }) => {
+const LoseModal = ({ score, onReplay }) => {
   const navigate = useNavigate();
-  useEffect(() => {
-    playSystemSound("lose");
-  }, []);
-
+  useEffect(() => { playSystemSound("lose"); }, []);
   return (
     <div className="wh-modal-overlay">
       <div className="wh-modal lose">
@@ -78,265 +103,198 @@ const LoseModal = ({ score, restartGame, children }) => {
           <img src={sad} alt="Sad Drago" className="wh-sad-anim" />
         </div>
         <h2 className="wh-modal-title">!انتهت القلوب</h2>
-        <p className="wh-modal-subtitle">{children}</p>
-        <p className="wh-modal-score">النتيجة النهائية: {score}</p>
+        <p className="wh-modal-subtitle">لا تحزن، يمكنك المحاولة مرة أخرى</p>
+        <p className="wh-modal-score">النتيجة: {score} / {WORDS_PER_STAGE}</p>
         <div className="wh-btn-container">
-          <button className="wh-modal-btn" onClick={restartGame}>
-            حاول مرة أخرى
-          </button>
-          <button className="wh-exit-btn" onClick={() => navigate("/home")}>
-            خروج
-          </button>
+          <button className="wh-modal-btn" onClick={onReplay}>حاول مرة أخرى</button>
+          <button className="wh-exit-btn" onClick={() => navigate("/home")}>خروج</button>
         </div>
       </div>
     </div>
   );
 };
 
-// --- كود اللعبة الأساسي ---
-const gameSounds = {
-  correct: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
-  ),
-  wrong: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3",
-  ),
-  click: new Audio(
-    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
-  ),
+// ─── Progress helpers ─────────────────────────────────────────
+const loadProgress = () => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        ...defaultProgress,
+        ...parsed,
+        completedStages: { ...defaultProgress.completedStages, ...parsed.completedStages },
+        stars: { ...defaultProgress.stars, ...parsed.stars },
+      };
+    }
+  } catch (e) {}
+  return defaultProgress;
 };
 
-const originalWordData = [
-  {
-    id: 1,
-    wordBefore: "سـمـ",
-    wordAfter: "",
-    missing: "ك",
-    options: ["ق", "ك", "خ"],
-    hint: "حيوان يعيش في البحر",
-  },
-  {
-    id: 2,
-    wordBefore: "كِتـ",
-    wordAfter: "ب",
-    missing: "ا",
-    options: ["ا", "ى", "و"],
-    hint: "نقرأ فيه الدروس",
-  },
-  {
-    id: 3,
-    wordBefore: "شـجـ",
-    wordAfter: "ة",
-    missing: "ر",
-    options: ["ز", "ر", "د"],
-    hint: "نزرعها ونسقيها",
-  },
-  {
-    id: 4,
-    wordBefore: "قـ",
-    wordAfter: "ـر",
-    missing: "م",
-    options: ["م", "ل", "ع"],
-    hint: "يظهر في السماء ليلاً",
-  },
-  {
-    id: 5,
-    wordBefore: "عِـنَـ",
-    wordAfter: "",
-    missing: "ب",
-    options: ["ت", "ن", "ب"],
-    hint: "فاكهة صغيرة ولذيذة",
-  },
-  {
-    id: 6,
-    wordBefore: "جَـمَـ",
-    wordAfter: "",
-    missing: "ل",
-    options: ["ل", "ا", "ك"],
-    hint: "حيوان يعيش في الصحراء",
-  },
-  {
-    id: 7,
-    wordBefore: "فِـيـ",
-    wordAfter: "",
-    missing: "ل",
-    options: ["ل", "ك", "ر"],
-    hint: "حيوان ضخم له خرطوم",
-  },
-  {
-    id: 8,
-    wordBefore: "بَـ",
-    wordAfter: "ـة",
-    missing: "ط",
-    options: ["ض", "ص", "ط"],
-    hint: "طائر يسبح في الماء",
-  },
-];
+const saveProgress = (prog) => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prog)); } catch (e) {}
+};
 
+// ─── Main Component ───────────────────────────────────────────
 const WordHuntGame = () => {
-  const [gameQuestions, setGameQuestions] = useState([]);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [score, setScore] = useState(0);
-  const [lives, setLives] = useState(3);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [gameState, setGameState] = useState("start");
-  const [selectedOption, setSelectedOption] = useState(null);
+  const navigate = useNavigate();
+
+  // View state: "levels" | "stages" | "game"
+  const [view, setView]                         = useState("levels");
+  const [progress, setProgress]                 = useState(loadProgress);
+
+  // API level data
+  const [apiLevels, setApiLevels]               = useState([]);
+  const [apiLoading, setApiLoading]             = useState(true);
+  const [apiError, setApiError]                 = useState(null);
+
+  // Selection state
+  const [selectedLevelId, setSelectedLevelId]   = useState(null);
+  const [selectedStageIndex, setSelectedStageIndex] = useState(null);
+
+  // Game state
+  const [gameQuestions, setGameQuestions]       = useState([]);
+  const [currentQuestion, setCurrentQuestion]   = useState(0);
+  const [score, setScore]                       = useState(0);
+  const [lives, setLives]                       = useState(3);
+  const [showFeedback, setShowFeedback]         = useState(false);
+  const [isCorrect, setIsCorrect]               = useState(false);
+  const [gameState, setGameState]               = useState("playing"); // "playing" | "loading" | "won" | "lost"
+  const [selectedOption, setSelectedOption]     = useState(null);
+  const [starsEarned, setStarsEarned]           = useState(0);
 
   // Session tracking
-  const [sessionId, setSessionId] = useState(null);
-  const [startTime, setStartTime] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [sessionId, setSessionId]               = useState(null);
+  const [startTime, setStartTime]               = useState(null);
+  const [userId, setUserId]                     = useState(null);
 
-  const shuffleArray = (array) => {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-  };
-
-  const playSound = (type) => {
-    const audio = gameSounds[type];
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch((e) => console.log(e));
-    }
-  };
-
-  // دالة نطق الحرف
-  const speakLetter = (e, letter) => {
-    e.stopPropagation();
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(letter);
-      utterance.lang = "ar-SA";
-      utterance.rate = 0.7; // تبطيء الصوت عشان الحرف يكون واضح
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  const startGame = async () => {
-    try {
-      playSound("click");
-      setGameState("loading");
-      setShowFeedback(false);
-      setSelectedOption(null);
-      setScore(0);
-      setLives(3);
-
-      // Get user info
-      const authUser = getAuthUser();
-      if (authUser?.userId) {
-        setUserId(authUser.userId);
-      }
-
-      // Start session
+  // ── Fetch levels on mount ─────────────────────────────────
+  useEffect(() => {
+    const fetchLevels = async () => {
       try {
-        const levelsRes = await hutGameAPI.getLevels();
-        const levels = levelsRes.data?.data || [];
-        const levelNumber = levels.length ? levels[0].levelNumber : 1;
+        setApiLoading(true);
+        setApiError(null);
+        const res = await hutGameAPI.getLevels();
+        const levels = res.data?.data || [];
+        setApiLevels(levels);
+      } catch (err) {
+        console.error("Failed to fetch hut levels:", err);
+        setApiError("تعذّر تحميل المستويات. تحقق من الاتصال وأعد المحاولة.");
+      } finally {
+        setApiLoading(false);
+      }
+    };
+    fetchLevels();
 
-        if (authUser?.userId) {
-          const sessionRes = await hutGameAPI.startSession(
-            authUser.userId,
-            levelNumber,
-          );
+    const authUser = getAuthUser();
+    if (authUser?.userId) setUserId(authUser.userId);
+  }, []);
+
+  // ── Level selection helpers ───────────────────────────────
+  const isLevelUnlocked = (levelIndex) => {
+    return levelIndex + 1 <= progress.unlockedLevel;
+  };
+
+  const getLevelStagesCompleted = (levelNum) => {
+    const stages = progress.completedStages[String(levelNum)] || [false, false, false, false, false];
+    return stages.filter(Boolean).length;
+  };
+
+  const getTotalStarsForLevel = (levelNum) => {
+    const stars = progress.stars[String(levelNum)] || [0, 0, 0, 0, 0];
+    return stars.reduce((a, b) => a + b, 0);
+  };
+
+  // ── Stage helpers ─────────────────────────────────────────
+  const isStageUnlocked = (levelNum, stageIndex) => {
+    if (stageIndex === 0) return true;
+    const stages = progress.completedStages[String(levelNum)] || [];
+    return stages[stageIndex - 1] === true;
+  };
+
+  const getStageStars = (levelNum, stageIndex) => {
+    return (progress.stars[String(levelNum)] || [])[stageIndex] || 0;
+  };
+
+  // ── Start stage game ──────────────────────────────────────
+  const startStage = async (levelId, stageIndex) => {
+    const levelNum = apiLevels[levelId - 1]?.levelNumber ?? levelId;
+    setSelectedLevelId(levelId);
+    setSelectedStageIndex(stageIndex);
+    setGameState("loading");
+    setView("game");
+    setScore(0);
+    setLives(3);
+    setCurrentQuestion(0);
+    setShowFeedback(false);
+    setSelectedOption(null);
+    setStarsEarned(0);
+
+    try {
+      // Start session
+      if (userId) {
+        try {
+          const sessionRes = await hutGameAPI.startSession(userId, levelNum);
           setSessionId(sessionRes.data?.data?.sessionId);
           setStartTime(Date.now());
+        } catch (sessErr) {
+          console.warn("Session start error:", sessErr);
         }
-      } catch (sessionErr) {
-        console.warn("Could not start session:", sessionErr);
       }
 
-      // fetch levels
-      const levelsRes = await hutGameAPI.getLevels();
-      const levels = levelsRes.data?.data || [];
-      const levelNumber = levels.length ? levels[0].levelNumber : 0;
-
-      // fetch 5 random words for the level
-      const fetches = Array.from({ length: 5 }).map(() =>
-        hutGameAPI.getRandomWord(levelNumber),
+      // Fetch words
+      const fetches = Array.from({ length: WORDS_PER_STAGE }).map(() =>
+        hutGameAPI.getRandomWord(levelNum)
       );
-
       const responses = await Promise.all(fetches);
 
-      const questions = responses
-        .map((res, idx) => {
-          const d = res?.data?.data;
-          if (!d) return null;
+      const questions = responses.map((res, idx) => {
+        const d = res?.data?.data;
+        if (!d) return null;
+        const full    = d.fullWord || "";
+        const missing = d.missingLetter || d.missing || "";
+        const missIdx = full.indexOf(missing);
+        const wordBefore = missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
+        const wordAfter  = missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
+        return { id: idx + 1, wordBefore, wordAfter, missing, options: d.options || [], hint: d.hint || "" };
+      }).filter(Boolean);
 
-          const full = d.fullWord || "";
-          const missing = d.missingLetter || d.missing || "";
+      if (questions.length === 0) throw new Error("No questions returned");
 
-          const missIdx = full.indexOf(missing);
-
-          const wordBefore =
-            missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
-
-          const wordAfter =
-            missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
-
-          return {
-            id: idx + 1,
-            wordBefore,
-            wordAfter,
-            missing,
-            options: d.options || [],
-            hint: d.hint || "",
-          };
-        })
-        .filter(Boolean);
-
-      if (questions.length) {
-        setGameQuestions(questions);
-      } else {
-        const shuffled = shuffleArray(originalWordData).slice(0, 5);
-        setGameQuestions(shuffled);
-      }
-
-      setCurrentQuestion(0);
+      setGameQuestions(questions);
       setGameState("playing");
     } catch (err) {
-      console.error("HutGame API error:", err);
-
-      const shuffled = shuffleArray(originalWordData).slice(0, 5);
-      setGameQuestions(shuffled);
-      setCurrentQuestion(0);
-      setGameState("playing");
+      console.error("Stage load error:", err);
+      setApiError("تعذّر تحميل كلمات المرحلة. أعد المحاولة.");
+      setView("stages");
     }
   };
 
+  // ── Answer handler ────────────────────────────────────────
   const handleAnswer = (selectedLetter) => {
     if (gameState !== "playing" || showFeedback) return;
 
     setSelectedOption(selectedLetter);
     const currentWord = gameQuestions[currentQuestion];
-    const isAnswerCorrect = selectedLetter === currentWord.missing;
+    const correct = selectedLetter === currentWord.missing;
 
-    // Track answer in session
     if (sessionId) {
-      try {
-        hutGameAPI.submitAnswer(sessionId, isAnswerCorrect);
-      } catch (err) {
-        console.warn("Could not submit answer:", err);
-      }
+      hutGameAPI.submitAnswer(sessionId, correct).catch(() => {});
     }
 
-    if (isAnswerCorrect) {
+    if (correct) {
       setIsCorrect(true);
-      setScore(score + 1);
+      const newScore = score + 1;
+      setScore(newScore);
       playSound("correct");
       setTimeout(() => setShowFeedback(true), 300);
-
       setTimeout(() => {
         if (currentQuestion < gameQuestions.length - 1) {
-          setCurrentQuestion(currentQuestion + 1);
+          setCurrentQuestion((q) => q + 1);
           setShowFeedback(false);
           setSelectedOption(null);
         } else {
-          finishGame(true); // Won
+          handleStageComplete(newScore, lives);
         }
       }, 1800);
     } else {
@@ -346,297 +304,398 @@ const WordHuntGame = () => {
       const newLives = lives - 1;
       setLives(newLives);
       if (newLives === 0) {
-        setTimeout(() => {
-          finishGame(false); // Lost
-        }, 1500);
+        setTimeout(() => handleStageComplete(score, 0), 1500);
       } else {
-        setTimeout(() => {
-          setShowFeedback(false);
-          setSelectedOption(null);
-        }, 1500);
+        setTimeout(() => { setShowFeedback(false); setSelectedOption(null); }, 1500);
       }
+    }
+  };
+
+  // ── Stage completion ───────────────────────────────────────
+  const handleStageComplete = async (finalScore, remainingLives) => {
+    const won = remainingLives > 0 || finalScore === WORDS_PER_STAGE;
+    const stars = won ? remainingLives : 0; // 3 lives = 3★, 2 = 2★, 1 = 1★
+    setStarsEarned(stars);
+
+    // Finish session
+    if (sessionId && startTime) {
+      const timeSeconds = Math.floor((Date.now() - startTime) / 1000);
+      hutGameAPI.finishSession(sessionId, timeSeconds).catch(() => {});
+      setSessionId(null);
+    }
+
+    // Award XP if won
+    if (userId && won) {
+      profileAPI.awardXP(userId, finalScore * 10, true).catch(() => {});
+    }
+
+    if (won) {
+      // Update progress
+      setProgress((prev) => {
+        const levelKey = String(selectedLevelId);
+        const newCompleted = { ...prev.completedStages };
+        const newStars    = { ...prev.stars };
+
+        if (!newCompleted[levelKey]) newCompleted[levelKey] = [false, false, false, false, false];
+        if (!newStars[levelKey])     newStars[levelKey]     = [0, 0, 0, 0, 0];
+
+        const levelCompleted = [...newCompleted[levelKey]];
+        const levelStars     = [...newStars[levelKey]];
+        levelCompleted[selectedStageIndex] = true;
+        levelStars[selectedStageIndex] = Math.max(levelStars[selectedStageIndex], stars);
+
+        newCompleted[levelKey] = levelCompleted;
+        newStars[levelKey]     = levelStars;
+
+        // Check if all stages in this level are done → unlock next level
+        let newUnlocked = prev.unlockedLevel;
+        if (levelCompleted.every(Boolean)) {
+          newUnlocked = Math.max(prev.unlockedLevel, selectedLevelId + 1);
+        }
+
+        const updated = { ...prev, completedStages: newCompleted, stars: newStars, unlockedLevel: newUnlocked };
+        saveProgress(updated);
+        return updated;
+      });
+
+      setGameState("won");
+    } else {
+      setGameState("lost");
     }
   };
 
   const getButtonClass = (letter) => {
     if (selectedOption !== letter) return "wh-option-btn wh-opt-default";
-    return isCorrect
-      ? "wh-option-btn wh-opt-correct"
-      : "wh-option-btn wh-opt-wrong";
+    return isCorrect ? "wh-option-btn wh-opt-correct" : "wh-option-btn wh-opt-wrong";
   };
 
-  const finishGame = async (won) => {
-    try {
-      // Finish session
-      if (sessionId && startTime) {
-        const timeSeconds = Math.floor((Date.now() - startTime) / 1000);
-        await hutGameAPI.finishSession(sessionId, timeSeconds);
-      }
-
-      // Award XP if user is authenticated and game was completed
-      if (userId && won) {
-        const xpEarned = score * 10; // 10 XP per correct answer
-        try {
-          await profileAPI.awardXP(userId, xpEarned, true);
-        } catch (xpErr) {
-          console.warn("Could not award XP:", xpErr);
-        }
-      }
-
-      setGameState(won ? "won" : "lost");
-    } catch (err) {
-      console.error("Error finishing game:", err);
-      setGameState(won ? "won" : "lost");
+  const handleContinue = () => {
+    // Try to open next stage
+    const nextStage = selectedStageIndex + 1;
+    if (nextStage < STAGES_PER_LEVEL) {
+      startStage(selectedLevelId, nextStage);
+    } else {
+      setView("stages");
+      setGameState("playing");
     }
   };
 
-  const currentData = gameQuestions[currentQuestion] || originalWordData[0];
-  const progressPercentage = (currentQuestion / gameQuestions.length) * 100;
+  const handleReplay = () => {
+    startStage(selectedLevelId, selectedStageIndex);
+  };
 
-  // Wrapper عشان الخلفية تظهر في كل الصفحات
-  const PageWrapper = ({ children }) => (
+  // ─── Page wrapper ──────────────────────────────────────────
+  const PageWrapper = ({ children, wide = false }) => (
     <div className="wh-full-page">
-      <div className="wh-wrapper">{children}</div>
+      <div className={wide ? "wh-wrapper" : "wh-wrapper"} style={wide ? { maxWidth: "900px", width: "95%" } : {}}>
+        {children}
+      </div>
     </div>
   );
 
-  if (gameState === "start") {
-    return (
-      <PageWrapper>
-        <div className="wh-start-screen">
-          <div className="wh-icon-container">
-            <Home className="w-24 h-24 text-amber-600" size={64} />
+  // ═══════════════════════════════════════════════════════════
+  // VIEW: LEVELS
+  // ═══════════════════════════════════════════════════════════
+  if (view === "levels") {
+    if (apiLoading) {
+      return (
+        <div className="wh-full-page">
+          <div className="wh-wrapper">
+            <div className="wh-loading-container">
+              <div className="wh-loading-spinner">⏳</div>
+              <p style={{ color: "#fef3c7", fontWeight: 700 }}>جارٍ تحميل المستويات...</p>
+            </div>
           </div>
-          <h1 className="wh-title">كوخ الكلمات</h1>
-          <p className="wh-subtitle">
-            ساعدنا في إصلاح الكلمات المكسورة داخل الكوخ!
-          </p>
-          <button onClick={startGame} className="wh-btn wh-btn-start">
-            <Play size={28} fill="white" /> ابدأ اللعب
-          </button>
         </div>
-      </PageWrapper>
+      );
+    }
+
+    if (apiError) {
+      return (
+        <div className="wh-full-page">
+          <div className="wh-wrapper">
+            <div className="wh-loading-container">
+              <div className="wh-error-box">
+                <h3>⚠️ خطأ في التحميل</h3>
+                <p>{apiError}</p>
+                <button className="wh-retry-btn" onClick={() => window.location.reload()}>إعادة المحاولة</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const levelCards = apiLevels.length > 0 ? apiLevels : Array.from({ length: 6 }, (_, i) => ({ levelNumber: i + 1, description: `المستوى ${i + 1}` }));
+
+    return (
+      <div className="wh-full-page">
+        <div style={{ width: "95%", maxWidth: "900px", overflowY: "auto", maxHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: "30px 0" }}>
+          {/* Header */}
+          <div className="wh-map-title-container">
+            <h1 className="wh-map-title">🏠 كوخ الكلمات</h1>
+            <p className="wh-map-subtitle">اختر مستوى وابدأ رحلتك!</p>
+          </div>
+
+          {/* Level Cards */}
+          <div className="wh-levels-grid">
+            {levelCards.map((level, idx) => {
+              const levelNum    = level.levelNumber ?? idx + 1;
+              const isUnlocked  = isLevelUnlocked(idx);
+              const completed   = getLevelStagesCompleted(levelNum);
+              const totalStars  = getTotalStarsForLevel(levelNum);
+              const pct         = Math.round((completed / STAGES_PER_LEVEL) * 100);
+
+              return (
+                <div
+                  key={levelNum}
+                  className={`wh-level-card${!isUnlocked ? " wh-level-card-locked" : ""}`}
+                  onClick={() => {
+                    if (!isUnlocked) return;
+                    setSelectedLevelId(levelNum);
+                    setView("stages");
+                  }}
+                >
+                  {!isUnlocked && <div className="wh-lock-overlay">🔒</div>}
+
+                  <div className="wh-level-card-content">
+                    <div className="wh-level-num">المستوى {levelNum}</div>
+                    <h3 className="wh-level-name">
+                      {level.description || level.name || `المستوى ${levelNum}`}
+                    </h3>
+                    <p className="wh-level-focus">
+                      {isUnlocked
+                        ? totalStars > 0
+                          ? `⭐ ${totalStars} / ${STAGES_PER_LEVEL * 3} نجمة`
+                          : completed > 0
+                            ? `✅ ${completed} مراحل مكتملة`
+                            : "ابدأ هنا"
+                        : "أكمل المستوى السابق للفتح"}
+                    </p>
+                  </div>
+
+                  <div className="wh-level-footer">
+                    <div className="wh-level-progress-text">
+                      <span>{pct}%</span>
+                      <span>{completed}/{STAGES_PER_LEVEL} مراحل</span>
+                    </div>
+                    <div className="wh-progress-bar-bg">
+                      <div
+                        className="wh-progress-bar-fill-level"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
     );
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // VIEW: STAGES
+  // ═══════════════════════════════════════════════════════════
+  if (view === "stages") {
+    const levelNum = selectedLevelId;
+    const levelInfo = apiLevels.find((l) => (l.levelNumber ?? 0) === levelNum) || { description: `المستوى ${levelNum}` };
+
+    return (
+      <div className="wh-full-page">
+        <div style={{ width: "95%", maxWidth: "900px", display: "flex", flexDirection: "column", alignItems: "center", padding: "30px 0", overflowY: "auto", maxHeight: "100vh" }}>
+          {/* Header */}
+          <div className="wh-stages-header" style={{ width: "100%", boxSizing: "border-box", marginBottom: "40px" }}>
+            <h2 className="wh-stages-header-title">
+              🏠 <span>المستوى {levelNum}</span> — {levelInfo.description || `المستوى ${levelNum}`}
+            </h2>
+            <button className="wh-back-btn" onClick={() => setView("levels")}>
+              ← العودة للخريطة
+            </button>
+          </div>
+
+          {/* Stage nodes */}
+          <div className="wh-stages-grid">
+            {Array.from({ length: STAGES_PER_LEVEL }, (_, stageIdx) => {
+              const unlocked = isStageUnlocked(levelNum, stageIdx);
+              const stars    = getStageStars(levelNum, stageIdx);
+
+              return (
+                <div key={stageIdx} className="wh-stage-node-wrapper">
+                  <div
+                    className={`wh-stage-node${!unlocked ? " wh-stage-node-locked" : ""}`}
+                    onClick={() => { if (unlocked) startStage(levelNum, stageIdx); }}
+                  >
+                    {unlocked ? stageIdx + 1 : "🔒"}
+                  </div>
+                  <div className="wh-stage-label">المرحلة {stageIdx + 1}</div>
+                  <div className="wh-stage-stars">
+                    {[1, 2, 3].map((s) => (
+                      <span key={s} className={`wh-star ${s <= stars ? "wh-star-active" : "wh-star-inactive"}`}>★</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // VIEW: GAME
+  // ═══════════════════════════════════════════════════════════
   if (gameState === "loading") {
     return (
-      <PageWrapper>
-        <div className="wh-start-screen">
-          <h2 className="wh-title">جارٍ تحضير اللعبة...</h2>
-          <p className="wh-subtitle">جلب كلمات المستوى من الخادم</p>
-          <button className="wh-btn wh-btn-start" disabled>
-            <Play size={28} fill="white" /> تحميل...
-          </button>
+      <div className="wh-full-page">
+        <div className="wh-wrapper">
+          <div className="wh-loading-container">
+            <div className="wh-loading-spinner">⏳</div>
+            <p style={{ color: "#fef3c7", fontWeight: 700 }}>جارٍ تحضير الكلمات...</p>
+          </div>
         </div>
-      </PageWrapper>
+      </div>
     );
   }
 
   if (gameState === "won") {
     return (
-      <WinModal score={score} restartGame={startGame}>
-        ممتاز! لقد قمت بإصلاح كل الكلمات
-      </WinModal>
+      <WinModal
+        score={score}
+        starsEarned={starsEarned}
+        onContinue={handleContinue}
+        onReplay={handleReplay}
+      />
     );
   }
 
   if (gameState === "lost") {
-    return (
-      <LoseModal score={score} restartGame={startGame}>
-        لا تحزن، يمكنك المحاولة مرة أخرى
-      </LoseModal>
-    );
+    return <LoseModal score={score} onReplay={handleReplay} />;
   }
 
+  // Playing
+  const currentData = gameQuestions[currentQuestion];
+  const progressPercentage = gameQuestions.length > 0 ? (currentQuestion / gameQuestions.length) * 100 : 0;
+
+  if (!currentData) return null;
+
   return (
-    <PageWrapper>
-      <div className="wh-header">
-        <h1
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            fontWeight: "bold",
-          }}
-        >
-          <Home size={24} /> كوخ الكلمات
-        </h1>
-        <div style={{ display: "flex", gap: "4px" }}>
-          {[...Array(3)].map((_, i) => (
-            <Heart
-              key={i}
-              size={24}
-              fill={i < lives ? "#ef4444" : "#4b5563"}
-              color={i < lives ? "#ef4444" : "#4b5563"}
-              style={{ opacity: i < lives ? 1 : 0.3 }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="wh-game-container">
-        <div className="wh-progress-bar">
-          <div
-            className="wh-progress-fill"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
+    <div className="wh-full-page">
+      <div className="wh-wrapper">
+        {/* Game Header */}
+        <div className="wh-header">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "bold" }}>
+            <Home size={24} />
+            <span>المستوى {selectedLevelId} — المرحلة {selectedStageIndex + 1}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "4px" }}>
+              {[...Array(3)].map((_, i) => (
+                <Heart
+                  key={i}
+                  size={24}
+                  fill={i < lives ? "#ef4444" : "#4b5563"}
+                  color={i < lives ? "#ef4444" : "#4b5563"}
+                  style={{ opacity: i < lives ? 1 : 0.3 }}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => { setView("stages"); setGameState("playing"); }}
+              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "12px", opacity: 0.8 }}
+            >
+              ✕ خروج
+            </button>
+          </div>
         </div>
 
-        <div
-          style={{
-            flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          {/* --- إضافة التلميح (Hint) هنا --- */}
-          {currentData.hint && (
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        {/* Game Body */}
+        <div className="wh-game-container">
+          {/* Progress bar */}
+          <div className="wh-progress-bar">
+            <div className="wh-progress-fill" style={{ width: `${progressPercentage}%` }} />
+          </div>
+
+          {/* Question counter */}
+          <div style={{ textAlign: "center", fontSize: "0.9rem", color: "#6b7280", fontWeight: 600, marginBottom: "8px" }}>
+            {currentQuestion + 1} / {gameQuestions.length}
+          </div>
+
+          <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+            {/* Hint */}
+            {currentData.hint && (
+              <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#fffbeb", color: "#d97706", padding: "8px 20px", borderRadius: "9999px", fontWeight: "bold", fontSize: "1.2rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #fde68a" }}>
+                  <span>💡</span>
+                  <span>{currentData.hint}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Word display */}
+            <div className="wh-word-display">
+              <div className="wh-word-text">
+                <span>{currentData.wordBefore}</span>
+                <span className="wh-missing-letter">?</span>
+                <span>{currentData.wordAfter}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className="wh-options-grid">
+            {currentData.options.map((letter, index) => (
               <div
+                key={index}
+                className={getButtonClass(letter)}
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  backgroundColor: "#fffbeb",
-                  color: "#d97706",
-                  padding: "8px 20px",
-                  borderRadius: "9999px",
-                  fontWeight: "bold",
-                  fontSize: "1.2rem",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-                  border: "1px solid #fde68a",
+                  position: "relative", padding: 0,
+                  display: "flex", overflow: "hidden",
+                  cursor: showFeedback || selectedOption !== null ? "default" : "pointer",
+                  opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
                 }}
               >
-                <span>💡</span>
-                <span>{currentData.hint}</span>
+                <div
+                  onClick={() => { if (!showFeedback && selectedOption === null) handleAnswer(letter); }}
+                  style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+                >
+                  <span>{letter}</span>
+                </div>
+                <div style={{ width: "2px", background: "rgba(0,0,0,0.1)" }} />
+                <div
+                  onClick={(e) => { if (!showFeedback && selectedOption === null) speakLetter(e, letter); }}
+                  style={{ width: "70px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.4)", transition: "background 0.2s" }}
+                  onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.6)")}
+                  onMouseOut={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.4)")}
+                >
+                  <Volume2 size={24} color="#2563eb" />
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* Feedback overlay */}
+          {showFeedback && (
+            <div className={`wh-feedback ${isCorrect ? "success" : "error"}`}>
+              {isCorrect ? (
+                <>
+                  <CheckCircle size={80} color="#22c55e" style={{ marginBottom: "1rem" }} />
+                  <h3 style={{ fontSize: "2rem", color: "#15803d", fontWeight: "bold" }}>مُمتاز!</h3>
+                </>
+              ) : (
+                <>
+                  <XCircle size={80} color="#ef4444" style={{ marginBottom: "1rem" }} />
+                  <h3 style={{ fontSize: "2rem", color: "#b91c1c", fontWeight: "bold" }}>خطأ!</h3>
+                  <p style={{ color: "#dc2626", fontWeight: "bold" }}>خسرت قلب 💔</p>
+                </>
+              )}
             </div>
           )}
-
-          <div className="wh-word-display">
-            <div className="wh-word-text">
-              <span>{currentData.wordBefore}</span>
-              <span className="wh-missing-letter">?</span>
-              <span>{currentData.wordAfter}</span>
-            </div>
-          </div>
         </div>
-
-        <div className="wh-options-grid">
-          {currentData.options.map((letter, index) => (
-            // تم تغيير الزرار لـ div مقسوم عشان يمنع اللخبطة
-            <div
-              key={index}
-              className={getButtonClass(letter)}
-              style={{
-                position: "relative",
-                padding: 0, // بنشيل البادينج عشان نقسم الزرار صح
-                display: "flex",
-                overflow: "hidden",
-                cursor:
-                  showFeedback || selectedOption !== null
-                    ? "default"
-                    : "pointer",
-                opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
-              }}
-            >
-              {/* مساحة اختيار الحرف - كبيرة وواضحة */}
-              <div
-                onClick={() => {
-                  if (!showFeedback && selectedOption === null)
-                    handleAnswer(letter);
-                }}
-                style={{
-                  flexGrow: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "16px",
-                }}
-              >
-                <span>{letter}</span>
-              </div>
-
-              {/* خط فاصل بين مساحة الاختيار ومساحة الصوت */}
-              <div
-                style={{ width: "2px", background: "rgba(0,0,0,0.1)" }}
-              ></div>
-
-              {/* مساحة الصوت - مخصصة للصوت بس ومفصولة تماماً */}
-              <div
-                onClick={(e) => {
-                  if (!showFeedback && selectedOption === null)
-                    speakLetter(e, letter);
-                }}
-                style={{
-                  width: "70px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "rgba(255, 255, 255, 0.4)",
-                  transition: "background 0.2s",
-                }}
-                onMouseOver={(e) =>
-                  (e.currentTarget.style.background =
-                    "rgba(255, 255, 255, 0.6)")
-                }
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.background =
-                    "rgba(255, 255, 255, 0.4)")
-                }
-              >
-                <Volume2 size={24} color="#2563eb" />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {showFeedback && (
-          <div className={`wh-feedback ${isCorrect ? "success" : "error"}`}>
-            {isCorrect ? (
-              <>
-                <CheckCircle
-                  size={80}
-                  color="#22c55e"
-                  style={{ marginBottom: "1rem" }}
-                />
-                <h3
-                  style={{
-                    fontSize: "2rem",
-                    color: "#15803d",
-                    fontWeight: "bold",
-                  }}
-                >
-                  مُمتاز!
-                </h3>
-              </>
-            ) : (
-              <>
-                <XCircle
-                  size={80}
-                  color="#ef4444"
-                  style={{ marginBottom: "1rem" }}
-                />
-                <h3
-                  style={{
-                    fontSize: "2rem",
-                    color: "#b91c1c",
-                    fontWeight: "bold",
-                  }}
-                >
-                  خطأ!
-                </h3>
-                <p style={{ color: "#dc2626", fontWeight: "bold" }}>
-                  خسرت قلب 💔
-                </p>
-              </>
-            )}
-          </div>
-        )}
       </div>
-    </PageWrapper>
+    </div>
   );
 };
 
