@@ -12,7 +12,8 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: var(--spacing-xl) var(--spacing-md);
+  margin-top: 50px; /* Adjust if you have a fixed header */
+  padding: var(--spacing-xl);
   position: relative;
   z-index: 2;
 }
