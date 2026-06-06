@@ -419,7 +419,9 @@ function Profile() {
                     >
                       <div>{msg.content || msg.message || msg.text}</div>
                       <div className={styles.messageMeta}>
-                        {new Date(msg.sentAt || msg.createdAt || Date.now()).toLocaleTimeString([], {
+                        {new Date(
+                          msg.sentAt || msg.createdAt || Date.now(),
+                        ).toLocaleTimeString([], {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}

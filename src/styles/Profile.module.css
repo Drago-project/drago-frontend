@@ -11,7 +11,7 @@
 
 /* Desktop Layout */
 @media (min-width: 1024px) {
-  .profilePage { 
+  .profilePage {
     margin: 0px;
     padding: 100px 40px 40px;
     display: flex;
@@ -63,7 +63,7 @@
   margin: 15px;
   background: white;
   border-radius: 20px;
-  padding: 13px ;
+  padding: 13px;
   text-align: center;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
@@ -96,7 +96,9 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .editBtn:hover {
@@ -144,7 +146,11 @@
   position: absolute;
   width: 120%;
   height: 120%;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 60%);
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.15),
+    transparent 60%
+  );
   top: -20%;
   left: -20%;
 }
@@ -205,14 +211,14 @@
 }
 
 /* ===== DAILY GOAL ===== */
-.dailyGoal p{
+.dailyGoal p {
   margin: 20px;
 }
 .dailyGoal {
-  margin:15px;
+  margin: 15px;
   background: #ecfeff;
   padding: 30px;
-  height:200px;
+  height: 200px;
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -336,7 +342,9 @@
   color: white;
   cursor: pointer;
   font-weight: 700;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .chatSendBtn:disabled {
@@ -430,7 +438,9 @@
   border-radius: 999px;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
   flex: 1;
 }
 

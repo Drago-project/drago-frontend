@@ -78,7 +78,10 @@ export function useWebSocket({ conversationId, enabled = true, onMessage }) {
       socket.removeEventListener("close", handleClose);
       socket.removeEventListener("error", handleError);
       socket.removeEventListener("message", handleMessage);
-      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+      if (
+        socket.readyState === WebSocket.OPEN ||
+        socket.readyState === WebSocket.CONNECTING
+      ) {
         socket.close();
       }
       if (wsRef.current === socket) {
