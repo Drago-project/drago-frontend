@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { profileAPI } from "../server/endpoints";
+import { profileAPI, messagesAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
 
 const getLevelData = (xp) => {
@@ -53,6 +53,13 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatLoading, setChatLoading] = useState(true);
+  const [chatError, setChatError] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const chatEndRef = useRef(null);
+
   useEffect(() => {
     if (!userId) {
       setError("Not logged in");
@@ -93,6 +100,72 @@ function Profile() {
       })
       .finally(() => setLoading(false));
   }, [userId]);
+
+  const loadChatMessages = async () => {
+    if (!userId) return;
+    setChatError("");
+    try {
+      const res = await messagesAPI.getByStudent(userId);
+      setChatMessages(res.data?.data ?? res.data ?? []);
+    } catch (err) {
+      console.error("Chat load error:", err);
+      setChatError("Unable to load doctor chat.");
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!userId) return;
+    setChatLoading(true);
+    let active = true;
+
+    const runFetch = async () => {
+      if (!active) return;
+      await loadChatMessages();
+    };
+
+    runFetch();
+    const interval = setInterval(runFetch, 5000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const handleSendChat = async () => {
+    const text = chatInput.trim();
+    if (!text || !userId) return;
+
+    const optimistic = {
+      id: `opt-${Date.now()}`,
+      senderId: userId,
+      content: text,
+      sentAt: new Date().toISOString(),
+      optimistic: true,
+    };
+
+    setChatMessages((prev) => [...prev, optimistic]);
+    setChatInput("");
+    setChatSending(true);
+    setChatError("");
+
+    try {
+      await messagesAPI.send(null, userId, text);
+      await loadChatMessages();
+    } catch (err) {
+      console.error("Chat send error:", err);
+      setChatMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      setChatInput(text);
+      setChatError("Failed to send message. Please try again.");
+    } finally {
+      setChatSending(false);
+    }
+  };
 
   const handleAddXp = () => {
     if (!userId) return;
@@ -307,6 +380,80 @@ function Profile() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* CHAT WITH DOCTOR */}
+        <div className={styles.chatSection}>
+          <div className={styles.chatHeader}>
+            <div>
+              <h3>💬 Chat with your doctor</h3>
+              <p className={styles.chatSubtitle}>
+                Send messages and get help from your doctor directly.
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.chatBody}>
+            {chatLoading ? (
+              <p style={{ color: "#6b7280", textAlign: "center" }}>
+                Loading chat...
+              </p>
+            ) : chatError ? (
+              <p style={{ color: "#dc2626", textAlign: "center" }}>
+                {chatError}
+              </p>
+            ) : chatMessages.length === 0 ? (
+              <p style={{ color: "#6b7280", textAlign: "center" }}>
+                No messages yet. Say hi to your doctor!
+              </p>
+            ) : (
+              <div className={styles.chatMessages}>
+                {chatMessages.map((msg, index) => {
+                  const isMine = msg.senderId === userId;
+                  return (
+                    <div
+                      key={msg.id || index}
+                      className={`${styles.messageBubble} ${
+                        isMine ? styles.mine : styles.their
+                      }`}
+                    >
+                      <div>{msg.content || msg.message || msg.text}</div>
+                      <div className={styles.messageMeta}>
+                        {new Date(msg.sentAt || msg.createdAt || Date.now()).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </div>
+            )}
+          </div>
+
+          <div className={styles.chatInputRow}>
+            <input
+              type="text"
+              placeholder="Write a message to your doctor..."
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendChat();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className={styles.chatSendBtn}
+              onClick={handleSendChat}
+              disabled={chatSending || !chatInput.trim()}
+            >
+              {chatSending ? "Sending..." : "Send"}
+            </button>
+          </div>
         </div>
       </div>
 

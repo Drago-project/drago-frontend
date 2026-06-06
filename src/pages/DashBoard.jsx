@@ -1,5 +1,7 @@
 // src/pages/DashBoard.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useWebSocket } from "../hooks/useWebSocket";
+import { toImageSrc } from "../utils/imageUtils";
 import {
   LayoutDashboard,
   Users,
@@ -1321,16 +1323,54 @@ function MessagesView({ t }) {
     error,
     refetch,
   } = useApiData(() => messagesAPI.getConversations(), []);
-  const [selected, setSelected] = useState(null);
+
+  const [selected, setSelected] = useState(null); // studentId string
   const [messages, setMessages] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef(null); // auto-scroll anchor
 
-  const list = Array.isArray(conversations) ? conversations : [];
+  // ── WebSocket ──────────────────────────────────────────────────────────────
+  const { send: wsSend, status: wsStatus } = useWebSocket({
+    conversationId: selected,
+    enabled: !!selected,
+    onMessage: (data) => {
+      // Server sends { type: "message", payload: { ... } }
+      if (data?.type === "message") {
+        setMessages((prev) => {
+          // Deduplicate by id if your backend provides one
+          const id = data.payload?.id;
+          if (id && prev.some((m) => m.id === id)) return prev;
+          return [...prev, data.payload];
+        });
+      }
+    },
+  });
 
+  // ── Polling fallback when WebSocket is not open ────────────────────────────
+  useEffect(() => {
+    if (!selected || wsStatus === "open") return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await messagesAPI.getByStudent(selected);
+        setMessages(res.data?.data ?? res.data ?? []);
+      } catch (e) {
+        console.error("Poll error:", e);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [selected, wsStatus]);
+
+  // ── Auto-scroll to latest message ─────────────────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ── Load conversation history when a student is selected ──────────────────
   const loadMessages = async (studentId) => {
     setSelected(studentId);
+    setMessages([]);
     setMsgLoading(true);
     try {
       const res = await messagesAPI.getByStudent(studentId);
@@ -1342,19 +1382,42 @@ function MessagesView({ t }) {
     }
   };
 
+  // ── Send a message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
-    if (!newMsg.trim() || !selected) return;
-    setSending(true);
-    try {
-      await messagesAPI.send(null, selected, newMsg.trim());
-      setNewMsg("");
-      await loadMessages(selected);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSending(false);
+    const text = newMsg.trim();
+    if (!text || !selected) return;
+
+    // Optimistic update so the UI feels instant
+    const optimistic = {
+      id: `opt-${Date.now()}`,
+      content: text,
+      senderId: "doctor", // anything that != studentId so it renders on the right
+      sentAt: new Date().toISOString(),
+      optimistic: true,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    setNewMsg("");
+
+    // Try WebSocket first
+    const sentViaWs = wsSend({ type: "message", content: text, to: selected });
+
+    if (!sentViaWs) {
+      // WebSocket not ready — fall back to HTTP
+      setSending(true);
+      try {
+        await messagesAPI.send(null, selected, text);
+      } catch (e) {
+        console.error(e);
+        // Roll back optimistic message on failure
+        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+        setNewMsg(text);
+      } finally {
+        setSending(false);
+      }
     }
   };
+
+  const list = Array.isArray(conversations) ? conversations : [];
 
   return (
     <div
@@ -1365,7 +1428,7 @@ function MessagesView({ t }) {
         height: "calc(100vh - 180px)",
       }}
     >
-      {/* Conversations list */}
+      {/* ── Conversations list ── */}
       <div
         className="card"
         style={{
@@ -1381,9 +1444,39 @@ function MessagesView({ t }) {
             borderBottom: "1px solid #e2e8f0",
             fontWeight: 700,
             fontSize: "1.1rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
           {t("messages")}
+          {/* WebSocket status pill */}
+          <span
+            style={{
+              fontSize: "0.7rem",
+              fontWeight: 600,
+              padding: "2px 8px",
+              borderRadius: 10,
+              background:
+                wsStatus === "open"
+                  ? "#dcfce7"
+                  : wsStatus === "connecting"
+                    ? "#fef9c3"
+                    : "#fee2e2",
+              color:
+                wsStatus === "open"
+                  ? "#16a34a"
+                  : wsStatus === "connecting"
+                    ? "#854d0e"
+                    : "#991b1b",
+            }}
+          >
+            {wsStatus === "open"
+              ? "● live"
+              : wsStatus === "connecting"
+                ? "◌ connecting"
+                : "○ offline"}
+          </span>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
           {loading ? (
@@ -1460,7 +1553,7 @@ function MessagesView({ t }) {
         </div>
       </div>
 
-      {/* Chat window */}
+      {/* ── Chat window ── */}
       <div
         className="card"
         style={{ padding: 0, display: "flex", flexDirection: "column" }}
@@ -1478,23 +1571,74 @@ function MessagesView({ t }) {
             Select a conversation
           </div>
         ) : (
-          <div className="chat-window" style={{ height: "100%" }}>
-            <div className="chat-messages">
+          <>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "1.5rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+              }}
+            >
               {msgLoading ? (
                 <LoadingState t={t} />
+              ) : messages.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#94a3b8" }}>
+                  No messages yet. Say hello!
+                </p>
               ) : (
-                (Array.isArray(messages) ? messages : []).map((m, i) => (
-                  <div
-                    key={i}
-                    className={`chat-bubble ${m.senderId === selected ? "received" : "sent"}`}
-                  >
-                    {m.content || m.message || m.text}
-                  </div>
-                ))
+                messages.map((m, i) => {
+                  const isMine = m.senderId !== selected;
+                  return (
+                    <div
+                      key={m.id || i}
+                      style={{
+                        alignSelf: isMine ? "flex-end" : "flex-start",
+                        maxWidth: "70%",
+                        padding: "0.75rem 1rem",
+                        borderRadius: isMine
+                          ? "1rem 1rem 0.25rem 1rem"
+                          : "1rem 1rem 1rem 0.25rem",
+                        background: isMine ? "var(--color-primary)" : "white",
+                        color: isMine ? "white" : "inherit",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
+                        fontSize: "0.9rem",
+                        opacity: m.optimistic ? 0.7 : 1,
+                        transition: "opacity 0.2s",
+                      }}
+                    >
+                      {m.content || m.message || m.text}
+                      {m.optimistic && (
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            opacity: 0.6,
+                            marginLeft: 6,
+                          }}
+                        >
+                          sending…
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
               )}
+              <div ref={messagesEndRef} />
             </div>
-            <div style={{ padding: "1rem", borderTop: "1px solid #e2e8f0" }}>
-              <div className="chat-input-area">
+
+            {/* Input bar */}
+            <div
+              style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0" }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  alignItems: "center",
+                }}
+              >
                 <input
                   className="chat-input"
                   placeholder={t("writeMsg")}
@@ -1503,24 +1647,32 @@ function MessagesView({ t }) {
                   onKeyDown={(e) =>
                     e.key === "Enter" && !e.shiftKey && handleSend()
                   }
+                  style={{
+                    flex: 1,
+                    padding: "0.75rem 1rem",
+                    borderRadius: "2rem",
+                    border: "1px solid #e2e8f0",
+                    outline: "none",
+                    fontFamily: "inherit",
+                  }}
                 />
                 <button
                   className="primary-btn"
                   style={{
                     borderRadius: "50%",
-                    width: 45,
-                    height: 45,
+                    width: 44,
+                    height: 44,
                     padding: 0,
                     justifyContent: "center",
                   }}
                   onClick={handleSend}
-                  disabled={sending}
+                  disabled={sending || !newMsg.trim()}
                 >
-                  {sending ? <Loader size={18} /> : <Send size={20} />}
+                  {sending ? <Loader size={18} /> : <Send size={18} />}
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
@@ -1596,7 +1748,7 @@ function SettingsView({ t }) {
     phoneNumber: "",
     specialist: "",
   });
-  const [photoUrl, setPhotoUrl] = useState(null);
+  const [imageSrc, setImageSrc] = useState(null); // ← replaces photoUrl
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -1618,18 +1770,21 @@ function SettingsView({ t }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
+  // Load profile on mount
   useEffect(() => {
     doctorSettingsAPI
       .get()
       .then((res) => {
         const d = res.data?.data ?? res.data;
+        console.log(d.profileImage ?? d.photoUrl)
         setForm({
           fullName: d.fullName || "",
           email: d.email || "",
           phoneNumber: d.phoneNumber || "",
           specialist: d.specialist || "",
         });
-        if (d.photoUrl) setPhotoUrl(d.photoUrl);
+        // The API returns `profileImage` as a raw base64 string (PNG or SVG)
+        setImageSrc(toImageSrc(d.profileImage ?? d.photoUrl ?? null));
       })
       .catch(() => setError("فشل تحميل البيانات"))
       .finally(() => setLoading(false));
@@ -1641,43 +1796,33 @@ function SettingsView({ t }) {
     setError("");
     setSuccessMsg("");
     try {
-      await doctorSettingsAPI.update({
-        fullName: form.fullName,
-        phoneNumber: form.phoneNumber,
-        specialist: form.specialist,
-        email: form.email,
-        password: "", // بعتي string فاضي مش null
-      });
+      await doctorSettingsAPI.update({ ...form, password: "" });
       setSuccessMsg("تم حفظ التغييرات بنجاح ✓");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      // حولي الـ error لـ string صح
-      const errData = err?.response?.data;
-      const msg =
-        typeof errData === "string"
-          ? errData
-          : errData?.message ||
-            errData?.title ||
-            (errData?.errors
-              ? Object.values(errData.errors).flat().join(" | ")
-              : null) ||
-            "فشل الحفظ";
-      setError(msg);
+      const d = err?.response?.data;
+      setError(
+        typeof d === "string" ? d : d?.message || d?.title || "فشل الحفظ",
+      );
     } finally {
       setSaving(false);
     }
   };
+
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPhoto(true);
+    // Preview immediately using a local object URL while the upload is in-flight
+    const localSrc = URL.createObjectURL(file);
+    setImageSrc(localSrc);
     try {
       const res = await doctorSettingsAPI.uploadPhoto(file);
       const d = res.data?.data ?? res.data;
-      if (d?.photoUrl) setPhotoUrl(d.photoUrl);
-      setPhotoUrl(URL.createObjectURL(file));
-    } catch (error) {
-      console.error(error);
+      // Replace with the server's base64 once available
+      const serverSrc = toImageSrc(d?.profileImage ?? d?.photoUrl ?? null);
+      if (serverSrc) setImageSrc(serverSrc);
+    } catch {
       setError("فشل رفع الصورة");
     } finally {
       setUploadingPhoto(false);
@@ -1693,30 +1838,22 @@ function SettingsView({ t }) {
     setEmailError("");
     try {
       await doctorSettingsAPI.update({
-        fullName: form.fullName,
-        phoneNumber: form.phoneNumber,
-        specialist: form.specialist,
+        ...form,
         email: newEmail,
-        password: "", // ← زي ما عملنا في handleSave
+        password: "",
       });
       setShowEmailInput(false);
       setShowEmailVerify(true);
     } catch (err) {
-      const errData = err?.response?.data;
-      const msg =
-        typeof errData === "string"
-          ? errData
-          : errData?.message ||
-            errData?.title ||
-            (errData?.errors
-              ? Object.values(errData.errors).flat().join(" | ")
-              : null) ||
-            "فشل إرسال الكود";
-      setEmailError(msg);
+      const d = err?.response?.data;
+      setEmailError(
+        typeof d === "string" ? d : d?.message || "فشل إرسال الكود",
+      );
     } finally {
       setEmailLoading(false);
     }
   };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword.length < 8) {
@@ -1770,6 +1907,7 @@ function SettingsView({ t }) {
           {t("profile")}
         </h3>
 
+        {/* ── Avatar ── */}
         <div
           style={{
             display: "flex",
@@ -1779,9 +1917,9 @@ function SettingsView({ t }) {
           }}
         >
           <div style={{ position: "relative" }}>
-            {photoUrl ? (
+            {imageSrc ? (
               <img
-                src={photoUrl}
+                src={imageSrc}
                 alt="profile"
                 style={{
                   width: 90,
@@ -1855,24 +1993,36 @@ function SettingsView({ t }) {
                 marginTop: "0.4rem",
               }}
             >
-              JPG أو PNG — أقل من 2MB
+              PNG, JPG, أو SVG — أقل من 2MB
             </p>
           </div>
         </div>
 
+        {/* ── Form fields ── */}
         <form onSubmit={handleSave}>
-          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
-            <label className="form-label">{t("fullName")}</label>
-            <input
-              className="form-input"
-              type="text"
-              value={form.fullName}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, fullName: e.target.value }))
-              }
-            />
-          </div>
+          {[
+            { label: t("fullName"), name: "fullName", type: "text" },
+            { label: t("phone"), name: "phoneNumber", type: "tel" },
+            { label: "التخصص", name: "specialist", type: "text" },
+          ].map((f) => (
+            <div
+              key={f.name}
+              className="form-group"
+              style={{ marginBottom: "1.2rem" }}
+            >
+              <label className="form-label">{f.label}</label>
+              <input
+                className="form-input"
+                type={f.type}
+                value={form[f.name]}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, [f.name]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
 
+          {/* Email row with change button */}
           <div className="form-group" style={{ marginBottom: "1.2rem" }}>
             <label className="form-label">{t("email")}</label>
             <div style={{ display: "flex", gap: 8 }}>
@@ -1895,30 +2045,6 @@ function SettingsView({ t }) {
                 تغيير
               </button>
             </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
-            <label className="form-label">{t("phone")}</label>
-            <input
-              className="form-input"
-              type="tel"
-              value={form.phoneNumber}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))
-              }
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
-            <label className="form-label">التخصص</label>
-            <input
-              className="form-input"
-              type="text"
-              value={form.specialist}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, specialist: e.target.value }))
-              }
-            />
           </div>
 
           {error && (
@@ -1975,13 +2101,13 @@ function SettingsView({ t }) {
               🔒 تغيير كلمة المرور
             </button>
             <button type="submit" className="primary-btn" disabled={saving}>
-              <Save size={16} />
-              {saving ? "جاري الحفظ..." : t("save")}
+              <Save size={16} /> {saving ? "جاري الحفظ..." : t("save")}
             </button>
           </div>
         </form>
       </div>
 
+      {/* ── Change email modal ── */}
       {showEmailInput && (
         <div className="modal-overlay" onClick={() => setShowEmailInput(false)}>
           <div
@@ -2058,6 +2184,7 @@ function SettingsView({ t }) {
         </div>
       )}
 
+      {/* ── Email verification modal ── */}
       {showEmailVerify && (
         <EmailVerification
           email={newEmail}
@@ -2073,6 +2200,7 @@ function SettingsView({ t }) {
         />
       )}
 
+      {/* ── Change password modal ── */}
       {showPasswordModal && (
         <div
           className="modal-overlay"
@@ -2191,7 +2319,6 @@ function SettingsView({ t }) {
           </div>
         </div>
       )}
-
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
