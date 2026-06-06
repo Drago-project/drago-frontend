@@ -746,7 +746,7 @@ function HomeView({ t, lang }) {
     loading,
     error,
     refetch,
-  } = useApiData(() => dashboardAPI.getStats(), []);
+  } = useApiData(() => dashboardAPI.getDashboardData(), []);
 
   const statCards = [
     {

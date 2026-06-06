@@ -80,7 +80,7 @@ export const doctorSettingsAPI = {
 // DASHBOARD
 // ─────────────────────────────────────────
 export const dashboardAPI = {
-  getStats: () => api.get("/api/Dashboard/stats"),
+  getDashboardData: () => api.get("/api/Dashboard/home"),
 };
 
 // ─────────────────────────────────────────
@@ -93,7 +93,7 @@ export const studentsAPI = {
   create: (data) => api.post("/api/Students", data),
   update: (id, data) => api.put(`/api/Students/${id}`, data),
   assignByEmail: (email) =>
-    api.post("/api/Students/assign-by-email", { email }),
+    api.post("/api/Dashboard/add-student", { email }),
 };
 // ─────────────────────────────────────────
 // SESSIONS
