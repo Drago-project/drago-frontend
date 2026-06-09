@@ -41,6 +41,98 @@ const getUserId = () => {
   return null;
 };
 
+const loadGameProgress = () => {
+  const games = [
+    {
+      id: "word_hunt",
+      name: "Word Hunt",
+      arabicName: "كوخ الكلمات",
+      storageKey: "word_hunt_progress",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🏠",
+      color: "#f59e0b"
+    },
+    {
+      id: "reading_quest",
+      name: "Reading Quest",
+      arabicName: "مغامرة القراءة",
+      storageKey: "reading_quest_progress",
+      totalLevels: 4,
+      stagesPerLevel: 5,
+      icon: "📖",
+      color: "#3b82f6"
+    },
+    {
+      id: "volcano_words",
+      name: "Volcano Words",
+      arabicName: "بركان الكلمات",
+      storageKey: "volcano_words_progress",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🌋",
+      color: "#ef4444"
+    },
+    {
+      id: "tomb_puzzle",
+      name: "Tomb Puzzle",
+      arabicName: "مقبرة الأسرار",
+      storageKey: "tomb_puzzle_progress",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🏺",
+      color: "#8b5cf6"
+    }
+  ];
+
+  return games.map(game => {
+    let completedStagesCount = 0;
+    let totalStars = 0;
+    let unlockedLevel = 1;
+    try {
+      const stored = localStorage.getItem(game.storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        unlockedLevel = parsed.unlockedLevel || 1;
+
+        if (parsed.completedStages) {
+          Object.keys(parsed.completedStages).forEach(level => {
+            const stages = parsed.completedStages[level];
+            if (Array.isArray(stages)) {
+              completedStagesCount += stages.filter(Boolean).length;
+            }
+          });
+        }
+
+        if (parsed.stars) {
+          Object.keys(parsed.stars).forEach(level => {
+            const stars = parsed.stars[level];
+            if (Array.isArray(stars)) {
+              totalStars += stars.reduce((sum, s) => sum + (Number(s) || 0), 0);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.error(`Error loading progress for ${game.name}:`, e);
+    }
+
+    const maxStages = game.totalLevels * game.stagesPerLevel;
+    const maxStars = maxStages * 3;
+    const progressPercent = Math.min(100, Math.round((completedStagesCount / maxStages) * 100));
+
+    return {
+      ...game,
+      unlockedLevel,
+      completedStagesCount,
+      maxStages,
+      totalStars,
+      maxStars,
+      progressPercent
+    };
+  });
+};
+
 function Profile() {
   const navigate = useNavigate();
   const dailyGoal = 50;
@@ -50,6 +142,7 @@ function Profile() {
   const [formData, setFormData] = useState({});
   const [showEdit, setShowEdit] = useState(false);
   const [achievements, setAchievements] = useState([]);
+  const [gamesProgress, setGamesProgress] = useState(() => loadGameProgress());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -307,6 +400,54 @@ function Profile() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* GAMES PROGRESS */}
+        <div className={styles.gamesSection}>
+          <h3>🎮 Games Progress</h3>
+          <div className={styles.gamesGrid}>
+            {gamesProgress.map((game) => (
+              <div key={game.id} className={styles.gameCard}>
+                <div className={styles.gameCardHeader}>
+                  <span className={styles.gameIcon}>{game.icon}</span>
+                  <div className={styles.gameNameContainer}>
+                    <h4 className={styles.gameName}>{game.name}</h4>
+                    <span className={styles.gameArabicName}>{game.arabicName}</span>
+                  </div>
+                </div>
+
+                <div className={styles.gameStats}>
+                  <div className={styles.gameStatRow}>
+                    <span>Unlocked Level:</span>
+                    <strong>Level {game.unlockedLevel} / {game.totalLevels}</strong>
+                  </div>
+                  <div className={styles.gameStatRow}>
+                    <span>Completed Stages:</span>
+                    <strong>{game.completedStagesCount} / {game.maxStages}</strong>
+                  </div>
+                  <div className={styles.gameStatRow}>
+                    <span>Stars Earned:</span>
+                    <strong>⭐ {game.totalStars} / {game.maxStars}</strong>
+                  </div>
+                </div>
+
+                <div className={styles.gameProgressContainer}>
+                  <div className={styles.gameProgressBarBg}>
+                    <div
+                      className={styles.gameProgressBarFill}
+                      style={{
+                        width: `${game.progressPercent}%`,
+                        backgroundColor: game.color,
+                      }}
+                    />
+                  </div>
+                  <div className={styles.gameProgressPercent}>
+                    {game.progressPercent}% Completed
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
