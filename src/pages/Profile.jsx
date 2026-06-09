@@ -58,7 +58,7 @@ function Profile() {
 
   // Chat states
   const [chatMessages, setChatMessages] = useState([]);
-  const [chatLoading, setChatLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
   const [chatInput, setChatInput] = useState("");
   const [chatSending, setChatSending] = useState(false);
@@ -166,19 +166,12 @@ function Profile() {
     }
   }, [userId, doctorId]); // ضفنا doctorId هنا
 
-  // 3. Load chat data when chat window is toggled open
+  // 3. Load chat data when the chat window is opened and doctorId is available
   useEffect(() => {
-    // لما الشات يتفتح، أو لو الدكتور اتعمله set بعد ما الشات كان مفتوح
     if (isChatOpen && doctorId) {
       loadChatData();
     }
   }, [loadChatData, isChatOpen, doctorId]);
-  // Load chat data when chat window is toggled open
-  useEffect(() => {
-    if (isChatOpen) {
-      loadChatData();
-    }
-  }, [loadChatData, isChatOpen]);
 
   // Auto-scroll to the bottom of the chat
   useEffect(() => {

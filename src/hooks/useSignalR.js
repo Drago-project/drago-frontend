@@ -6,50 +6,48 @@ export function useSignalR({ doctorId, studentId, onMessage }) {
   const [status, setStatus] = useState("disconnected");
   const latestOnMessage = useRef(onMessage);
 
-  // update the ref whenever onMessage changes
+  // تحديث الدالة دايماً عشان تقرأ أحدث State
   useEffect(() => {
     latestOnMessage.current = onMessage;
   }, [onMessage]);
 
-  // 1. initialize the SignalR connection when doctorId and studentId are available
+  // 1. فتح الاتصال (بيحصل مرة واحدة بس في البداية)
   useEffect(() => {
-    if (!doctorId || !studentId) return;
+    if (!doctorId && !studentId) return;
 
     const backendUrl = import.meta.env.VITE_API_URL || "";
     const token = localStorage.getItem("authToken");
 
     const newConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${backendUrl}/chatHub`, {
-        accessTokenFactory: () => token, // supply the token for authentication if needed
+        accessTokenFactory: () => token,
       })
       .withAutomaticReconnect()
       .build();
 
     setConnection(newConnection);
-  }, [doctorId, studentId]);
 
-  // 2. start the room and set up listeners
+    return () => {
+      newConnection.stop();
+    };
+  }, []); // 👈 قوسين فاضيين عشان ميفصلش ويعيد الاتصال كل ما الطالب يتغير
+
+  // 2. تشغيل الاتصال والاستماع
   useEffect(() => {
     if (!connection) return;
 
     const startConnection = async () => {
       try {
-        setStatus("connecting");
-        await connection.start();
-        setStatus("connected");
+        if (connection.state === signalR.HubConnectionState.Disconnected) {
+          setStatus("connecting");
+          await connection.start();
+          setStatus("connected");
+        }
 
-        // room name convention: "chat-{doctorId}-{studentId}"
-        const roomName = `chat-${doctorId}-${studentId}`;
-
-        // join room request
-        await connection.invoke("JoinRoom", roomName);
-
-        // listen to new messages
         connection.on("ReceiveMessage", (message) => {
           if (latestOnMessage.current) latestOnMessage.current(message);
         });
 
-        // listen to notfications
         connection.on("ReceiveNotification", (notif) => {
           console.log("Notification:", notif);
           window.dispatchEvent(
@@ -64,23 +62,21 @@ export function useSignalR({ doctorId, studentId, onMessage }) {
 
     startConnection();
 
-    //  cleanup on unmount or when doctorId/studentId changes
     return () => {
-      if (connection) {
-        // الاستماع للإشعارات
-        connection.on("ReceiveNotification", (notif) => {
-          console.log("Notification:", notif);
-          // ده السطر السحري اللي بيبعت إشارة لكل المشروع
-          window.dispatchEvent(
-            new CustomEvent("drago-notification", { detail: notif }),
-          );
-        });
-        connection.off("ReceiveMessage");
-        connection.off("ReceiveNotification");
-        connection.stop();
-      }
+      connection.off("ReceiveMessage");
+      connection.off("ReceiveNotification");
     };
-  }, [connection, doctorId, studentId]);
+  }, [connection]);
+
+  // 3. الدخول للغرفة الصحيحة كل ما الدكتور يختار طالب مختلف
+  useEffect(() => {
+    if (connection && status === "connected" && doctorId && studentId) {
+      const roomName = `chat-${doctorId}-${studentId}`;
+      connection
+        .invoke("JoinRoom", roomName)
+        .catch((err) => console.error("JoinRoom Error:", err));
+    }
+  }, [connection, status, doctorId, studentId]);
 
   return { status, connection };
 }

@@ -1341,182 +1341,184 @@ function AssessmentsView({ t }) {
   );
 }
 
-function MessagesView({ t, incomingMessage }) {
+function MessagesView({ t }) {
   const doctorId = getUserId();
 
   const {
     data: conversations,
-    loading,
-    error,
-    refetch,
+    loading: convsLoading,
+    error: convsError,
+    refetch: refetchConvs,
   } = useApiData(() => messagesAPI.getConversations(), []);
 
   const { data: allStudents } = useApiData(() => studentsAPI.getAll(), []);
 
-  const [selectedStudentId, setSelectedStudentId] = useState(null);
-  const [activeConversationId, setActiveConversationId] = useState(null);
-  const activeConvRef = useRef(null);
-
-  const [messages, setMessages] = useState([]);
-  const [msgLoading, setMsgLoading] = useState(false);
-  const [msgError, setMsgError] = useState("");
-  const [newMsg, setNewMsg] = useState("");
-  const [sending, setSending] = useState(false);
+  const [localConvs, setLocalConvs] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [localConvs, setLocalConvs] = useState([]);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
+  const [messages, setMessages] = useState([]);
+
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+
   const messagesEndRef = useRef(null);
 
-  // Sync references
+  // تحديث المحادثات الجانبية
   useEffect(() => {
-    activeConvRef.current = activeConversationId;
-  }, [activeConversationId]);
-
-  useEffect(() => {
-    if (conversations) setLocalConvs(conversations);
-  }, [conversations]);
-//   useEffect(() => {
-//   console.log("DOCTOR INCOMING:", incomingMessage);
-// }, [incomingMessage]);
-
-  // 1. معالجة الرسائل القادمة من Dashboard بشكل سليم
-  useEffect(() => {
-    if (!incomingMessage) return;
-
-    const role = incomingMessage.senderRole || incomingMessage.SenderRole || "";
-    const sId = incomingMessage.senderId || incomingMessage.SenderId;
-    const rId = incomingMessage.receiverId || incomingMessage.ReceiverId;
-    const msgConvId =
-      incomingMessage.conversationId || incomingMessage.ConversationId;
-
-    // استخراج رقم الطالب (لو المرسل طالب يبقى هو، لو المرسل دكتور يبقى الـ receiver)
-    const msgStudentId = Number(role.toLowerCase() === "student" ? sId : rId);
-    const currentSelectedConv = Number(activeConvRef.current);
-
-    if (!msgStudentId) return;
-
-    // تحديث الشات المفتوح حالياً لو المحادثة متطابقة
-    if (msgConvId && currentSelectedConv === Number(msgConvId)) {
-      setMessages((prev) => {
-        const msgId =
-          incomingMessage.messageId ||
-          incomingMessage.MessageId ||
-          incomingMessage.id;
-        if (msgId) {
-          const exists = prev.some(
-            (m) => (m.messageId || m.MessageId || m.id) === msgId,
-          );
-          if (exists) return prev;
-        }
-        return [...prev, incomingMessage];
-      });
+    if (conversations) {
+      setLocalConvs(conversations);
     }
+  }, [conversations]);
 
-    // تحديث القائمة الجانبية وإضاءة النقطة الحمراء
-    setLocalConvs((prevConvs) => {
-      const updatedList = [...prevConvs];
-      const convIndex = updatedList.findIndex(
-        (c) =>
-          (msgConvId &&
-            Number(c.conversationId || c.id) === Number(msgConvId)) ||
-          Number(c.studentId || c.participantId || c.userId) === msgStudentId,
-      );
+  // استخدام Ref لمعرفة الطالب المفتوح حالياً داخل الـ SignalR
+  const selectedStudentRef = useRef(null);
+  useEffect(() => {
+    selectedStudentRef.current = selectedStudentId;
+  }, [selectedStudentId]);
 
-      if (convIndex > -1) {
-        const [movedConv] = updatedList.splice(convIndex, 1);
-        movedConv.lastMessage =
-          incomingMessage.content ||
-          incomingMessage.text ||
-          incomingMessage.Message ||
-          "رسالة جديدة";
+  // 🔥 1. الشات سيستم المغلق (SignalR جوه المكون مباشرة)
+  useSignalR({
+    doctorId: doctorId || 0,
+    studentId: selectedStudentId,
+    onMessage: (message) => {
+      const role = message.senderRole || message.SenderRole || "";
+      const sId = message.senderId || message.SenderId;
+      const rId = message.receiverId || message.ReceiverId;
 
-        if (currentSelectedConv !== Number(msgConvId)) {
-          movedConv.isRead = false;
-        }
-        updatedList.unshift(movedConv);
-      } else {
-        refetch(); // إذا كانت أول رسالة يتم جلب المحادثة
+      const msgStudentId = role.toLowerCase() === "student" ? sId : rId;
+      if (!msgStudentId) return;
+
+      // 1. تحديث صندوق المحادثة لو الدكتور فاتح شات الطالب ده
+      if (selectedStudentRef.current === msgStudentId) {
+        setMessages((prev) => {
+          const msgId = message.messageId || message.id || message.MessageId;
+          if (
+            msgId &&
+            prev.some((m) => (m.messageId || m.id || m.MessageId) === msgId)
+          )
+            return prev;
+          return [...prev, message];
+        });
       }
-      return updatedList;
-    });
-  }, [incomingMessage, refetch]);
+      // ب. تحديث القائمة الجانبية فوراً
+      setLocalConvs((prevConvs) => {
+        const updatedList = [...prevConvs];
+        const convIndex = updatedList.findIndex(
+          (c) =>
+            Number(c.studentId || c.participantId || c.userId) === msgStudentId,
+        );
+
+        if (convIndex > -1) {
+          const [movedConv] = updatedList.splice(convIndex, 1);
+          movedConv.lastMessage =
+            message.content || message.text || message.Message;
+
+          if (Number(selectedStudentRef.current) !== msgStudentId) {
+            movedConv.isRead = false; // لو الشات مقفول نور النقطة الحمرا
+          }
+          updatedList.unshift(movedConv);
+        } else {
+          refetchConvs(); // لو طالب جديد خالص بيعمل ريفريش للقايمة
+        }
+        return updatedList;
+      });
+    },
+  });
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🔥 2. جلب المحادثات (بإرسال الـ Payload الصحيح للـ API)
-  const loadMessages = async (studentId) => {
+  // ─── 2. فتح المحادثة ───
+  const loadChatData = async (studentId) => {
+    if (!studentId || !doctorId) return;
+
     setSelectedStudentId(studentId);
     setMessages([]);
-    setMsgLoading(true);
-    setMsgError("");
+    setChatLoading(true);
+    setChatError("");
+
+    setLocalConvs((prev) =>
+      prev.map((c) =>
+        Number(c.studentId || c.participantId || c.userId) === Number(studentId)
+          ? { ...c, isRead: true }
+          : c,
+      ),
+    );
 
     try {
-      // إرسال doctorId و studentId فقط (حسب الـ Swagger)
       const convRes = await messagesAPI.getOrCreateConversation({
         doctorId: Number(doctorId),
         studentId: Number(studentId),
       });
 
-      const realConvId =
+      const activeConvId =
         convRes.data?.data?.conversationId ||
         convRes.data?.conversationId ||
-        convRes.data?.id;
-      setActiveConversationId(realConvId);
+        convRes.data?.id ||
+        0;
+      setConversationId(activeConvId);
 
-      // تحديث حالة القراءة محلياً
-      setLocalConvs((prev) =>
-        prev.map((c) =>
-          Number(c.conversationId || c.id) === Number(realConvId)
-            ? { ...c, isRead: true }
-            : c,
-        ),
-      );
-
-      if (realConvId) {
-        const msgRes = await messagesAPI.getMessages(realConvId);
+      if (activeConvId) {
+        const msgRes = await messagesAPI.getMessages(activeConvId);
         setMessages(msgRes.data?.data ?? msgRes.data ?? []);
       }
-    } catch (e) {
-      console.error("loadMessages error:", e);
-      setMsgError(t("error") || "فشل تحميل الرسائل");
+    } catch (err) {
+      console.error("Chat load error:", err);
+      setChatError("فشل في تحميل الرسائل.");
     } finally {
-      setMsgLoading(false);
+      setChatLoading(false);
     }
   };
 
-  const handleSend = async () => {
-    const text = newMsg.trim();
-    if (!text || !activeConversationId || !doctorId || msgLoading || sending)
-      return;
-
-    setSending(true);
-    setMsgError("");
+  // ─── 3. الإرسال ───
+  const handleSendChat = async () => {
+    const text = chatInput.trim();
+    if (!text || !selectedStudentId || !doctorId || chatSending) return;
 
     const tempId = `opt-${Date.now()}`;
     const optimisticMsg = {
       messageId: tempId,
-      content: text,
-      senderId: doctorId,
       senderRole: "Doctor",
-      optimistic: true,
+      content: text,
       sentAt: new Date().toISOString(),
+      optimistic: true,
     };
 
     setMessages((prev) => [...prev, optimisticMsg]);
-    setNewMsg("");
+    setChatInput("");
+    setChatError("");
+    setChatSending(true);
 
     try {
+      let activeConvId = conversationId;
+
+      if (!activeConvId) {
+        const convRes = await messagesAPI.getOrCreateConversation({
+          doctorId: Number(doctorId),
+          studentId: Number(selectedStudentId),
+        });
+        activeConvId =
+          convRes.data?.data?.conversationId ||
+          convRes.data?.conversationId ||
+          convRes.data?.id ||
+          0;
+        setConversationId(activeConvId);
+        refetchConvs();
+      }
+
       await messagesAPI.send({
         content: text,
         receiverId: Number(selectedStudentId),
         doctorId: Number(doctorId),
         studentId: Number(selectedStudentId),
-        conversationId: Number(activeConversationId),
+        conversationId: Number(activeConvId) || 0,
       });
 
-      // إزالة علامة (جاري الإرسال)
       setMessages((prev) =>
         prev.map((m) =>
           m.messageId === tempId ? { ...m, optimistic: false } : m,
@@ -1527,7 +1529,8 @@ function MessagesView({ t, incomingMessage }) {
         const updatedList = [...prevConvs];
         const convIndex = updatedList.findIndex(
           (c) =>
-            Number(c.conversationId || c.id) === Number(activeConversationId),
+            Number(c.studentId || c.participantId || c.userId) ===
+            Number(selectedStudentId),
         );
 
         if (convIndex > -1) {
@@ -1537,18 +1540,19 @@ function MessagesView({ t, incomingMessage }) {
         }
         return updatedList;
       });
-    } catch (e) {
-      console.error("SEND ERROR:", e);
+    } catch (err) {
+      console.error("Chat send error:", err);
       setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
-      setNewMsg(text);
-      setMsgError("فشل إرسال الرسالة، يرجى المحاولة مرة أخرى.");
+      setChatInput(text);
+      setChatError("فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.");
     } finally {
-      setSending(false);
+      setChatSending(false);
     }
   };
 
-  const list = searchQuery
-    ? (Array.isArray(allStudents) ? allStudents : []).filter((s) =>
+  const studentsList = Array.isArray(allStudents) ? allStudents : [];
+  const displayList = searchQuery
+    ? studentsList.filter((s) =>
         (s.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : localConvs;
@@ -1562,7 +1566,7 @@ function MessagesView({ t, incomingMessage }) {
         height: "calc(100vh - 180px)",
       }}
     >
-      {/* LEFT SIDEBAR */}
+      {/* القائمة الجانبية */}
       <div
         className="card"
         style={{ padding: 0, display: "flex", flexDirection: "column" }}
@@ -1582,39 +1586,37 @@ function MessagesView({ t, incomingMessage }) {
         </div>
 
         <div style={{ overflowY: "auto", flex: 1 }}>
-          {error ? (
-            <ErrorState t={t} onRetry={refetch} />
-          ) : loading && !searchQuery ? (
+          {convsError ? (
+            <ErrorState t={t} onRetry={refetchConvs} />
+          ) : convsLoading && !searchQuery ? (
             <LoadingState t={t} />
-          ) : list.length === 0 ? (
+          ) : displayList.length === 0 ? (
             <div
               style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}
             >
               {t("noMessages")}
             </div>
           ) : (
-            list.map((item) => {
-              const studentIdUI = item.studentId || item.userId || item.id;
+            displayList.map((item) => {
+              const studentIdUI =
+                item.studentId || item.participantId || item.userId || item.id;
               const name =
                 item.studentName || item.fullName || `Student #${studentIdUI}`;
-              const convId = item.conversationId || item.id;
-
               const isUnread = !searchQuery && item.isRead === false;
-              const isSelected =
-                activeConversationId === convId ||
-                selectedStudentId === studentIdUI;
 
               return (
                 <div
-                  key={`conv-${convId}-${studentIdUI}`}
+                  key={`sidebar-item-${studentIdUI}`}
                   className={`message-item ${isUnread ? "message-unread" : ""}`}
-                  onClick={() => loadMessages(studentIdUI)}
+                  onClick={() => loadChatData(studentIdUI)}
                   style={{
-                    backgroundColor: isSelected ? "#f1f5f9" : "transparent",
+                    backgroundColor:
+                      selectedStudentId === studentIdUI
+                        ? "#f1f5f9"
+                        : "transparent",
                   }}
                 >
                   <div className="profile-pic">{(name || "?")[0]}</div>
-
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 600 }}>{name}</div>
                     <div style={{ fontSize: "0.8rem", color: "#666" }}>
@@ -1629,16 +1631,16 @@ function MessagesView({ t, incomingMessage }) {
         </div>
       </div>
 
-      {/* CHAT BOX */}
+      {/* صندوق المحادثة */}
       <div
         className="card"
         style={{ display: "flex", flexDirection: "column", padding: 0 }}
       >
-        {!activeConversationId ? (
+        {!selectedStudentId ? (
           <div style={{ margin: "auto", color: "#888" }}>
             Select a conversation
           </div>
-        ) : msgLoading ? (
+        ) : chatLoading ? (
           <div
             style={{
               flex: 1,
@@ -1661,7 +1663,7 @@ function MessagesView({ t, incomingMessage }) {
                 gap: "0.5rem",
               }}
             >
-              {messages.length === 0 && !msgError && (
+              {messages.length === 0 && !chatError && (
                 <p
                   style={{
                     color: "#6b7280",
@@ -1705,9 +1707,9 @@ function MessagesView({ t, incomingMessage }) {
                         opacity: 0.7,
                       }}
                     >
-                      {m.sentAt || m.timestamp || m.SentAt
+                      {m.sentAt || m.timestamp || m.createdAt
                         ? new Date(
-                            m.sentAt || m.timestamp || m.SentAt,
+                            m.sentAt || m.timestamp || m.createdAt,
                           ).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -1721,7 +1723,7 @@ function MessagesView({ t, incomingMessage }) {
               <div ref={messagesEndRef} />
             </div>
 
-            {msgError && (
+            {chatError && (
               <div
                 style={{
                   margin: "0 1rem",
@@ -1733,7 +1735,7 @@ function MessagesView({ t, incomingMessage }) {
                   textAlign: "center",
                 }}
               >
-                {msgError}
+                {chatError}
               </div>
             )}
 
@@ -1747,21 +1749,21 @@ function MessagesView({ t, incomingMessage }) {
             >
               <input
                 className="chat-input"
-                value={newMsg}
+                value={chatInput}
                 onChange={(e) => {
-                  setNewMsg(e.target.value);
-                  setMsgError("");
+                  setChatInput(e.target.value);
+                  setChatError("");
                 }}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
                 placeholder={t("writeMsg")}
-                disabled={sending}
+                disabled={chatSending}
               />
               <button
                 className="primary-btn"
-                onClick={handleSend}
-                disabled={sending || !newMsg.trim()}
+                onClick={handleSendChat}
+                disabled={chatSending || !chatInput.trim()}
               >
-                {sending ? (
+                {chatSending ? (
                   <Loader
                     size={18}
                     style={{ animation: "spin 1s linear infinite" }}
@@ -2419,56 +2421,8 @@ export default function Dashboard() {
   const [lang, setLang] = useState("en");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Notification States & SignalR (Lifted up)
-  const doctorId = getUserId();
-  const [hasNewNotif, setHasNewNotif] = useState(false);
-  const [incomingMessage, setIncomingMessage] = useState(null);
-
-  // Fix 1: Use a ref to always access the latest activeTab inside the SignalR callback
-  const activeTabRef = useRef(activeTab);
-  useEffect(() => {
-    activeTabRef.current = activeTab;
-  }, [activeTab]);
-
-  useSignalR({
-    doctorId: doctorId,
-    studentId: null, // Null to listen to all incoming messages to this doctor
-    onMessage: (message) => {
-      // Prevent notifying if the message is from the doctor themselves
-      const role = message.senderRole || message.SenderRole;
-      if (role === "Doctor") return;
-
-      // Force trigger by adding timestamp to object
-      setIncomingMessage({ ...message, _ts: Date.now() });
-
-      // Use the ref to check the current tab reliably
-      if (activeTabRef.current !== "messages") {
-        setHasNewNotif(true);
-      }
-    },
-  });
-
   const t = (k) => translations[lang][k] || k;
   const toggleLang = () => setLang((l) => (l === "en" ? "ar" : "en"));
-
-  // Notification listener (Custom Event Fallback)
-  useEffect(() => {
-    const handleNotification = () => {
-      if (activeTab !== "messages") {
-        setHasNewNotif(true);
-      }
-    };
-    window.addEventListener("drago-notification", handleNotification);
-    return () =>
-      window.removeEventListener("drago-notification", handleNotification);
-  }, [activeTab]);
-
-  // Clear notification badge when entering messages
-  useEffect(() => {
-    if (activeTab === "messages") {
-      setHasNewNotif(false);
-    }
-  }, [activeTab]);
 
   const menuItems = [
     { id: "home", icon: Home, label: "home" },
@@ -2527,15 +2481,14 @@ export default function Dashboard() {
               <button onClick={toggleLang} className="icon-btn">
                 <Languages size={20} />
               </button>
+              {/* شيلنا النقطة الحمرا من هنا خلاص */}
               <button
                 className="icon-btn"
                 onClick={() => {
                   setActiveTab("messages");
-                  setHasNewNotif(false);
                 }}
               >
                 <Bell size={20} />
-                {hasNewNotif && <span className="badge-dot" />}
               </button>
               <div className="profile-pic">DR</div>
             </div>
@@ -2545,9 +2498,7 @@ export default function Dashboard() {
           {activeTab === "students" && <StudentsView t={t} lang={lang} />}
           {activeTab === "sessions" && <SessionsView t={t} />}
           {activeTab === "assessments" && <AssessmentsView t={t} />}
-          {activeTab === "messages" && (
-            <MessagesView t={t} incomingMessage={incomingMessage} />
-          )}
+          {activeTab === "messages" && <MessagesView t={t} />}
           {activeTab === "reports" && <ReportsView t={t} />}
           {activeTab === "settings" && <SettingsView t={t} />}
         </main>
