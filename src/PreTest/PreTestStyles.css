@@ -1,0 +1,104 @@
+@font-face {
+  font-family: "OpenDyslexic";
+  src: url("/fonts/open-dyslexic-font/OpendyslexicRegular-nRLZ0.otf") format("opentype");
+}
+@font-face {
+  font-family: "Maqroo";
+  src: url("/fonts/maqroo-font/Maqroo-Regular.ttf") format("truetype");
+}
+
+:root {
+  /* Primary Colors from Drago Character */
+  --color-primary: #EFA818; /* Orange/Yellow from character */
+  --color-avatar: #44958E; /* Teal/Green from dragon */
+  --color-secondary: #FDB462; /* Lighter orange */
+  --color-accent: #2D7A73; /* Darker teal */
+  
+  /* Neutral Colors */
+  --color-white: #FFFFFF;
+  --color-light-gray: #F8F9FA;
+  --color-gray: #E9ECEF;
+  --color-dark-gray: #6C757D;
+  --color-black: #212529;
+  
+  /* Background Colors */
+  --bg-primary: var(--color-primary);
+  --bg-avatar: var(--color-avatar);
+  --bg-light: var(--color-light-gray);
+  --bg-white: var(--color-white);
+  
+  /* Text Colors */
+  --text-primary: var(--color-black);
+  --text-secondary: var(--color-dark-gray);
+  --text-light: var(--color-white);
+  --text-accent: var(--color-avatar);
+  
+  /* Spacing */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-2xl: 4rem;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 50%;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.25);
+  
+  /* Typography */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 2rem;
+  --font-size-4xl: 2.5rem;
+  --font-size-5xl: 3rem;
+  
+  /* Line Heights */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-light-gray);
+  color: var(--color-black);
+  font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: var(--line-height-normal);
+}
+
+button, input, select {
+  font: inherit;
+  color: inherit;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
