@@ -11,7 +11,7 @@
 
 /* Desktop Layout */
 @media (min-width: 1024px) {
-  .profilePage { 
+  .profilePage {
     margin: 0px;
     padding: 100px 40px 40px;
     display: flex;
@@ -63,7 +63,7 @@
   margin: 15px;
   background: white;
   border-radius: 20px;
-  padding: 13px ;
+  padding: 13px;
   text-align: center;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
@@ -96,7 +96,9 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .editBtn:hover {
@@ -144,7 +146,11 @@
   position: absolute;
   width: 120%;
   height: 120%;
-  background: radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 60%);
+  background: radial-gradient(
+    circle at top left,
+    rgba(255, 255, 255, 0.15),
+    transparent 60%
+  );
   top: -20%;
   left: -20%;
 }
@@ -205,14 +211,14 @@
 }
 
 /* ===== DAILY GOAL ===== */
-.dailyGoal p{
+.dailyGoal p {
   margin: 20px;
 }
 .dailyGoal {
-  margin:15px;
+  margin: 15px;
   background: #ecfeff;
   padding: 30px;
-  height:200px;
+  height: 200px;
   border-radius: 20px;
   text-align: center;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -241,6 +247,109 @@
   .achievementsGrid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.chatSection {
+  margin: 15px;
+  background: white;
+  padding: 20px;
+  min-height: 360px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+.chatHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.chatSubtitle {
+  color: #6b7280;
+  margin-top: 6px;
+  font-size: 0.95rem;
+}
+
+.chatBody {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+}
+
+.chatMessages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.messageBubble {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 20px;
+  line-height: 1.4;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.mine {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #22b2c5, #377469);
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.their {
+  align-self: flex-start;
+  background: white;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 6px;
+}
+
+.messageMeta {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: right;
+}
+
+.chatInputRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.chatInputRow input {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  font-family: inherit;
+}
+
+.chatSendBtn {
+  width: 120px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #22b2c5, #377469);
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.chatSendBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .achievementCard {
@@ -329,7 +438,9 @@
   border-radius: 999px;
   padding: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
   flex: 1;
 }
 

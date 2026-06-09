@@ -1,0 +1,426 @@
+/* Drago Frontend Themed stylesheet for Dyslexia Pretest */
+/* 
+html, body, #root {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+} */
+
+/* body {
+  background: radial-gradient(circle at top right, var(--color-secondary), transparent 35%), var(--color-light-gray);
+  color: var(--color-black);
+  font-family: "Maqroo", "OpenDyslexic", monospace, Arial, sans-serif;
+  transition: direction var(--transition-normal);
+} */
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-normal);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+/* App Container */
+.app {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--spacing-md);
+}
+
+/* Hero & Header Section */
+.hero {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-secondary) 100%
+  );
+  color: var(--color-white);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.heroTop {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  z-index: 2;
+  position: relative;
+}
+
+.mascot {
+  width: 70px;
+  height: 70px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.2);
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero p {
+  margin: 0 0 4px;
+  color: var(--color-light-gray);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  line-height: var(--line-height-tight);
+}
+
+.hero span {
+  display: block;
+  margin-top: 8px;
+  color: var(--color-light-gray);
+}
+
+.heroBadges {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: var(--spacing-sm) 0;
+  z-index: 2;
+  position: relative;
+}
+
+.badge,
+.modeButton {
+  background: var(--color-white);
+  color: var(--color-accent);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  font-weight: 700;
+  border: 1px solid var(--color-gray);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+}
+
+.modeButton {
+  cursor: pointer;
+  background: var(--color-avatar);
+  color: var(--color-white);
+  border: none;
+}
+
+.modeButton:hover {
+  background-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+/* Progress bar */
+.progress,
+.miniProgress {
+  height: 12px;
+  background: var(--color-gray);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.progress i,
+.miniProgress i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-avatar) 0%,
+    var(--color-accent) 100%
+  );
+  transition: width var(--transition-slow);
+}
+
+/* Layout Grid */
+.layout {
+  display: grid;
+  gap: var(--spacing-md);
+  align-items: start;
+}
+
+.therapistLayout {
+  grid-template-columns: minmax(0, 1fr) 300px;
+  direction: ltr;
+}
+
+.childLayout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+main {
+  min-width: 0;
+  direction: rtl;
+}
+
+/* Therapist Sidebar timeline */
+.side {
+  direction: rtl;
+  position: sticky;
+  top: 20px;
+  background: var(--color-white);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+}
+
+.side h3 {
+  text-align: center;
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-accent);
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  color: var(--color-dark-gray);
+  margin-bottom: var(--spacing-xs);
+  transition: all var(--transition-normal);
+}
+
+.step b {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-full);
+  background: var(--color-light-gray);
+  display: grid;
+  place-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-dark-gray);
+}
+
+.step.active {
+  background: #fef3c7;
+  color: var(--color-primary);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.step.active b {
+  background: var(--color-primary);
+  color: var(--color-white);
+  font-weight: 700;
+}
+
+.step.done {
+  color: var(--color-avatar);
+  font-weight: 600;
+}
+
+.step.done b {
+  background: var(--color-avatar);
+  color: var(--color-white);
+}
+
+/* Rounded Tactile Cards */
+.card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  animation: fade 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.guide,
+.title,
+.missionHead,
+.resultHero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.guide {
+  align-items: center;
+}
+
+.dragon {
+  width: 105px;
+  height: 105px;
+  border-radius: var(--radius-lg);
+  background: #ecfdf5;
+  display: grid;
+  place-items: center;
+  font-size: 62px;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-avatar);
+  border: 1px solid var(--color-gray);
+}
+
+.guide h2,
+.title h2,
+.missionHead h2,
+.resultHero h2 {
+  margin: 0 0 8px;
+  font-size: var(--font-size-3xl);
+  color: var(--color-accent);
+}
+
+.guide p,
+.title p,
+.missionHead p,
+.resultHero p,
+.feature p {
+  color: var(--color-dark-gray);
+  line-height: var(--line-height-relaxed);
+  margin: 0;
+}
+
+.missionTag {
+  display: inline-flex;
+  background: #fef3c7;
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  border: 1px solid var(--color-secondary);
+}
+
+.featureGrid,
+.grid2,
+.scoreGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.feature {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-normal);
+}
+
+.feature:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.feature div {
+  font-size: 38px;
+}
+
+.feature h3 {
+  margin: 8px 0 5px;
+  color: var(--color-accent);
+}
+
+.notice {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin: var(--spacing-sm) 0;
+  line-height: var(--line-height-relaxed);
+  color: var(--color-accent);
+}
+
+.notice.warn {
+  background: #fef2f2;
+  border-color: #fecdd3;
+  color: #9f1239;
+}
+
+/* Button Custom Styles */
+.primary,
+.secondary,
+.ghost,
+.sound {
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary {
+  background: var(--color-primary);
+  color: var(--color-white);
+  box-shadow: 0 8px 20px rgba(239, 168, 24, 0.25);
+}
+
+.primary:hover:not(:disabled) {
+  background: #e6971a;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(239, 168, 24, 0.35);
+}
+
+.primary.big {
+  font-size: var(--font-size-lg);
+  padding: 16px 32px;
+}
+
+.secondary {
+  background: var(--color-avatar);
+  color: var(--color-white);
+  box-shadow: 0 8px 20px rgba(68, 150, 142, 0.25);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(68, 150, 142, 0.35);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--color-accent);
+  box-shadow: none;
+  border: 1px dashed var(--color-avatar);
+}
+
+.ghost:hover {
+  background: rgba(68, 150, 142, 0.05);
+}
+
+.sound {
+  background: var(--color-light-gray);
+  color: var(--color-avatar);
+  border: 1px solid var(--color-gray);
+}

@@ -1,7 +1,8 @@
 // src/components/ProtectedRoute.jsx
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 function ProtectedRoute({ children, requiredRole }) {
+  const location = useLocation();
   const token = localStorage.getItem("authToken");
   const storedUser = localStorage.getItem("userData");
 
@@ -89,6 +90,18 @@ function ProtectedRoute({ children, requiredRole }) {
     }
   } catch {
     /* ignore */
+  }
+
+  // If student still needs pretest, force pretest route before accessing other student pages.
+  const needsPretest = localStorage.getItem("needsPretest") === "true";
+  const isStudentRoute = requiredRole?.toLowerCase().includes("student");
+
+  if (
+    isStudentRoute &&
+    needsPretest &&
+    !location.pathname.startsWith("/pretest")
+  ) {
+    return <Navigate to="/pretest" replace />;
   }
 
   // if requiredRole is set, check access

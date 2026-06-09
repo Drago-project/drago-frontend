@@ -1,7 +1,8 @@
 // src/pages/DashBoard.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSignalR } from "../hooks/useSignalR";
+import { toImageSrc } from "../utils/imageUtils";
 import {
-  LayoutDashboard,
   Users,
   Calendar,
   FileText,
@@ -16,35 +17,49 @@ import {
   Download,
   TrendingUp,
   CheckCircle,
-  AlertCircle,
   Languages,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   MessageSquare,
-  User,
-  Mail,
-  Phone,
-  Save,
   Send,
   Plus,
   RefreshCw,
   Loader,
 } from "lucide-react";
-import EmailVerification from "../components/Emailverification";
-import ResetPasswordCode from "../components/ResetPasswordCode";
-import ForgotPassword from "../components/ForgotPassword";
 import {
   dashboardAPI,
   studentsAPI,
   sessionsAPI,
   assessmentsAPI,
   messagesAPI,
-  // recommendationsAPI,
-  // exercisesAPI,
-  // doctorsAPI,
   doctorSettingsAPI,
 } from "../server/endpoints";
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+const getUserId = () => {
+  try {
+    const userDataStr = localStorage.getItem("userData");
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      return userData?.userId || userData?.id || userData?.doctorId || null;
+    }
+  } catch (err) {
+    console.error("Error parsing userData:", err);
+  }
+
+  try {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.DoctorId || payload.userId || payload.sub || null;
+    }
+  } catch (err) {
+    console.error("Error parsing token:", err);
+  }
+
+  return null;
+};
 
 // ─── CSS Styles ───────────────────────────────────────────────────────────────
 const cssStyles = `
@@ -273,7 +288,7 @@ function useApiData(fetchFn, deps = []) {
     } finally {
       setLoading(false);
     }
-  }, deps); // eslint-disable-line
+  }, deps);
 
   useEffect(() => {
     load();
@@ -293,17 +308,19 @@ function LoadingState({ t }) {
   );
 }
 
-function ErrorState({ t, onRetry }) {
+function ErrorState({ t, onRetry, message }) {
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
-      <div className="error-banner">{t("error")}</div>
-      <button
-        className="primary-btn"
-        onClick={onRetry}
-        style={{ margin: "0 auto" }}
-      >
-        <RefreshCw size={16} /> {t("retry")}
-      </button>
+      <div className="error-banner">{message || t("error")}</div>
+      {onRetry && (
+        <button
+          className="primary-btn"
+          onClick={onRetry}
+          style={{ margin: "0 auto" }}
+        >
+          <RefreshCw size={16} /> {t("retry")}
+        </button>
+      )}
     </div>
   );
 }
@@ -581,7 +598,7 @@ function AddSessionModal({ isOpen, onClose, onSessionAdded, students }) {
               {Array.isArray(students) &&
                 students.map((s) => (
                   <option key={s.userId || s.id} value={s.userId || s.id}>
-                    {s.firstName} {s.lastName}
+                    {s.fullName || "طالب بدون اسم"}
                   </option>
                 ))}
             </select>
@@ -693,7 +710,7 @@ function AddAssessmentModal({ isOpen, onClose, onAssessmentAdded, students }) {
               {Array.isArray(students) &&
                 students.map((s) => (
                   <option key={s.userId || s.id} value={s.userId || s.id}>
-                    {s.firstName} {s.lastName}
+                    {s.fullName || "طالب بدون اسم"}
                   </option>
                 ))}
             </select>
@@ -746,7 +763,7 @@ function HomeView({ t, lang }) {
     loading,
     error,
     refetch,
-  } = useApiData(() => dashboardAPI.getStats(), []);
+  } = useApiData(() => dashboardAPI.getDashboardData(), []);
 
   const statCards = [
     {
@@ -897,9 +914,7 @@ function StudentsView({ t }) {
 
   const filtered = (Array.isArray(students) ? students : []).filter(
     (s) =>
-      `${s.firstName} ${s.lastName}`
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+      (s.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
       (s.diagnosis || "").toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -941,6 +956,7 @@ function StudentsView({ t }) {
               <thead>
                 <tr>
                   <th>{t("name")}</th>
+                  <th>{t("age")}</th>
                   <th>{t("level")}</th>
                   <th>{t("diagnosis")}</th>
                   <th>{t("prog")}</th>
@@ -951,7 +967,7 @@ function StudentsView({ t }) {
                 {filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       style={{
                         textAlign: "center",
                         color: "#94a3b8",
@@ -963,9 +979,15 @@ function StudentsView({ t }) {
                   </tr>
                 ) : (
                   filtered.map((s) => {
+                    const nameParts = (s.fullName || "?").split(" ");
+                    const firstInitial = nameParts[0]?.[0] || "";
+                    const secondInitial =
+                      nameParts.length > 1 ? nameParts[1]?.[0] || "" : "";
                     const initials =
-                      `${(s.firstName || "?")[0]}${(s.lastName || "?")[0]}`.toUpperCase();
+                      `${firstInitial}${secondInitial}`.toUpperCase();
+
                     const progress = s.progress ?? 0;
+
                     return (
                       <tr key={s.userId || s.id}>
                         <td>
@@ -988,9 +1010,10 @@ function StudentsView({ t }) {
                             >
                               {initials}
                             </div>
-                            {s.firstName} {s.lastName}
+                            {s.fullName || "—"}
                           </div>
                         </td>
+                        <td>{s.age || "—"}</td>
                         <td>
                           <span
                             style={{
@@ -1140,8 +1163,10 @@ function SessionsView({ t }) {
               </div>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: "0 0 0.25rem 0" }}>
-                  {s.student?.firstName} {s.student?.lastName}{" "}
-                  {!s.student && `Student #${s.studentId}`}
+                  {s.student?.fullName ||
+                    (s.student?.firstName
+                      ? `${s.student.firstName} ${s.student.lastName}`
+                      : `Student #${s.studentId}`)}
                 </h3>
                 <div
                   style={{
@@ -1268,8 +1293,10 @@ function AssessmentsView({ t }) {
                     return (
                       <tr key={a.assessmentId || a.id}>
                         <td style={{ fontWeight: 600, color: "#377C76" }}>
-                          {a.student?.firstName} {a.student?.lastName}{" "}
-                          {!a.student && `Student #${a.studentId}`}
+                          {a.student?.fullName ||
+                            (a.student?.firstName
+                              ? `${a.student.firstName} ${a.student.lastName}`
+                              : `Student #${a.studentId}`)}
                         </td>
                         <td>{a.type}</td>
                         <td>
@@ -1315,46 +1342,220 @@ function AssessmentsView({ t }) {
 }
 
 function MessagesView({ t }) {
+  const doctorId = getUserId();
+
   const {
     data: conversations,
-    loading,
-    error,
-    refetch,
+    loading: convsLoading,
+    error: convsError,
+    refetch: refetchConvs,
   } = useApiData(() => messagesAPI.getConversations(), []);
-  const [selected, setSelected] = useState(null);
+
+  const { data: allStudents } = useApiData(() => studentsAPI.getAll(), []);
+
+  const [localConvs, setLocalConvs] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [msgLoading, setMsgLoading] = useState(false);
-  const [newMsg, setNewMsg] = useState("");
-  const [sending, setSending] = useState(false);
 
-  const list = Array.isArray(conversations) ? conversations : [];
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState("");
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
 
-  const loadMessages = async (studentId) => {
-    setSelected(studentId);
-    setMsgLoading(true);
+  const messagesEndRef = useRef(null);
+
+  // تحديث المحادثات الجانبية
+  useEffect(() => {
+    if (conversations) {
+      setLocalConvs(conversations);
+    }
+  }, [conversations]);
+
+  // استخدام Ref لمعرفة الطالب المفتوح حالياً داخل الـ SignalR
+  const selectedStudentRef = useRef(null);
+  useEffect(() => {
+    selectedStudentRef.current = selectedStudentId;
+  }, [selectedStudentId]);
+
+  // 🔥 1. الشات سيستم المغلق (SignalR جوه المكون مباشرة)
+  useSignalR({
+    doctorId: doctorId || 0,
+    studentId: selectedStudentId,
+    onMessage: (message) => {
+      const role = message.senderRole || message.SenderRole || "";
+      const sId = message.senderId || message.SenderId;
+      const rId = message.receiverId || message.ReceiverId;
+
+      const msgStudentId = role.toLowerCase() === "student" ? sId : rId;
+      if (!msgStudentId) return;
+
+      // 1. تحديث صندوق المحادثة لو الدكتور فاتح شات الطالب ده
+      if (selectedStudentRef.current === msgStudentId) {
+        setMessages((prev) => {
+          const msgId = message.messageId || message.id || message.MessageId;
+          if (
+            msgId &&
+            prev.some((m) => (m.messageId || m.id || m.MessageId) === msgId)
+          )
+            return prev;
+          return [...prev, message];
+        });
+      }
+      // ب. تحديث القائمة الجانبية فوراً
+      setLocalConvs((prevConvs) => {
+        const updatedList = [...prevConvs];
+        const convIndex = updatedList.findIndex(
+          (c) =>
+            Number(c.studentId || c.participantId || c.userId) === msgStudentId,
+        );
+
+        if (convIndex > -1) {
+          const [movedConv] = updatedList.splice(convIndex, 1);
+          movedConv.lastMessage =
+            message.content || message.text || message.Message;
+
+          if (Number(selectedStudentRef.current) !== msgStudentId) {
+            movedConv.isRead = false; // لو الشات مقفول نور النقطة الحمرا
+          }
+          updatedList.unshift(movedConv);
+        } else {
+          refetchConvs(); // لو طالب جديد خالص بيعمل ريفريش للقايمة
+        }
+        return updatedList;
+      });
+    },
+  });
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // ─── 2. فتح المحادثة ───
+  const loadChatData = async (studentId) => {
+    if (!studentId || !doctorId) return;
+
+    setSelectedStudentId(studentId);
+    setMessages([]);
+    setChatLoading(true);
+    setChatError("");
+
+    setLocalConvs((prev) =>
+      prev.map((c) =>
+        Number(c.studentId || c.participantId || c.userId) === Number(studentId)
+          ? { ...c, isRead: true }
+          : c,
+      ),
+    );
+
     try {
-      const res = await messagesAPI.getByStudent(studentId);
-      setMessages(res.data?.data ?? res.data ?? []);
-    } catch (e) {
-      console.error(e);
+      const convRes = await messagesAPI.getOrCreateConversation({
+        doctorId: Number(doctorId),
+        studentId: Number(studentId),
+      });
+
+      const activeConvId =
+        convRes.data?.data?.conversationId ||
+        convRes.data?.conversationId ||
+        convRes.data?.id ||
+        0;
+      setConversationId(activeConvId);
+
+      if (activeConvId) {
+        const msgRes = await messagesAPI.getMessages(activeConvId);
+        setMessages(msgRes.data?.data ?? msgRes.data ?? []);
+      }
+    } catch (err) {
+      console.error("Chat load error:", err);
+      setChatError("فشل في تحميل الرسائل.");
     } finally {
-      setMsgLoading(false);
+      setChatLoading(false);
     }
   };
 
-  const handleSend = async () => {
-    if (!newMsg.trim() || !selected) return;
-    setSending(true);
+  // ─── 3. الإرسال ───
+  const handleSendChat = async () => {
+    const text = chatInput.trim();
+    if (!text || !selectedStudentId || !doctorId || chatSending) return;
+
+    const tempId = `opt-${Date.now()}`;
+    const optimisticMsg = {
+      messageId: tempId,
+      senderRole: "Doctor",
+      content: text,
+      sentAt: new Date().toISOString(),
+      optimistic: true,
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setChatInput("");
+    setChatError("");
+    setChatSending(true);
+
     try {
-      await messagesAPI.send(null, selected, newMsg.trim());
-      setNewMsg("");
-      await loadMessages(selected);
-    } catch (e) {
-      console.error(e);
+      let activeConvId = conversationId;
+
+      if (!activeConvId) {
+        const convRes = await messagesAPI.getOrCreateConversation({
+          doctorId: Number(doctorId),
+          studentId: Number(selectedStudentId),
+        });
+        activeConvId =
+          convRes.data?.data?.conversationId ||
+          convRes.data?.conversationId ||
+          convRes.data?.id ||
+          0;
+        setConversationId(activeConvId);
+        refetchConvs();
+      }
+
+      await messagesAPI.send({
+        content: text,
+        receiverId: Number(selectedStudentId),
+        doctorId: Number(doctorId),
+        studentId: Number(selectedStudentId),
+        conversationId: Number(activeConvId) || 0,
+      });
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.messageId === tempId ? { ...m, optimistic: false } : m,
+        ),
+      );
+
+      setLocalConvs((prevConvs) => {
+        const updatedList = [...prevConvs];
+        const convIndex = updatedList.findIndex(
+          (c) =>
+            Number(c.studentId || c.participantId || c.userId) ===
+            Number(selectedStudentId),
+        );
+
+        if (convIndex > -1) {
+          const [movedConv] = updatedList.splice(convIndex, 1);
+          movedConv.lastMessage = text;
+          updatedList.unshift(movedConv);
+        }
+        return updatedList;
+      });
+    } catch (err) {
+      console.error("Chat send error:", err);
+      setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
+      setChatInput(text);
+      setChatError("فشل إرسال الرسالة. يرجى المحاولة مرة أخرى.");
     } finally {
-      setSending(false);
+      setChatSending(false);
     }
   };
+
+  const studentsList = Array.isArray(allStudents) ? allStudents : [];
+  const displayList = searchQuery
+    ? studentsList.filter((s) =>
+        (s.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : localConvs;
 
   return (
     <div
@@ -1365,162 +1566,214 @@ function MessagesView({ t }) {
         height: "calc(100vh - 180px)",
       }}
     >
-      {/* Conversations list */}
-      <div
-        className="card"
-        style={{
-          padding: 0,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "1.5rem",
-            borderBottom: "1px solid #e2e8f0",
-            fontWeight: 700,
-            fontSize: "1.1rem",
-          }}
-        >
-          {t("messages")}
-        </div>
-        <div style={{ overflowY: "auto", flex: 1 }}>
-          {loading ? (
-            <LoadingState t={t} />
-          ) : error ? (
-            <ErrorState t={t} onRetry={refetch} />
-          ) : list.length === 0 ? (
-            <p
-              style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}
-            >
-              {t("noMessages")}
-            </p>
-          ) : (
-            list.map((conv) => (
-              <div
-                key={conv.studentId || conv.id}
-                className={`message-item ${!conv.isRead ? "message-unread" : ""}`}
-                style={{
-                  background:
-                    selected === (conv.studentId || conv.id)
-                      ? "#e8f4f3"
-                      : undefined,
-                }}
-                onClick={() => loadMessages(conv.studentId || conv.id)}
-              >
-                <div
-                  className="profile-pic"
-                  style={{
-                    background: "#cbd5e1",
-                    fontSize: "0.9rem",
-                    flexShrink: 0,
-                  }}
-                >
-                  {(conv.studentName || conv.name || "?")[0]}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.2rem",
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                      {conv.studentName ||
-                        conv.name ||
-                        `Student #${conv.studentId}`}
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                      {conv.lastMessageTime
-                        ? new Date(conv.lastMessageTime).toLocaleTimeString(
-                            [],
-                            { hour: "2-digit", minute: "2-digit" },
-                          )
-                        : ""}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#64748b",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {conv.lastMessage || conv.preview || "..."}
-                  </div>
-                </div>
-                {!conv.isRead && <div className="unread-dot" />}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Chat window */}
+      {/* القائمة الجانبية */}
       <div
         className="card"
         style={{ padding: 0, display: "flex", flexDirection: "column" }}
       >
-        {!selected ? (
+        <div style={{ padding: "1rem", borderBottom: "1px solid #eee" }}>
+          <h3>{t("messages")}</h3>
+        </div>
+
+        <div style={{ padding: "0.5rem 1rem" }}>
+          <input
+            className="search-bar"
+            placeholder={t("search")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {convsError ? (
+            <ErrorState t={t} onRetry={refetchConvs} />
+          ) : convsLoading && !searchQuery ? (
+            <LoadingState t={t} />
+          ) : displayList.length === 0 ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}
+            >
+              {t("noMessages")}
+            </div>
+          ) : (
+            displayList.map((item) => {
+              const studentIdUI =
+                item.studentId || item.participantId || item.userId || item.id;
+              const name =
+                item.studentName || item.fullName || `Student #${studentIdUI}`;
+              const isUnread = !searchQuery && item.isRead === false;
+
+              return (
+                <div
+                  key={`sidebar-item-${studentIdUI}`}
+                  className={`message-item ${isUnread ? "message-unread" : ""}`}
+                  onClick={() => loadChatData(studentIdUI)}
+                  style={{
+                    backgroundColor:
+                      selectedStudentId === studentIdUI
+                        ? "#f1f5f9"
+                        : "transparent",
+                  }}
+                >
+                  <div className="profile-pic">{(name || "?")[0]}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{name}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#666" }}>
+                      {item.lastMessage || "..."}
+                    </div>
+                  </div>
+                  {isUnread && <div className="unread-dot" />}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* صندوق المحادثة */}
+      <div
+        className="card"
+        style={{ display: "flex", flexDirection: "column", padding: 0 }}
+      >
+        {!selectedStudentId ? (
+          <div style={{ margin: "auto", color: "#888" }}>
+            Select a conversation
+          </div>
+        ) : chatLoading ? (
           <div
             style={{
               flex: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#94a3b8",
             }}
           >
-            Select a conversation
+            <LoadingState t={t} />
           </div>
         ) : (
-          <div className="chat-window" style={{ height: "100%" }}>
-            <div className="chat-messages">
-              {msgLoading ? (
-                <LoadingState t={t} />
-              ) : (
-                (Array.isArray(messages) ? messages : []).map((m, i) => (
-                  <div
-                    key={i}
-                    className={`chat-bubble ${m.senderId === selected ? "received" : "sent"}`}
-                  >
-                    {m.content || m.message || m.text}
-                  </div>
-                ))
-              )}
-            </div>
-            <div style={{ padding: "1rem", borderTop: "1px solid #e2e8f0" }}>
-              <div className="chat-input-area">
-                <input
-                  className="chat-input"
-                  placeholder={t("writeMsg")}
-                  value={newMsg}
-                  onChange={(e) => setNewMsg(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && !e.shiftKey && handleSend()
-                  }
-                />
-                <button
-                  className="primary-btn"
+          <>
+            <div
+              style={{
+                flex: 1,
+                padding: "1rem",
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
+              {messages.length === 0 && !chatError && (
+                <p
                   style={{
-                    borderRadius: "50%",
-                    width: 45,
-                    height: 45,
-                    padding: 0,
-                    justifyContent: "center",
+                    color: "#6b7280",
+                    textAlign: "center",
+                    margin: "auto",
                   }}
-                  onClick={handleSend}
-                  disabled={sending}
                 >
-                  {sending ? <Loader size={18} /> : <Send size={20} />}
-                </button>
-              </div>
+                  Say hi to the student!
+                </p>
+              )}
+              {messages.map((m, index) => {
+                const role = m.senderRole || m.SenderRole || "";
+                const sId = m.senderId || m.SenderId;
+                const isMine =
+                  role.toLowerCase() === "doctor" ||
+                  Number(sId) === Number(doctorId);
+                const uniqueKey =
+                  m.messageId || m.MessageId || m.id || `msg-${index}`;
+
+                return (
+                  <div
+                    key={uniqueKey}
+                    style={{
+                      alignSelf: isMine ? "flex-end" : "flex-start",
+                      background: isMine ? "#377C76" : "#eee",
+                      color: isMine ? "white" : "black",
+                      padding: "0.75rem 1rem",
+                      borderRadius: isMine
+                        ? "1rem 1rem 0 1rem"
+                        : "1rem 1rem 1rem 0",
+                      maxWidth: "70%",
+                      opacity: m.optimistic ? 0.6 : 1,
+                    }}
+                  >
+                    <div>{m.content || m.text || m.Message || m.message}</div>
+                    <div
+                      style={{
+                        fontSize: "0.7rem",
+                        marginTop: "4px",
+                        textAlign: isMine ? "right" : "left",
+                        opacity: 0.7,
+                      }}
+                    >
+                      {m.sentAt || m.timestamp || m.createdAt
+                        ? new Date(
+                            m.sentAt || m.timestamp || m.createdAt,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                      {m.optimistic && <span> (جاري الإرسال...)</span>}
+                    </div>
+                  </div>
+                );
+              })}
+              <div ref={messagesEndRef} />
             </div>
-          </div>
+
+            {chatError && (
+              <div
+                style={{
+                  margin: "0 1rem",
+                  padding: "0.5rem",
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  borderRadius: "4px",
+                  fontSize: "0.85rem",
+                  textAlign: "center",
+                }}
+              >
+                {chatError}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                padding: "1rem",
+                gap: "0.5rem",
+                borderTop: "1px solid #eee",
+              }}
+            >
+              <input
+                className="chat-input"
+                value={chatInput}
+                onChange={(e) => {
+                  setChatInput(e.target.value);
+                  setChatError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+                placeholder={t("writeMsg")}
+                disabled={chatSending}
+              />
+              <button
+                className="primary-btn"
+                onClick={handleSendChat}
+                disabled={chatSending || !chatInput.trim()}
+              >
+                {chatSending ? (
+                  <Loader
+                    size={18}
+                    style={{ animation: "spin 1s linear infinite" }}
+                  />
+                ) : (
+                  t("send")
+                )}
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -1596,7 +1849,7 @@ function SettingsView({ t }) {
     phoneNumber: "",
     specialist: "",
   });
-  const [photoUrl, setPhotoUrl] = useState(null);
+  const [imageSrc, setImageSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -1629,7 +1882,7 @@ function SettingsView({ t }) {
           phoneNumber: d.phoneNumber || "",
           specialist: d.specialist || "",
         });
-        if (d.photoUrl) setPhotoUrl(d.photoUrl);
+        setImageSrc(toImageSrc(d.profileImage ?? d.photoUrl ?? null));
       })
       .catch(() => setError("فشل تحميل البيانات"))
       .finally(() => setLoading(false));
@@ -1641,43 +1894,31 @@ function SettingsView({ t }) {
     setError("");
     setSuccessMsg("");
     try {
-      await doctorSettingsAPI.update({
-        fullName: form.fullName,
-        phoneNumber: form.phoneNumber,
-        specialist: form.specialist,
-        email: form.email,
-        password: "", // بعتي string فاضي مش null
-      });
+      await doctorSettingsAPI.update({ ...form, password: "" });
       setSuccessMsg("تم حفظ التغييرات بنجاح ✓");
       setTimeout(() => setSuccessMsg(""), 3000);
     } catch (err) {
-      // حولي الـ error لـ string صح
-      const errData = err?.response?.data;
-      const msg =
-        typeof errData === "string"
-          ? errData
-          : errData?.message ||
-            errData?.title ||
-            (errData?.errors
-              ? Object.values(errData.errors).flat().join(" | ")
-              : null) ||
-            "فشل الحفظ";
-      setError(msg);
+      const d = err?.response?.data;
+      setError(
+        typeof d === "string" ? d : d?.message || d?.title || "فشل الحفظ",
+      );
     } finally {
       setSaving(false);
     }
   };
+
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPhoto(true);
+    const localSrc = URL.createObjectURL(file);
+    setImageSrc(localSrc);
     try {
       const res = await doctorSettingsAPI.uploadPhoto(file);
       const d = res.data?.data ?? res.data;
-      if (d?.photoUrl) setPhotoUrl(d.photoUrl);
-      setPhotoUrl(URL.createObjectURL(file));
-    } catch (error) {
-      console.error(error);
+      const serverSrc = toImageSrc(d?.profileImage ?? d?.photoUrl ?? null);
+      if (serverSrc) setImageSrc(serverSrc);
+    } catch {
       setError("فشل رفع الصورة");
     } finally {
       setUploadingPhoto(false);
@@ -1693,30 +1934,22 @@ function SettingsView({ t }) {
     setEmailError("");
     try {
       await doctorSettingsAPI.update({
-        fullName: form.fullName,
-        phoneNumber: form.phoneNumber,
-        specialist: form.specialist,
+        ...form,
         email: newEmail,
-        password: "", // ← زي ما عملنا في handleSave
+        password: "",
       });
       setShowEmailInput(false);
       setShowEmailVerify(true);
     } catch (err) {
-      const errData = err?.response?.data;
-      const msg =
-        typeof errData === "string"
-          ? errData
-          : errData?.message ||
-            errData?.title ||
-            (errData?.errors
-              ? Object.values(errData.errors).flat().join(" | ")
-              : null) ||
-            "فشل إرسال الكود";
-      setEmailError(msg);
+      const d = err?.response?.data;
+      setEmailError(
+        typeof d === "string" ? d : d?.message || "فشل إرسال الكود",
+      );
     } finally {
       setEmailLoading(false);
     }
   };
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     if (passwordForm.newPassword.length < 8) {
@@ -1770,6 +2003,7 @@ function SettingsView({ t }) {
           {t("profile")}
         </h3>
 
+        {/* ── Avatar ── */}
         <div
           style={{
             display: "flex",
@@ -1779,9 +2013,9 @@ function SettingsView({ t }) {
           }}
         >
           <div style={{ position: "relative" }}>
-            {photoUrl ? (
+            {imageSrc ? (
               <img
-                src={photoUrl}
+                src={imageSrc}
                 alt="profile"
                 style={{
                   width: 90,
@@ -1855,24 +2089,36 @@ function SettingsView({ t }) {
                 marginTop: "0.4rem",
               }}
             >
-              JPG أو PNG — أقل من 2MB
+              PNG, JPG, أو SVG — أقل من 2MB
             </p>
           </div>
         </div>
 
+        {/* ── Form fields ── */}
         <form onSubmit={handleSave}>
-          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
-            <label className="form-label">{t("fullName")}</label>
-            <input
-              className="form-input"
-              type="text"
-              value={form.fullName}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, fullName: e.target.value }))
-              }
-            />
-          </div>
+          {[
+            { label: t("fullName"), name: "fullName", type: "text" },
+            { label: t("phone"), name: "phoneNumber", type: "tel" },
+            { label: "التخصص", name: "specialist", type: "text" },
+          ].map((f) => (
+            <div
+              key={f.name}
+              className="form-group"
+              style={{ marginBottom: "1.2rem" }}
+            >
+              <label className="form-label">{f.label}</label>
+              <input
+                className="form-input"
+                type={f.type}
+                value={form[f.name]}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, [f.name]: e.target.value }))
+                }
+              />
+            </div>
+          ))}
 
+          {/* Email row with change button */}
           <div className="form-group" style={{ marginBottom: "1.2rem" }}>
             <label className="form-label">{t("email")}</label>
             <div style={{ display: "flex", gap: 8 }}>
@@ -1895,30 +2141,6 @@ function SettingsView({ t }) {
                 تغيير
               </button>
             </div>
-          </div>
-
-          <div className="form-group" style={{ marginBottom: "1.2rem" }}>
-            <label className="form-label">{t("phone")}</label>
-            <input
-              className="form-input"
-              type="tel"
-              value={form.phoneNumber}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, phoneNumber: e.target.value }))
-              }
-            />
-          </div>
-
-          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
-            <label className="form-label">التخصص</label>
-            <input
-              className="form-input"
-              type="text"
-              value={form.specialist}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, specialist: e.target.value }))
-              }
-            />
           </div>
 
           {error && (
@@ -1975,13 +2197,13 @@ function SettingsView({ t }) {
               🔒 تغيير كلمة المرور
             </button>
             <button type="submit" className="primary-btn" disabled={saving}>
-              <Save size={16} />
-              {saving ? "جاري الحفظ..." : t("save")}
+              <CheckCircle size={16} /> {saving ? "جاري الحفظ..." : t("save")}
             </button>
           </div>
         </form>
       </div>
 
+      {/* ── Change email modal ── */}
       {showEmailInput && (
         <div className="modal-overlay" onClick={() => setShowEmailInput(false)}>
           <div
@@ -2058,21 +2280,18 @@ function SettingsView({ t }) {
         </div>
       )}
 
+      {/* ── Email verification modal ── */}
+      {/* Assuming EmailVerification component exists */}
       {showEmailVerify && (
-        <EmailVerification
-          email={newEmail}
-          userType="doctor"
-          onClose={() => setShowEmailVerify(false)}
-          onVerified={() => {
-            setForm((prev) => ({ ...prev, email: newEmail }));
-            setShowEmailVerify(false);
-            setNewEmail("");
-            setSuccessMsg("تم تغيير الإيميل بنجاح ✓");
-            setTimeout(() => setSuccessMsg(""), 3000);
-          }}
-        />
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ textAlign: "center" }}>
+            <p>Email verification component goes here...</p>
+            <button onClick={() => setShowEmailVerify(false)}>Close</button>
+          </div>
+        </div>
       )}
 
+      {/* ── Change password modal ── */}
       {showPasswordModal && (
         <div
           className="modal-overlay"
@@ -2191,7 +2410,6 @@ function SettingsView({ t }) {
           </div>
         </div>
       )}
-
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -2237,22 +2455,14 @@ export default function Dashboard() {
               >
                 <item.icon size={20} />
                 <span>{t(item.label)}</span>
-                {activeTab === item.id &&
-                  (lang === "ar" ? (
-                    <ChevronLeft size={16} style={{ marginRight: "auto" }} />
-                  ) : (
-                    <ChevronRight size={16} style={{ marginLeft: "auto" }} />
-                  ))}
               </button>
             ))}
           </nav>
           <div className="sidebar-footer">
             <button
               className="nav-item"
-              style={{ color: "#fca5a5" }}
               onClick={() => {
-                localStorage.removeItem("authToken");
-                localStorage.removeItem("userData");
+                localStorage.clear();
                 window.location.href = "/";
               }}
             >
@@ -2268,16 +2478,17 @@ export default function Dashboard() {
               <h2>{t(activeTab)}</h2>
             </div>
             <div className="header-right">
-              <div className="search-bar">
-                <Search size={18} color="#94a3b8" />
-                <input placeholder={t("search")} />
-              </div>
               <button onClick={toggleLang} className="icon-btn">
                 <Languages size={20} />
               </button>
-              <button className="icon-btn">
+              {/* شيلنا النقطة الحمرا من هنا خلاص */}
+              <button
+                className="icon-btn"
+                onClick={() => {
+                  setActiveTab("messages");
+                }}
+              >
                 <Bell size={20} />
-                <span className="badge-dot" />
               </button>
               <div className="profile-pic">DR</div>
             </div>
@@ -2291,18 +2502,6 @@ export default function Dashboard() {
           {activeTab === "reports" && <ReportsView t={t} />}
           {activeTab === "settings" && <SettingsView t={t} />}
         </main>
-
-        {sidebarOpen && (
-          <div
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.5)",
-              zIndex: 40,
-            }}
-          />
-        )}
       </div>
     </>
   );
