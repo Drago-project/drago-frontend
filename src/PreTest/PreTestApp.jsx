@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "./PreTestStyles.css"; // ملف الـ CSS اللي غيرنا اسمه
-import "./styles/app.css";
+// import "./PreTestStyles.css"; // ملف الـ CSS اللي غيرنا اسمه
+import styles from "./styles/app.module.css";
 
 // Import hooks
 import { useLocalStorage } from "./hooks/useLocalStorage.js";
@@ -128,7 +128,7 @@ export default function PreTestApp() {
   }
 
   return (
-    <div className="app" dir="rtl">
+    <div className={styles.app} dir="rtl">
       <Header
         current={current}
         progress={progress}
@@ -142,8 +142,8 @@ export default function PreTestApp() {
       <div
         className={
           viewMode === "therapist"
-            ? "layout therapistLayout"
-            : "layout childLayout"
+            ? `${styles.layout} ${styles.therapistLayout}`
+            : `${styles.layout} ${styles.childLayout}`
         }
       >
         <main>
