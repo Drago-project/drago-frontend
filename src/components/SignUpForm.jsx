@@ -219,7 +219,7 @@ export default function SignUpForm() {
       const response = await usersAPI.register(payload);
 
       console.log("✅ Student Registered Successfully", response.data);
-
+      localStorage.setItem("needsPretest", "true");
       // Show email verification modal
       setRegisteredEmail(studentForm.email);
       setShowVerification(true);

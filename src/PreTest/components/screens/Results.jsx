@@ -3,15 +3,23 @@ import { computeResults, makePlan } from "../../utils/scoring.js";
 import { Notice } from "../ui/Notice.jsx";
 import dragoBack from "../../assets/drago/drago-back.svg";
 
-export function Results({ intake, safety, responses, stars, viewMode, onRestart }) {
+export function Results({
+  intake,
+  safety,
+  responses,
+  stars,
+  viewMode,
+  onRestart,
+  onFinish,
+}) {
   const results = useMemo(
     () => computeResults(responses, safety, intake),
-    [responses, safety, intake]
+    [responses, safety, intake],
   );
-  
+
   const plan = useMemo(
     () => makePlan(results.domainScores),
-    [results.domainScores]
+    [results.domainScores],
   );
 
   const [copied, setCopied] = useState(false);
@@ -54,10 +62,10 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
       encodeURIComponent(JSON.stringify(payload, null, 2));
     const downloadAnchor = document.createElement("a");
     downloadAnchor.setAttribute("href", dataStr);
-    
+
     const dateStr = new Date().toISOString().slice(0, 10);
     const fileName = `drago_report_${intake.childName || "child"}_${dateStr}.json`;
-    
+
     downloadAnchor.setAttribute("download", fileName);
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
@@ -67,9 +75,32 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
   if (viewMode === "child") {
     return (
       <section className="card results">
-        <div className="resultHero" style={{ alignItems: "center", gap: "20px" }}>
-          <div className="dragon" aria-hidden="true" style={{ overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "none", border: "none", boxShadow: "none", width: "110px", height: "110px", margin: "0", flexShrink: 0 }}>
-            <img src={dragoBack} alt="Drago" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <div
+          className="resultHero"
+          style={{ alignItems: "center", gap: "20px" }}
+        >
+          <div
+            className="dragon"
+            aria-hidden="true"
+            style={{
+              overflow: "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "none",
+              border: "none",
+              boxShadow: "none",
+              width: "110px",
+              height: "110px",
+              margin: "0",
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src={dragoBack}
+              alt="Drago"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+            />
           </div>
           <div style={{ flexGrow: 1 }}>
             <span className="missionTag">خريطة Drago</span>
@@ -81,7 +112,7 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
             <span>{stars}</span>
           </div>
         </div>
-        
+
         <h3>المغامرات المقترحة</h3>
         <div className="plans">
           {plan.map((p, i) => (
@@ -95,7 +126,7 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
             </div>
           ))}
         </div>
-        
+
         <button
           type="button"
           className="primary"
@@ -103,6 +134,15 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
           aria-label="البدء في رحلة تقييم جديدة"
         >
           رحلة جديدة
+        </button>
+        {/* FINISH BUTTON FOR CHILD VIEW */}
+        <button
+          type="button"
+          className="primary"
+          onClick={onFinish}
+          aria-label="إنهاء والذهاب للرئيسية"
+        >
+          إنهاء والذهاب للرئيسية
         </button>
       </section>
     );
@@ -118,17 +158,20 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
             الدرجة العامة تستخدم دقة، سرعة، صعوبة السؤال، واستبيان ولي الأمر.
           </p>
         </div>
-        <div className="scoreOrb" aria-label={`الدرجة الإجمالية ${results.overall} من 100`}>
+        <div
+          className="scoreOrb"
+          aria-label={`الدرجة الإجمالية ${results.overall} من 100`}
+        >
           <b>{results.overall}</b>
           <span>/100</span>
         </div>
       </div>
 
       <Notice>
-        مؤشر استبيان ولي الأمر: <b>{results.questionnaireRisk}%</b>. يستخدم كمعلومة
-        مساعدة فقط.
+        مؤشر استبيان ولي الأمر: <b>{results.questionnaireRisk}%</b>. يستخدم
+        كمعلومة مساعدة فقط.
       </Notice>
-      
+
       {results.flags.length > 0 && (
         <Notice warn>
           {results.flags.map((f) => (
@@ -170,7 +213,11 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
       </div>
 
       <h3>أضعف المهارات التفصيلية</h3>
-      <div className="chips" role="group" aria-label="المهارات التي تحتاج لتدريب">
+      <div
+        className="chips"
+        role="group"
+        aria-label="المهارات التي تحتاج لتدريب"
+      >
         {Object.entries(results.skillScores)
           .sort((a, b) => a[1] - b[1])
           .slice(0, 8)
@@ -185,7 +232,7 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
         <summary>JSON للتخزين</summary>
         <pre>{JSON.stringify(payload, null, 2)}</pre>
       </details>
-      
+
       <div className="row">
         <button
           type="button"
@@ -210,6 +257,18 @@ export function Results({ intake, safety, responses, stars, viewMode, onRestart 
           aria-label="تحميل ملف تقرير JSON"
         >
           تحميل تقرير JSON
+        </button>
+        {/* FINISH BUTTON FOR THERAPIST VIEW */}
+        <button
+          type="button"
+          className="primary"
+          onClick={onFinish}
+          aria-label="إنهاء والذهاب للرئيسية"
+          style={{
+            backgroundColor: "#4CAF50",
+          }} /* Added a style just to make it pop, optional */
+        >
+          إنهاء والذهاب للرئيسية
         </button>
       </div>
     </section>

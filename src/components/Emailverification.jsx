@@ -124,12 +124,11 @@ function EmailVerification({ email, userType, onClose, onVerified }) {
 
       if (onVerified) {
         onVerified();
+      } else if (userType === "doctor") {
+        navigate("/dashboard", { replace: true });
       } else {
-        if (userType === "doctor") {
-          navigate("/dashboard", { replace: true });
-        } else {
-          navigate("/home", { replace: true });
-        }
+        const needsPretest = localStorage.getItem("needsPretest") === "true";
+        navigate(needsPretest ? "/pretest" : "/home", { replace: true });
       }
     } catch (err) {
       console.error("Verification error:", err);

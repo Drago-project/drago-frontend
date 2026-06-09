@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./PreTestStyles.css"; // ملف الـ CSS اللي غيرنا اسمه
 import "./styles/app.css";
 
@@ -26,6 +27,7 @@ import { Results } from "./components/screens/Results.jsx";
 
 // غيرنا الاسم هنا لـ PreTestApp
 export default function PreTestApp() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [intake, setIntake] = useState(intakeDefaults);
@@ -120,6 +122,11 @@ export default function PreTestApp() {
     clearSaved();
   }
 
+  function finishPreTest() {
+    localStorage.removeItem("needsPretest");
+    navigate("/home", { replace: true });
+  }
+
   return (
     <div className="app" dir="rtl">
       <Header
@@ -176,6 +183,7 @@ export default function PreTestApp() {
               stars={stars}
               viewMode={viewMode}
               onRestart={restart}
+              onFinish={finishPreTest}
             />
           )}
         </main>

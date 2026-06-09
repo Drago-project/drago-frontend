@@ -25,7 +25,7 @@ import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResetPassword from "./components/ResetPassword";
-
+import PreTestApp from "./pretest/PreTestApp";
 // Games
 import VolcanoWords from "./games/VolcanoWords";
 import ReadingQuest from "./games/ReadingQuest";
@@ -62,7 +62,9 @@ function Layout() {
       if (roleStr?.toLowerCase().includes("doctor")) {
         navigate("/dashboard", { replace: true });
       } else {
-        navigate("/home", { replace: true });
+        localStorage.getItem("needsPretest") === "true"
+          ? navigate("/pretest", { replace: true })
+          : navigate("/home", { replace: true });
       }
     } catch {
       localStorage.removeItem("authToken");
@@ -73,7 +75,8 @@ function Layout() {
   const hideAllNav =
     location.pathname.startsWith("/games") ||
     location.pathname.startsWith("/dashboard") ||
-    location.pathname.startsWith("/reset-password");
+    location.pathname.startsWith("/reset-password") ||
+    location.pathname.startsWith("/pretest");
 
   const pathsWithInsideNav = ["/home", "/profile"];
   const isInsideApp = pathsWithInsideNav.some((path) =>
@@ -95,6 +98,14 @@ function Layout() {
           </Route>
           <Route path="/reset-password" element={<ResetPassword />} />
 
+          <Route
+            path="/pretest"
+            element={
+              <ProtectedRoute requiredRole="student">
+                <PreTestApp />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/home"
             element={
