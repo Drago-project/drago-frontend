@@ -1,4 +1,9 @@
 :root {
+  width: 100%;
+  min-height: 100vh;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   /* Primary Colors from Drago Character */
   --color-primary: #efa818; /* Orange/Yellow from character */
   --color-avatar: #44958e; /* Teal/Green from dragon */
@@ -119,6 +124,13 @@ h4 {
 p {
   margin-bottom: var(--spacing-sm);
   line-height: var(--line-height-relaxed);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
 }
 
 /* Button Base Styles */
