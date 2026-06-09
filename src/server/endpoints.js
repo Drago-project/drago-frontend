@@ -92,8 +92,7 @@ export const studentsAPI = {
   search: (query) => api.get(`/api/Students/search?q=${query}`),
   create: (data) => api.post("/api/Students", data),
   update: (id, data) => api.put(`/api/Students/${id}`, data),
-  assignByEmail: (email) =>
-    api.post("/api/Dashboard/add-student", { email }),
+  assignByEmail: (email) => api.post("/api/Dashboard/add-student", { email }),
 };
 // ─────────────────────────────────────────
 // SESSIONS
@@ -121,10 +120,12 @@ export const assessmentsAPI = {
 // MESSAGES
 // ─────────────────────────────────────────
 export const messagesAPI = {
-  getByStudent: (studentId) => api.get(`/api/Messages/${studentId}`),
+  getOrCreateConversation: (data) =>
+    api.post("/api/Messages/conversation", data),
+  send: (data) => api.post("/api/Messages/send", data),
   getConversations: () => api.get("/api/Messages/conversations"),
-  send: (receiverId, studentId, content) =>
-    api.post("/api/Messages", { receiverId, studentId, content }),
+  getMessages: (conversationId) =>
+    api.get(`/api/Messages/messages/${conversationId}`),
 };
 
 // ─────────────────────────────────────────

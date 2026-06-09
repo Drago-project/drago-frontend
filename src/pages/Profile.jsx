@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { profileAPI, messagesAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
+
+// SignalR hook integration
+import { useSignalR } from "../hooks/useSignalR";
 
 const getLevelData = (xp) => {
   const levels = [
@@ -53,6 +56,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Chat states
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(true);
   const [chatError, setChatError] = useState("");
@@ -60,6 +64,25 @@ function Profile() {
   const [chatSending, setChatSending] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Dynamic conversation and doctor states
+  const [conversationId, setConversationId] = useState(null);
+  const [doctorId, setDoctorId] = useState(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  // SignalR hook initialization
+  const { status: wsStatus } = useSignalR({
+    doctorId: doctorId || 0, // Dynamic doctorId resolved from profile/conversations
+    studentId: userId,
+    onMessage: (message) => {
+      setChatMessages((prev) => {
+        const id = message?.id || message?.messageId;
+        if (id && prev.some((m) => (m.id || m.messageId) === id)) return prev;
+        return [...prev, message];
+      });
+    },
+  });
+
+  // 1. Load Profile & Resolve Doctor ID on Mount
   useEffect(() => {
     if (!userId) {
       setError("Not logged in");
@@ -82,6 +105,12 @@ function Profile() {
           following: 0,
           avatarUrl: data.avatarUrl || "",
         });
+
+        // Resolve Doctor ID directly from Profile Response
+        if (data.doctorId) {
+          setDoctorId(data.doctorId);
+        }
+
         // Load achievements if returned
         if (data.allAchievements) {
           setAchievements(
@@ -101,49 +130,76 @@ function Profile() {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  const loadChatMessages = async () => {
-    if (!userId) return;
+  // 2. Load Conversation Details dynamically
+  const loadChatData = useCallback(async () => {
+    // لازم ننتظر لحد ما الـ doctorId ييجي من البروفايل
+    if (!userId || !doctorId) return;
+
     setChatError("");
+    setChatLoading(true);
+
     try {
-      const res = await messagesAPI.getByStudent(userId);
-      setChatMessages(res.data?.data ?? res.data ?? []);
+      // 1. نطلب المحادثة المحددة بين الطالب والدكتور ده مباشرة
+      const convRes = await messagesAPI.getOrCreateConversation({
+        doctorId: Number(doctorId),
+        studentId: Number(userId),
+      });
+
+      // استخراج الـ ID بتاع المحادثة
+      const activeConvId =
+        convRes.data?.data?.conversationId ||
+        convRes.data?.conversationId ||
+        convRes.data?.id;
+
+      if (activeConvId) {
+        setConversationId(activeConvId);
+
+        // 2. نجيب الهيستوري بتاع المحادثة دي
+        const msgRes = await messagesAPI.getMessages(activeConvId);
+        setChatMessages(msgRes.data?.data ?? msgRes.data ?? []);
+      }
     } catch (err) {
       console.error("Chat load error:", err);
-      setChatError("Unable to load doctor chat.");
+      setChatError("فشل في تحميل الرسائل السابقة.");
     } finally {
       setChatLoading(false);
     }
-  };
+  }, [userId, doctorId]); // ضفنا doctorId هنا
 
+  // 3. Load chat data when chat window is toggled open
   useEffect(() => {
-    if (!userId) return;
-    setChatLoading(true);
-    let active = true;
+    // لما الشات يتفتح، أو لو الدكتور اتعمله set بعد ما الشات كان مفتوح
+    if (isChatOpen && doctorId) {
+      loadChatData();
+    }
+  }, [loadChatData, isChatOpen, doctorId]);
+  // Load chat data when chat window is toggled open
+  useEffect(() => {
+    if (isChatOpen) {
+      loadChatData();
+    }
+  }, [loadChatData, isChatOpen]);
 
-    const runFetch = async () => {
-      if (!active) return;
-      await loadChatMessages();
-    };
-
-    runFetch();
-    const interval = setInterval(runFetch, 5000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [userId]);
-
+  // Auto-scroll to the bottom of the chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+  }, [chatMessages, isChatOpen]);
 
+  // 3. Handle Send Chat Message
   const handleSendChat = async () => {
     const text = chatInput.trim();
-    if (!text || !userId) return;
+    if (!text || !userId || chatSending) return;
 
+    if (!doctorId) {
+      setChatError("No doctor assigned to your profile yet.");
+      return;
+    }
+
+    // Optimistic message UI update
+    const tempId = `opt-${Date.now()}`;
     const optimistic = {
-      id: `opt-${Date.now()}`,
-      senderId: userId,
+      messageId: tempId,
+      senderRole: "Student",
       content: text,
       sentAt: new Date().toISOString(),
       optimistic: true,
@@ -151,22 +207,52 @@ function Profile() {
 
     setChatMessages((prev) => [...prev, optimistic]);
     setChatInput("");
-    setChatSending(true);
     setChatError("");
+    setChatSending(true);
 
     try {
-      await messagesAPI.send(null, userId, text);
-      await loadChatMessages();
+      let activeConvId = conversationId;
+
+      // 1. لو دي أول رسالة ومفيش ID للمحادثة، ننشئها الأول
+      if (!activeConvId) {
+        const convRes = await messagesAPI.getOrCreateConversation({
+          doctorId: Number(doctorId),
+          studentId: Number(userId),
+        });
+
+        // استخراج الـ ID بناءً على شكل الرد من الباك إند
+        activeConvId =
+          convRes.data?.data?.conversationId ||
+          convRes.data?.conversationId ||
+          convRes.data?.id ||
+          0;
+
+        setConversationId(activeConvId);
+      }
+
+      // 2. إرسال الرسالة باستخدام الـ ID الصحيح
+      const payload = {
+        content: text,
+        receiverId: Number(doctorId),
+        doctorId: Number(doctorId),
+        studentId: Number(userId),
+        conversationId: Number(activeConvId) || 0,
+      };
+
+      await messagesAPI.send(payload);
+
+      // Success: Remove optimistic item
+      setChatMessages((prev) => prev.filter((m) => m.messageId !== tempId));
     } catch (err) {
       console.error("Chat send error:", err);
-      setChatMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
+      // Rollback UI state on failure
+      setChatMessages((prev) => prev.filter((m) => m.messageId !== tempId));
       setChatInput(text);
       setChatError("Failed to send message. Please try again.");
     } finally {
       setChatSending(false);
     }
   };
-
   const handleAddXp = () => {
     if (!userId) return;
     profileAPI
@@ -219,7 +305,7 @@ function Profile() {
     );
   }
 
-  // Not logged in
+  // Not logged in state
   if (!userId) {
     return (
       <div className={styles.profilePage}>
@@ -231,7 +317,7 @@ function Profile() {
     );
   }
 
-  // API error
+  // API error state
   if (error || !userData) {
     return (
       <div className={styles.profilePage}>
@@ -382,81 +468,262 @@ function Profile() {
           )}
         </div>
 
-        {/* CHAT WITH DOCTOR */}
-        <div className={styles.chatSection}>
-          <div className={styles.chatHeader}>
-            <div>
-              <h3>💬 Chat with your doctor</h3>
-              <p className={styles.chatSubtitle}>
-                Send messages and get help from your doctor directly.
-              </p>
+        {/* FLOATING CHAT BUTTON */}
+        <button
+          onClick={() => setIsChatOpen(true)}
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            width: "65px",
+            height: "65px",
+            borderRadius: "50%",
+            background: "#EFA818",
+            color: "white",
+            border: "none",
+            boxShadow: "0 10px 20px rgba(239, 168, 24, 0.4)",
+            cursor: "pointer",
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "28px",
+            transition: "transform 0.2s",
+          }}
+          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+        >
+          💬
+        </button>
+
+        {/* POPUP CHAT WINDOW */}
+        {isChatOpen && (
+          <div
+            style={{
+              position: "fixed",
+              bottom: "105px",
+              right: "30px",
+              width: "360px",
+              height: "500px",
+              background: "white",
+              borderRadius: "1rem",
+              boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
+              display: "flex",
+              flexDirection: "column",
+              zIndex: 1000,
+              overflow: "hidden",
+            }}
+          >
+            {/* Chat Header */}
+            <div
+              style={{
+                background: "#377C76",
+                padding: "1rem",
+                color: "white",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: "1.1rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                💬 Chat with Doctor
+                {wsStatus === "Connected" && (
+                  <span
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      background: "#4ade80",
+                    }}
+                    title="Online"
+                  />
+                )}
+              </h3>
+              <button
+                onClick={() => setIsChatOpen(false)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "white",
+                  cursor: "pointer",
+                  fontSize: "1.2rem",
+                  fontWeight: "bold",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Body */}
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "1rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                background: "#f8fafc",
+              }}
+            >
+              {chatLoading ? (
+                <p
+                  style={{
+                    color: "#6b7280",
+                    textAlign: "center",
+                    margin: "auto",
+                  }}
+                >
+                  Loading chat...
+                </p>
+              ) : chatError ? (
+                <p
+                  style={{
+                    color: "#dc2626",
+                    textAlign: "center",
+                    margin: "auto",
+                  }}
+                >
+                  {chatError}
+                  <button
+                    onClick={loadChatData}
+                    style={{
+                      display: "block",
+                      margin: "10px auto",
+                      padding: "5px 10px",
+                      background: "#377C76",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Retry
+                  </button>
+                </p>
+              ) : chatMessages.length === 0 ? (
+                <p
+                  style={{
+                    color: "#6b7280",
+                    textAlign: "center",
+                    margin: "auto",
+                  }}
+                >
+                  {!doctorId
+                    ? "No doctor assigned yet."
+                    : "No messages yet. Say hi to your doctor!"}
+                </p>
+              ) : (
+                <>
+                  {chatMessages.map((msg, index) => {
+                    const isMine =
+                      msg.senderRole === "Student" || msg.senderId === userId;
+                    return (
+                      <div
+                        key={msg.id || msg.messageId || index}
+                        style={{
+                          alignSelf: isMine ? "flex-end" : "flex-start",
+                          maxWidth: "75%",
+                          padding: "0.6rem 1rem",
+                          borderRadius: isMine
+                            ? "1rem 1rem 0.25rem 1rem"
+                            : "1rem 1rem 1rem 0.25rem",
+                          background: isMine ? "#377C76" : "white",
+                          color: isMine ? "white" : "#1e293b",
+                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                          fontSize: "0.9rem",
+                          opacity: msg.optimistic ? 0.7 : 1,
+                        }}
+                      >
+                        <div>{msg.content || msg.message || msg.text}</div>
+                        <div
+                          style={{
+                            fontSize: "0.7rem",
+                            marginTop: "4px",
+                            textAlign: isMine ? "right" : "left",
+                            opacity: 0.7,
+                          }}
+                        >
+                          {new Date(
+                            msg.sentAt || msg.createdAt || Date.now(),
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                          {msg.optimistic && <span> (Sending...)</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={chatEndRef} />
+                </>
+              )}
+            </div>
+
+            {/* Chat Input Area */}
+            <div
+              style={{
+                padding: "0.75rem",
+                background: "white",
+                borderTop: "1px solid #e2e8f0",
+              }}
+            >
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <input
+                  type="text"
+                  placeholder="Write a message..."
+                  value={chatInput}
+                  disabled={!doctorId || chatLoading}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendChat();
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: "0.6rem 1rem",
+                    borderRadius: "2rem",
+                    border: "1px solid #e2e8f0",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={handleSendChat}
+                  disabled={chatSending || !chatInput.trim() || !doctorId}
+                  style={{
+                    background:
+                      !chatInput.trim() || !doctorId ? "#ccc" : "#EFA818",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "50%",
+                    width: "40px",
+                    height: "40px",
+                    cursor:
+                      chatSending || !chatInput.trim() || !doctorId
+                        ? "not-allowed"
+                        : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ➤
+                </button>
+              </div>
             </div>
           </div>
-
-          <div className={styles.chatBody}>
-            {chatLoading ? (
-              <p style={{ color: "#6b7280", textAlign: "center" }}>
-                Loading chat...
-              </p>
-            ) : chatError ? (
-              <p style={{ color: "#dc2626", textAlign: "center" }}>
-                {chatError}
-              </p>
-            ) : chatMessages.length === 0 ? (
-              <p style={{ color: "#6b7280", textAlign: "center" }}>
-                No messages yet. Say hi to your doctor!
-              </p>
-            ) : (
-              <div className={styles.chatMessages}>
-                {chatMessages.map((msg, index) => {
-                  const isMine = msg.senderId === userId;
-                  return (
-                    <div
-                      key={msg.id || index}
-                      className={`${styles.messageBubble} ${
-                        isMine ? styles.mine : styles.their
-                      }`}
-                    >
-                      <div>{msg.content || msg.message || msg.text}</div>
-                      <div className={styles.messageMeta}>
-                        {new Date(
-                          msg.sentAt || msg.createdAt || Date.now(),
-                        ).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={chatEndRef} />
-              </div>
-            )}
-          </div>
-
-          <div className={styles.chatInputRow}>
-            <input
-              type="text"
-              placeholder="Write a message to your doctor..."
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendChat();
-                }
-              }}
-            />
-            <button
-              type="button"
-              className={styles.chatSendBtn}
-              onClick={handleSendChat}
-              disabled={chatSending || !chatInput.trim()}
-            >
-              {chatSending ? "Sending..." : "Send"}
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* EDIT MODAL */}

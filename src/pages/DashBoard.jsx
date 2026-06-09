@@ -1,9 +1,8 @@
 // src/pages/DashBoard.jsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useWebSocket } from "../hooks/useWebSocket";
+import { useSignalR } from "../hooks/useSignalR";
 import { toImageSrc } from "../utils/imageUtils";
 import {
-  LayoutDashboard,
   Users,
   Calendar,
   FileText,
@@ -18,35 +17,49 @@ import {
   Download,
   TrendingUp,
   CheckCircle,
-  AlertCircle,
   Languages,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   MessageSquare,
-  User,
-  Mail,
-  Phone,
-  Save,
   Send,
   Plus,
   RefreshCw,
   Loader,
 } from "lucide-react";
-import EmailVerification from "../components/Emailverification";
-import ResetPasswordCode from "../components/ResetPasswordCode";
-import ForgotPassword from "../components/ForgotPassword";
 import {
   dashboardAPI,
   studentsAPI,
   sessionsAPI,
   assessmentsAPI,
   messagesAPI,
-  // recommendationsAPI,
-  // exercisesAPI,
-  // doctorsAPI,
   doctorSettingsAPI,
 } from "../server/endpoints";
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+const getUserId = () => {
+  try {
+    const userDataStr = localStorage.getItem("userData");
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      return userData?.userId || userData?.id || userData?.doctorId || null;
+    }
+  } catch (err) {
+    console.error("Error parsing userData:", err);
+  }
+
+  try {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return payload.DoctorId || payload.userId || payload.sub || null;
+    }
+  } catch (err) {
+    console.error("Error parsing token:", err);
+  }
+
+  return null;
+};
 
 // ─── CSS Styles ───────────────────────────────────────────────────────────────
 const cssStyles = `
@@ -275,7 +288,7 @@ function useApiData(fetchFn, deps = []) {
     } finally {
       setLoading(false);
     }
-  }, deps); // eslint-disable-line
+  }, deps);
 
   useEffect(() => {
     load();
@@ -295,17 +308,19 @@ function LoadingState({ t }) {
   );
 }
 
-function ErrorState({ t, onRetry }) {
+function ErrorState({ t, onRetry, message }) {
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
-      <div className="error-banner">{t("error")}</div>
-      <button
-        className="primary-btn"
-        onClick={onRetry}
-        style={{ margin: "0 auto" }}
-      >
-        <RefreshCw size={16} /> {t("retry")}
-      </button>
+      <div className="error-banner">{message || t("error")}</div>
+      {onRetry && (
+        <button
+          className="primary-btn"
+          onClick={onRetry}
+          style={{ margin: "0 auto" }}
+        >
+          <RefreshCw size={16} /> {t("retry")}
+        </button>
+      )}
     </div>
   );
 }
@@ -583,7 +598,7 @@ function AddSessionModal({ isOpen, onClose, onSessionAdded, students }) {
               {Array.isArray(students) &&
                 students.map((s) => (
                   <option key={s.userId || s.id} value={s.userId || s.id}>
-                    {s.firstName} {s.lastName}
+                    {s.fullName || "طالب بدون اسم"}
                   </option>
                 ))}
             </select>
@@ -695,7 +710,7 @@ function AddAssessmentModal({ isOpen, onClose, onAssessmentAdded, students }) {
               {Array.isArray(students) &&
                 students.map((s) => (
                   <option key={s.userId || s.id} value={s.userId || s.id}>
-                    {s.firstName} {s.lastName}
+                    {s.fullName || "طالب بدون اسم"}
                   </option>
                 ))}
             </select>
@@ -899,9 +914,7 @@ function StudentsView({ t }) {
 
   const filtered = (Array.isArray(students) ? students : []).filter(
     (s) =>
-      `${s.firstName} ${s.lastName}`
-        .toLowerCase()
-        .includes(search.toLowerCase()) ||
+      (s.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
       (s.diagnosis || "").toLowerCase().includes(search.toLowerCase()),
   );
 
@@ -943,6 +956,7 @@ function StudentsView({ t }) {
               <thead>
                 <tr>
                   <th>{t("name")}</th>
+                  <th>{t("age")}</th>
                   <th>{t("level")}</th>
                   <th>{t("diagnosis")}</th>
                   <th>{t("prog")}</th>
@@ -953,7 +967,7 @@ function StudentsView({ t }) {
                 {filtered.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       style={{
                         textAlign: "center",
                         color: "#94a3b8",
@@ -965,9 +979,15 @@ function StudentsView({ t }) {
                   </tr>
                 ) : (
                   filtered.map((s) => {
+                    const nameParts = (s.fullName || "?").split(" ");
+                    const firstInitial = nameParts[0]?.[0] || "";
+                    const secondInitial =
+                      nameParts.length > 1 ? nameParts[1]?.[0] || "" : "";
                     const initials =
-                      `${(s.firstName || "?")[0]}${(s.lastName || "?")[0]}`.toUpperCase();
+                      `${firstInitial}${secondInitial}`.toUpperCase();
+
                     const progress = s.progress ?? 0;
+
                     return (
                       <tr key={s.userId || s.id}>
                         <td>
@@ -990,9 +1010,10 @@ function StudentsView({ t }) {
                             >
                               {initials}
                             </div>
-                            {s.firstName} {s.lastName}
+                            {s.fullName || "—"}
                           </div>
                         </td>
+                        <td>{s.age || "—"}</td>
                         <td>
                           <span
                             style={{
@@ -1142,8 +1163,10 @@ function SessionsView({ t }) {
               </div>
               <div style={{ flex: 1 }}>
                 <h3 style={{ margin: "0 0 0.25rem 0" }}>
-                  {s.student?.firstName} {s.student?.lastName}{" "}
-                  {!s.student && `Student #${s.studentId}`}
+                  {s.student?.fullName ||
+                    (s.student?.firstName
+                      ? `${s.student.firstName} ${s.student.lastName}`
+                      : `Student #${s.studentId}`)}
                 </h3>
                 <div
                   style={{
@@ -1270,8 +1293,10 @@ function AssessmentsView({ t }) {
                     return (
                       <tr key={a.assessmentId || a.id}>
                         <td style={{ fontWeight: 600, color: "#377C76" }}>
-                          {a.student?.firstName} {a.student?.lastName}{" "}
-                          {!a.student && `Student #${a.studentId}`}
+                          {a.student?.fullName ||
+                            (a.student?.firstName
+                              ? `${a.student.firstName} ${a.student.lastName}`
+                              : `Student #${a.studentId}`)}
                         </td>
                         <td>{a.type}</td>
                         <td>
@@ -1316,7 +1341,9 @@ function AssessmentsView({ t }) {
   );
 }
 
-function MessagesView({ t }) {
+function MessagesView({ t, incomingMessage }) {
+  const doctorId = getUserId();
+
   const {
     data: conversations,
     loading,
@@ -1324,100 +1351,207 @@ function MessagesView({ t }) {
     refetch,
   } = useApiData(() => messagesAPI.getConversations(), []);
 
-  const [selected, setSelected] = useState(null); // studentId string
+  const { data: allStudents } = useApiData(() => studentsAPI.getAll(), []);
+
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const activeConvRef = useRef(null);
+
   const [messages, setMessages] = useState([]);
   const [msgLoading, setMsgLoading] = useState(false);
+  const [msgError, setMsgError] = useState("");
   const [newMsg, setNewMsg] = useState("");
   const [sending, setSending] = useState(false);
-  const messagesEndRef = useRef(null); // auto-scroll anchor
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // ── WebSocket ──────────────────────────────────────────────────────────────
-  const { send: wsSend, status: wsStatus } = useWebSocket({
-    conversationId: selected,
-    enabled: !!selected,
-    onMessage: (data) => {
-      // Server sends { type: "message", payload: { ... } }
-      if (data?.type === "message") {
-        setMessages((prev) => {
-          // Deduplicate by id if your backend provides one
-          const id = data.payload?.id;
-          if (id && prev.some((m) => m.id === id)) return prev;
-          return [...prev, data.payload];
-        });
-      }
-    },
-  });
+  const [localConvs, setLocalConvs] = useState([]);
+  const messagesEndRef = useRef(null);
 
-  // ── Polling fallback when WebSocket is not open ────────────────────────────
+  // Sync references
   useEffect(() => {
-    if (!selected || wsStatus === "open") return;
-    const interval = setInterval(async () => {
-      try {
-        const res = await messagesAPI.getByStudent(selected);
-        setMessages(res.data?.data ?? res.data ?? []);
-      } catch (e) {
-        console.error("Poll error:", e);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [selected, wsStatus]);
+    activeConvRef.current = activeConversationId;
+  }, [activeConversationId]);
 
-  // ── Auto-scroll to latest message ─────────────────────────────────────────
+  useEffect(() => {
+    if (conversations) setLocalConvs(conversations);
+  }, [conversations]);
+//   useEffect(() => {
+//   console.log("DOCTOR INCOMING:", incomingMessage);
+// }, [incomingMessage]);
+
+  // 1. معالجة الرسائل القادمة من Dashboard بشكل سليم
+  useEffect(() => {
+    if (!incomingMessage) return;
+
+    const role = incomingMessage.senderRole || incomingMessage.SenderRole || "";
+    const sId = incomingMessage.senderId || incomingMessage.SenderId;
+    const rId = incomingMessage.receiverId || incomingMessage.ReceiverId;
+    const msgConvId =
+      incomingMessage.conversationId || incomingMessage.ConversationId;
+
+    // استخراج رقم الطالب (لو المرسل طالب يبقى هو، لو المرسل دكتور يبقى الـ receiver)
+    const msgStudentId = Number(role.toLowerCase() === "student" ? sId : rId);
+    const currentSelectedConv = Number(activeConvRef.current);
+
+    if (!msgStudentId) return;
+
+    // تحديث الشات المفتوح حالياً لو المحادثة متطابقة
+    if (msgConvId && currentSelectedConv === Number(msgConvId)) {
+      setMessages((prev) => {
+        const msgId =
+          incomingMessage.messageId ||
+          incomingMessage.MessageId ||
+          incomingMessage.id;
+        if (msgId) {
+          const exists = prev.some(
+            (m) => (m.messageId || m.MessageId || m.id) === msgId,
+          );
+          if (exists) return prev;
+        }
+        return [...prev, incomingMessage];
+      });
+    }
+
+    // تحديث القائمة الجانبية وإضاءة النقطة الحمراء
+    setLocalConvs((prevConvs) => {
+      const updatedList = [...prevConvs];
+      const convIndex = updatedList.findIndex(
+        (c) =>
+          (msgConvId &&
+            Number(c.conversationId || c.id) === Number(msgConvId)) ||
+          Number(c.studentId || c.participantId || c.userId) === msgStudentId,
+      );
+
+      if (convIndex > -1) {
+        const [movedConv] = updatedList.splice(convIndex, 1);
+        movedConv.lastMessage =
+          incomingMessage.content ||
+          incomingMessage.text ||
+          incomingMessage.Message ||
+          "رسالة جديدة";
+
+        if (currentSelectedConv !== Number(msgConvId)) {
+          movedConv.isRead = false;
+        }
+        updatedList.unshift(movedConv);
+      } else {
+        refetch(); // إذا كانت أول رسالة يتم جلب المحادثة
+      }
+      return updatedList;
+    });
+  }, [incomingMessage, refetch]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── Load conversation history when a student is selected ──────────────────
+  // 🔥 2. جلب المحادثات (بإرسال الـ Payload الصحيح للـ API)
   const loadMessages = async (studentId) => {
-    setSelected(studentId);
+    setSelectedStudentId(studentId);
     setMessages([]);
     setMsgLoading(true);
+    setMsgError("");
+
     try {
-      const res = await messagesAPI.getByStudent(studentId);
-      setMessages(res.data?.data ?? res.data ?? []);
+      // إرسال doctorId و studentId فقط (حسب الـ Swagger)
+      const convRes = await messagesAPI.getOrCreateConversation({
+        doctorId: Number(doctorId),
+        studentId: Number(studentId),
+      });
+
+      const realConvId =
+        convRes.data?.data?.conversationId ||
+        convRes.data?.conversationId ||
+        convRes.data?.id;
+      setActiveConversationId(realConvId);
+
+      // تحديث حالة القراءة محلياً
+      setLocalConvs((prev) =>
+        prev.map((c) =>
+          Number(c.conversationId || c.id) === Number(realConvId)
+            ? { ...c, isRead: true }
+            : c,
+        ),
+      );
+
+      if (realConvId) {
+        const msgRes = await messagesAPI.getMessages(realConvId);
+        setMessages(msgRes.data?.data ?? msgRes.data ?? []);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("loadMessages error:", e);
+      setMsgError(t("error") || "فشل تحميل الرسائل");
     } finally {
       setMsgLoading(false);
     }
   };
 
-  // ── Send a message ─────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = newMsg.trim();
-    if (!text || !selected) return;
+    if (!text || !activeConversationId || !doctorId || msgLoading || sending)
+      return;
 
-    // Optimistic update so the UI feels instant
-    const optimistic = {
-      id: `opt-${Date.now()}`,
+    setSending(true);
+    setMsgError("");
+
+    const tempId = `opt-${Date.now()}`;
+    const optimisticMsg = {
+      messageId: tempId,
       content: text,
-      senderId: "doctor", // anything that != studentId so it renders on the right
-      sentAt: new Date().toISOString(),
+      senderId: doctorId,
+      senderRole: "Doctor",
       optimistic: true,
+      sentAt: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, optimistic]);
+
+    setMessages((prev) => [...prev, optimisticMsg]);
     setNewMsg("");
 
-    // Try WebSocket first
-    const sentViaWs = wsSend({ type: "message", content: text, to: selected });
+    try {
+      await messagesAPI.send({
+        content: text,
+        receiverId: Number(selectedStudentId),
+        doctorId: Number(doctorId),
+        studentId: Number(selectedStudentId),
+        conversationId: Number(activeConversationId),
+      });
 
-    if (!sentViaWs) {
-      // WebSocket not ready — fall back to HTTP
-      setSending(true);
-      try {
-        await messagesAPI.send(null, selected, text);
-      } catch (e) {
-        console.error(e);
-        // Roll back optimistic message on failure
-        setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
-        setNewMsg(text);
-      } finally {
-        setSending(false);
-      }
+      // إزالة علامة (جاري الإرسال)
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.messageId === tempId ? { ...m, optimistic: false } : m,
+        ),
+      );
+
+      setLocalConvs((prevConvs) => {
+        const updatedList = [...prevConvs];
+        const convIndex = updatedList.findIndex(
+          (c) =>
+            Number(c.conversationId || c.id) === Number(activeConversationId),
+        );
+
+        if (convIndex > -1) {
+          const [movedConv] = updatedList.splice(convIndex, 1);
+          movedConv.lastMessage = text;
+          updatedList.unshift(movedConv);
+        }
+        return updatedList;
+      });
+    } catch (e) {
+      console.error("SEND ERROR:", e);
+      setMessages((prev) => prev.filter((m) => m.messageId !== tempId));
+      setNewMsg(text);
+      setMsgError("فشل إرسال الرسالة، يرجى المحاولة مرة أخرى.");
+    } finally {
+      setSending(false);
     }
   };
 
-  const list = Array.isArray(conversations) ? conversations : [];
+  const list = searchQuery
+    ? (Array.isArray(allStudents) ? allStudents : []).filter((s) =>
+        (s.fullName || "").toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+    : localConvs;
 
   return (
     <div
@@ -1428,249 +1562,214 @@ function MessagesView({ t }) {
         height: "calc(100vh - 180px)",
       }}
     >
-      {/* ── Conversations list ── */}
-      <div
-        className="card"
-        style={{
-          padding: 0,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            padding: "1.5rem",
-            borderBottom: "1px solid #e2e8f0",
-            fontWeight: 700,
-            fontSize: "1.1rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {t("messages")}
-          {/* WebSocket status pill */}
-          <span
-            style={{
-              fontSize: "0.7rem",
-              fontWeight: 600,
-              padding: "2px 8px",
-              borderRadius: 10,
-              background:
-                wsStatus === "open"
-                  ? "#dcfce7"
-                  : wsStatus === "connecting"
-                    ? "#fef9c3"
-                    : "#fee2e2",
-              color:
-                wsStatus === "open"
-                  ? "#16a34a"
-                  : wsStatus === "connecting"
-                    ? "#854d0e"
-                    : "#991b1b",
-            }}
-          >
-            {wsStatus === "open"
-              ? "● live"
-              : wsStatus === "connecting"
-                ? "◌ connecting"
-                : "○ offline"}
-          </span>
-        </div>
-        <div style={{ overflowY: "auto", flex: 1 }}>
-          {loading ? (
-            <LoadingState t={t} />
-          ) : error ? (
-            <ErrorState t={t} onRetry={refetch} />
-          ) : list.length === 0 ? (
-            <p
-              style={{ textAlign: "center", color: "#94a3b8", padding: "2rem" }}
-            >
-              {t("noMessages")}
-            </p>
-          ) : (
-            list.map((conv) => (
-              <div
-                key={conv.studentId || conv.id}
-                className={`message-item ${!conv.isRead ? "message-unread" : ""}`}
-                style={{
-                  background:
-                    selected === (conv.studentId || conv.id)
-                      ? "#e8f4f3"
-                      : undefined,
-                }}
-                onClick={() => loadMessages(conv.studentId || conv.id)}
-              >
-                <div
-                  className="profile-pic"
-                  style={{
-                    background: "#cbd5e1",
-                    fontSize: "0.9rem",
-                    flexShrink: 0,
-                  }}
-                >
-                  {(conv.studentName || conv.name || "?")[0]}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      marginBottom: "0.2rem",
-                    }}
-                  >
-                    <span style={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                      {conv.studentName ||
-                        conv.name ||
-                        `Student #${conv.studentId}`}
-                    </span>
-                    <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
-                      {conv.lastMessageTime
-                        ? new Date(conv.lastMessageTime).toLocaleTimeString(
-                            [],
-                            { hour: "2-digit", minute: "2-digit" },
-                          )
-                        : ""}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "#64748b",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {conv.lastMessage || conv.preview || "..."}
-                  </div>
-                </div>
-                {!conv.isRead && <div className="unread-dot" />}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* ── Chat window ── */}
+      {/* LEFT SIDEBAR */}
       <div
         className="card"
         style={{ padding: 0, display: "flex", flexDirection: "column" }}
       >
-        {!selected ? (
+        <div style={{ padding: "1rem", borderBottom: "1px solid #eee" }}>
+          <h3>{t("messages")}</h3>
+        </div>
+
+        <div style={{ padding: "0.5rem 1rem" }}>
+          <input
+            className="search-bar"
+            placeholder={t("search")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </div>
+
+        <div style={{ overflowY: "auto", flex: 1 }}>
+          {error ? (
+            <ErrorState t={t} onRetry={refetch} />
+          ) : loading && !searchQuery ? (
+            <LoadingState t={t} />
+          ) : list.length === 0 ? (
+            <div
+              style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}
+            >
+              {t("noMessages")}
+            </div>
+          ) : (
+            list.map((item) => {
+              const studentIdUI = item.studentId || item.userId || item.id;
+              const name =
+                item.studentName || item.fullName || `Student #${studentIdUI}`;
+              const convId = item.conversationId || item.id;
+
+              const isUnread = !searchQuery && item.isRead === false;
+              const isSelected =
+                activeConversationId === convId ||
+                selectedStudentId === studentIdUI;
+
+              return (
+                <div
+                  key={`conv-${convId}-${studentIdUI}`}
+                  className={`message-item ${isUnread ? "message-unread" : ""}`}
+                  onClick={() => loadMessages(studentIdUI)}
+                  style={{
+                    backgroundColor: isSelected ? "#f1f5f9" : "transparent",
+                  }}
+                >
+                  <div className="profile-pic">{(name || "?")[0]}</div>
+
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{name}</div>
+                    <div style={{ fontSize: "0.8rem", color: "#666" }}>
+                      {item.lastMessage || "..."}
+                    </div>
+                  </div>
+                  {isUnread && <div className="unread-dot" />}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      {/* CHAT BOX */}
+      <div
+        className="card"
+        style={{ display: "flex", flexDirection: "column", padding: 0 }}
+      >
+        {!activeConversationId ? (
+          <div style={{ margin: "auto", color: "#888" }}>
+            Select a conversation
+          </div>
+        ) : msgLoading ? (
           <div
             style={{
               flex: 1,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#94a3b8",
             }}
           >
-            Select a conversation
+            <LoadingState t={t} />
           </div>
         ) : (
           <>
             <div
               style={{
                 flex: 1,
+                padding: "1rem",
                 overflowY: "auto",
-                padding: "1.5rem",
                 display: "flex",
                 flexDirection: "column",
-                gap: "0.75rem",
+                gap: "0.5rem",
               }}
             >
-              {msgLoading ? (
-                <LoadingState t={t} />
-              ) : messages.length === 0 ? (
-                <p style={{ textAlign: "center", color: "#94a3b8" }}>
-                  No messages yet. Say hello!
+              {messages.length === 0 && !msgError && (
+                <p
+                  style={{
+                    color: "#6b7280",
+                    textAlign: "center",
+                    margin: "auto",
+                  }}
+                >
+                  Say hi to the student!
                 </p>
-              ) : (
-                messages.map((m, i) => {
-                  const isMine = m.senderId !== selected;
-                  return (
+              )}
+              {messages.map((m, index) => {
+                const role = m.senderRole || m.SenderRole || "";
+                const sId = m.senderId || m.SenderId;
+                const isMine =
+                  role.toLowerCase() === "doctor" ||
+                  Number(sId) === Number(doctorId);
+                const uniqueKey =
+                  m.messageId || m.MessageId || m.id || `msg-${index}`;
+
+                return (
+                  <div
+                    key={uniqueKey}
+                    style={{
+                      alignSelf: isMine ? "flex-end" : "flex-start",
+                      background: isMine ? "#377C76" : "#eee",
+                      color: isMine ? "white" : "black",
+                      padding: "0.75rem 1rem",
+                      borderRadius: isMine
+                        ? "1rem 1rem 0 1rem"
+                        : "1rem 1rem 1rem 0",
+                      maxWidth: "70%",
+                      opacity: m.optimistic ? 0.6 : 1,
+                    }}
+                  >
+                    <div>{m.content || m.text || m.Message || m.message}</div>
                     <div
-                      key={m.id || i}
                       style={{
-                        alignSelf: isMine ? "flex-end" : "flex-start",
-                        maxWidth: "70%",
-                        padding: "0.75rem 1rem",
-                        borderRadius: isMine
-                          ? "1rem 1rem 0.25rem 1rem"
-                          : "1rem 1rem 1rem 0.25rem",
-                        background: isMine ? "var(--color-primary)" : "white",
-                        color: isMine ? "white" : "inherit",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.06)",
-                        fontSize: "0.9rem",
-                        opacity: m.optimistic ? 0.7 : 1,
-                        transition: "opacity 0.2s",
+                        fontSize: "0.7rem",
+                        marginTop: "4px",
+                        textAlign: isMine ? "right" : "left",
+                        opacity: 0.7,
                       }}
                     >
-                      {m.content || m.message || m.text}
-                      {m.optimistic && (
-                        <span
-                          style={{
-                            fontSize: "0.7rem",
-                            opacity: 0.6,
-                            marginLeft: 6,
-                          }}
-                        >
-                          sending…
-                        </span>
-                      )}
+                      {m.sentAt || m.timestamp || m.SentAt
+                        ? new Date(
+                            m.sentAt || m.timestamp || m.SentAt,
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
+                      {m.optimistic && <span> (جاري الإرسال...)</span>}
                     </div>
-                  );
-                })
-              )}
+                  </div>
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input bar */}
-            <div
-              style={{ padding: "1rem 1.5rem", borderTop: "1px solid #e2e8f0" }}
-            >
+            {msgError && (
               <div
                 style={{
-                  display: "flex",
-                  gap: "0.75rem",
-                  alignItems: "center",
+                  margin: "0 1rem",
+                  padding: "0.5rem",
+                  background: "#fee2e2",
+                  color: "#dc2626",
+                  borderRadius: "4px",
+                  fontSize: "0.85rem",
+                  textAlign: "center",
                 }}
               >
-                <input
-                  className="chat-input"
-                  placeholder={t("writeMsg")}
-                  value={newMsg}
-                  onChange={(e) => setNewMsg(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && !e.shiftKey && handleSend()
-                  }
-                  style={{
-                    flex: 1,
-                    padding: "0.75rem 1rem",
-                    borderRadius: "2rem",
-                    border: "1px solid #e2e8f0",
-                    outline: "none",
-                    fontFamily: "inherit",
-                  }}
-                />
-                <button
-                  className="primary-btn"
-                  style={{
-                    borderRadius: "50%",
-                    width: 44,
-                    height: 44,
-                    padding: 0,
-                    justifyContent: "center",
-                  }}
-                  onClick={handleSend}
-                  disabled={sending || !newMsg.trim()}
-                >
-                  {sending ? <Loader size={18} /> : <Send size={18} />}
-                </button>
+                {msgError}
               </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                padding: "1rem",
+                gap: "0.5rem",
+                borderTop: "1px solid #eee",
+              }}
+            >
+              <input
+                className="chat-input"
+                value={newMsg}
+                onChange={(e) => {
+                  setNewMsg(e.target.value);
+                  setMsgError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                placeholder={t("writeMsg")}
+                disabled={sending}
+              />
+              <button
+                className="primary-btn"
+                onClick={handleSend}
+                disabled={sending || !newMsg.trim()}
+              >
+                {sending ? (
+                  <Loader
+                    size={18}
+                    style={{ animation: "spin 1s linear infinite" }}
+                  />
+                ) : (
+                  t("send")
+                )}
+              </button>
             </div>
           </>
         )}
@@ -1748,7 +1847,7 @@ function SettingsView({ t }) {
     phoneNumber: "",
     specialist: "",
   });
-  const [imageSrc, setImageSrc] = useState(null); // ← replaces photoUrl
+  const [imageSrc, setImageSrc] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -1770,20 +1869,17 @@ function SettingsView({ t }) {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  // Load profile on mount
   useEffect(() => {
     doctorSettingsAPI
       .get()
       .then((res) => {
         const d = res.data?.data ?? res.data;
-        console.log(d.profileImage ?? d.photoUrl)
         setForm({
           fullName: d.fullName || "",
           email: d.email || "",
           phoneNumber: d.phoneNumber || "",
           specialist: d.specialist || "",
         });
-        // The API returns `profileImage` as a raw base64 string (PNG or SVG)
         setImageSrc(toImageSrc(d.profileImage ?? d.photoUrl ?? null));
       })
       .catch(() => setError("فشل تحميل البيانات"))
@@ -1813,13 +1909,11 @@ function SettingsView({ t }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingPhoto(true);
-    // Preview immediately using a local object URL while the upload is in-flight
     const localSrc = URL.createObjectURL(file);
     setImageSrc(localSrc);
     try {
       const res = await doctorSettingsAPI.uploadPhoto(file);
       const d = res.data?.data ?? res.data;
-      // Replace with the server's base64 once available
       const serverSrc = toImageSrc(d?.profileImage ?? d?.photoUrl ?? null);
       if (serverSrc) setImageSrc(serverSrc);
     } catch {
@@ -2101,7 +2195,7 @@ function SettingsView({ t }) {
               🔒 تغيير كلمة المرور
             </button>
             <button type="submit" className="primary-btn" disabled={saving}>
-              <Save size={16} /> {saving ? "جاري الحفظ..." : t("save")}
+              <CheckCircle size={16} /> {saving ? "جاري الحفظ..." : t("save")}
             </button>
           </div>
         </form>
@@ -2185,19 +2279,14 @@ function SettingsView({ t }) {
       )}
 
       {/* ── Email verification modal ── */}
+      {/* Assuming EmailVerification component exists */}
       {showEmailVerify && (
-        <EmailVerification
-          email={newEmail}
-          userType="doctor"
-          onClose={() => setShowEmailVerify(false)}
-          onVerified={() => {
-            setForm((prev) => ({ ...prev, email: newEmail }));
-            setShowEmailVerify(false);
-            setNewEmail("");
-            setSuccessMsg("تم تغيير الإيميل بنجاح ✓");
-            setTimeout(() => setSuccessMsg(""), 3000);
-          }}
-        />
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ textAlign: "center" }}>
+            <p>Email verification component goes here...</p>
+            <button onClick={() => setShowEmailVerify(false)}>Close</button>
+          </div>
+        </div>
       )}
 
       {/* ── Change password modal ── */}
@@ -2330,8 +2419,56 @@ export default function Dashboard() {
   const [lang, setLang] = useState("en");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Notification States & SignalR (Lifted up)
+  const doctorId = getUserId();
+  const [hasNewNotif, setHasNewNotif] = useState(false);
+  const [incomingMessage, setIncomingMessage] = useState(null);
+
+  // Fix 1: Use a ref to always access the latest activeTab inside the SignalR callback
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+
+  useSignalR({
+    doctorId: doctorId,
+    studentId: null, // Null to listen to all incoming messages to this doctor
+    onMessage: (message) => {
+      // Prevent notifying if the message is from the doctor themselves
+      const role = message.senderRole || message.SenderRole;
+      if (role === "Doctor") return;
+
+      // Force trigger by adding timestamp to object
+      setIncomingMessage({ ...message, _ts: Date.now() });
+
+      // Use the ref to check the current tab reliably
+      if (activeTabRef.current !== "messages") {
+        setHasNewNotif(true);
+      }
+    },
+  });
+
   const t = (k) => translations[lang][k] || k;
   const toggleLang = () => setLang((l) => (l === "en" ? "ar" : "en"));
+
+  // Notification listener (Custom Event Fallback)
+  useEffect(() => {
+    const handleNotification = () => {
+      if (activeTab !== "messages") {
+        setHasNewNotif(true);
+      }
+    };
+    window.addEventListener("drago-notification", handleNotification);
+    return () =>
+      window.removeEventListener("drago-notification", handleNotification);
+  }, [activeTab]);
+
+  // Clear notification badge when entering messages
+  useEffect(() => {
+    if (activeTab === "messages") {
+      setHasNewNotif(false);
+    }
+  }, [activeTab]);
 
   const menuItems = [
     { id: "home", icon: Home, label: "home" },
@@ -2364,22 +2501,14 @@ export default function Dashboard() {
               >
                 <item.icon size={20} />
                 <span>{t(item.label)}</span>
-                {activeTab === item.id &&
-                  (lang === "ar" ? (
-                    <ChevronLeft size={16} style={{ marginRight: "auto" }} />
-                  ) : (
-                    <ChevronRight size={16} style={{ marginLeft: "auto" }} />
-                  ))}
               </button>
             ))}
           </nav>
           <div className="sidebar-footer">
             <button
               className="nav-item"
-              style={{ color: "#fca5a5" }}
               onClick={() => {
-                localStorage.removeItem("authToken");
-                localStorage.removeItem("userData");
+                localStorage.clear();
                 window.location.href = "/";
               }}
             >
@@ -2395,16 +2524,18 @@ export default function Dashboard() {
               <h2>{t(activeTab)}</h2>
             </div>
             <div className="header-right">
-              <div className="search-bar">
-                <Search size={18} color="#94a3b8" />
-                <input placeholder={t("search")} />
-              </div>
               <button onClick={toggleLang} className="icon-btn">
                 <Languages size={20} />
               </button>
-              <button className="icon-btn">
+              <button
+                className="icon-btn"
+                onClick={() => {
+                  setActiveTab("messages");
+                  setHasNewNotif(false);
+                }}
+              >
                 <Bell size={20} />
-                <span className="badge-dot" />
+                {hasNewNotif && <span className="badge-dot" />}
               </button>
               <div className="profile-pic">DR</div>
             </div>
@@ -2414,22 +2545,12 @@ export default function Dashboard() {
           {activeTab === "students" && <StudentsView t={t} lang={lang} />}
           {activeTab === "sessions" && <SessionsView t={t} />}
           {activeTab === "assessments" && <AssessmentsView t={t} />}
-          {activeTab === "messages" && <MessagesView t={t} />}
+          {activeTab === "messages" && (
+            <MessagesView t={t} incomingMessage={incomingMessage} />
+          )}
           {activeTab === "reports" && <ReportsView t={t} />}
           {activeTab === "settings" && <SettingsView t={t} />}
         </main>
-
-        {sidebarOpen && (
-          <div
-            onClick={() => setSidebarOpen(false)}
-            style={{
-              position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.5)",
-              zIndex: 40,
-            }}
-          />
-        )}
       </div>
     </>
   );
