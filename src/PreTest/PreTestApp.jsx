@@ -63,6 +63,10 @@ export default function PreTestApp() {
   // Pre-warm the HuggingFace STT connection on mount
   useEffect(() => {
     warmUpSTT();
+    document.body.classList.add("pretest-body");
+    return () => {
+      document.body.classList.remove("pretest-body");
+    };
   }, []);
 
   const current = flow[step];
