@@ -3,9 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import style from "../styles/TombPuzzle.module.css";
 import { fallbackQuestions } from "../data/tombPuzzleFallback";
 
-// ─── HF Space data source ─────────────────────────────────────────────────────
-const HF_QUESTIONS_URL =
-  "https://huggingface.co/spaces/T1a2T3a4/tartiiiiib/raw/main/generated_questions.json";
+// ─── Local Proxy / Vercel Serverless API source ───────────────────────────────
+const HF_QUESTIONS_URL = "/api/tomb/questions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TOTAL_LEVELS   = 6;

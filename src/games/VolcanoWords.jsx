@@ -7,8 +7,7 @@ import reading from "../assets/emotions/drago(reading).svg";
 import sitting from "../assets/poses/drago(sitting).svg";
 import { WinModal, LoseModal } from "../components/WinLose.jsx";
 
-const API_BASE = "https://mohamed4111-dyslexia-v2.hf.space";
-const HF_API_KEY = import.meta?.env?.VITE_HF_API_KEY || "";
+const API_BASE = "/api/volcano";
 
 const INITIAL_LAVA_LEVEL = 40;
 const INITIAL_HINTS = 5;
@@ -628,12 +627,9 @@ function VolcanoWords() {
     form.append("file", audioBlob, "speech.webm");
     form.append("target_word", targetWord);
 
-    const headers = HF_API_KEY ? { "X-API-Key": HF_API_KEY } : undefined;
-
     try {
       const res = await fetchWithTimeout(`${API_BASE}/check_word`, {
         method: "POST",
-        headers,
         body: form,
       });
 
