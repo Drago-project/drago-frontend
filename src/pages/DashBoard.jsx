@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSignalR } from "../hooks/useSignalR";
 import { toImageSrc } from "../utils/imageUtils";
 import {
+  Menu,
   Users,
   Calendar,
   FileText,
@@ -150,13 +151,59 @@ body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 
 .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); margin-top: 6px; flex-shrink: 0; }
 .bar { transition: height 0.5s ease; }
 .bar:hover { opacity: 0.8; }
+.menu-toggle { display: none; background: transparent; border: none; color: var(--color-primary); cursor: pointer; padding: 0.5rem; }
+.mobile-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 40; }
 @media (max-width: 1024px) {
+  .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .mobile-overlay.open { display: block; }
   .sidebar { transform: translateX(-100%); }
   .rtl .sidebar { transform: translateX(100%); }
   .sidebar.open { transform: translateX(0); }
   .main-content { margin: 0; padding: 1rem; }
   .top-header { padding: 0 1rem; }
   .grid-2 { grid-template-columns: 1fr; }
+}
+
+.chat-grid-container {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+  height: calc(100vh - 190px);
+}
+.chat-sidebar-wrap { display: flex; flex-direction: column; height: 100%; }
+.chat-main-wrap { display: flex; flex-direction: column; height: 100%; }
+
+@media (max-width: 1024px) {
+  .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+  .sidebar { transform: translateX(-100%); }
+  .rtl .sidebar { transform: translateX(100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 1rem; }
+  .rtl .main-content { margin-right: 0; }
+  .top-header { padding: 0 1rem; margin-bottom: 1rem; height: 70px; }
+}
+
+/* تظبيط الشات للموبايل (شاشات أقل من 768px) */
+@media (max-width: 768px) {
+  .chat-grid-container {
+    grid-template-columns: 1fr !important;
+    height: calc(100vh - 140px) !important; /* تكبير الارتفاع عشان يملى الشاشة في الموبايل */
+    gap: 0;
+  }
+  
+  /* لو الدكتور فتح شات طالب: إخفي القائمة الجانبية فوراً */
+  .chat-grid-container.chat-active .chat-sidebar-wrap {
+    display: none !important;
+  }
+  
+  /* لو الدكتور برة ومش فاتح شات: إخفي صندوق المحادثة الفاضي */
+  .chat-grid-container:not(.chat-active) .chat-main-wrap {
+    display: none !important;
+  }
+  
+  .chat-bubble {
+    max-width: 85% !important; /* تكبير عرض فقاعة الرسالة في الموبايل عشان القراءة */
+  }
 }
 `;
 
@@ -1341,7 +1388,7 @@ function AssessmentsView({ t }) {
   );
 }
 
-function MessagesView({ t }) {
+function MessagesView({ t, lang }) {
   const doctorId = getUserId();
 
   const {
@@ -1367,20 +1414,17 @@ function MessagesView({ t }) {
 
   const messagesEndRef = useRef(null);
 
-  // تحديث المحادثات الجانبية
   useEffect(() => {
     if (conversations) {
       setLocalConvs(conversations);
     }
   }, [conversations]);
 
-  // استخدام Ref لمعرفة الطالب المفتوح حالياً داخل الـ SignalR
   const selectedStudentRef = useRef(null);
   useEffect(() => {
     selectedStudentRef.current = selectedStudentId;
   }, [selectedStudentId]);
 
-  // 🔥 1. الشات سيستم المغلق (SignalR جوه المكون مباشرة)
   useSignalR({
     doctorId: doctorId || 0,
     studentId: selectedStudentId,
@@ -1392,7 +1436,6 @@ function MessagesView({ t }) {
       const msgStudentId = role.toLowerCase() === "student" ? sId : rId;
       if (!msgStudentId) return;
 
-      // 1. تحديث صندوق المحادثة لو الدكتور فاتح شات الطالب ده
       if (selectedStudentRef.current === msgStudentId) {
         setMessages((prev) => {
           const msgId = message.messageId || message.id || message.MessageId;
@@ -1404,7 +1447,6 @@ function MessagesView({ t }) {
           return [...prev, message];
         });
       }
-      // ب. تحديث القائمة الجانبية فوراً
       setLocalConvs((prevConvs) => {
         const updatedList = [...prevConvs];
         const convIndex = updatedList.findIndex(
@@ -1418,11 +1460,11 @@ function MessagesView({ t }) {
             message.content || message.text || message.Message;
 
           if (Number(selectedStudentRef.current) !== msgStudentId) {
-            movedConv.isRead = false; // لو الشات مقفول نور النقطة الحمرا
+            movedConv.isRead = false;
           }
           updatedList.unshift(movedConv);
         } else {
-          refetchConvs(); // لو طالب جديد خالص بيعمل ريفريش للقايمة
+          refetchConvs();
         }
         return updatedList;
       });
@@ -1433,7 +1475,6 @@ function MessagesView({ t }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ─── 2. فتح المحادثة ───
   const loadChatData = async (studentId) => {
     if (!studentId || !doctorId) return;
 
@@ -1475,7 +1516,6 @@ function MessagesView({ t }) {
     }
   };
 
-  // ─── 3. الإرسال ───
   const handleSendChat = async () => {
     const text = chatInput.trim();
     if (!text || !selectedStudentId || !doctorId || chatSending) return;
@@ -1559,18 +1599,10 @@ function MessagesView({ t }) {
 
   return (
     <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "320px 1fr",
-        gap: "1.5rem",
-        height: "calc(100vh - 180px)",
-      }}
+      className={`chat-grid-container ${selectedStudentId ? "chat-active" : ""}`}
     >
-      {/* القائمة الجانبية */}
-      <div
-        className="card"
-        style={{ padding: 0, display: "flex", flexDirection: "column" }}
-      >
+      {/* ── القائمة الجانبية (قائمة المحادثات) ── */}
+      <div className="card chat-sidebar-wrap" style={{ padding: 0 }}>
         <div style={{ padding: "1rem", borderBottom: "1px solid #eee" }}>
           <h3>{t("messages")}</h3>
         </div>
@@ -1631,10 +1663,10 @@ function MessagesView({ t }) {
         </div>
       </div>
 
-      {/* صندوق المحادثة */}
+      {/* ── صندوق المحادثة النشط ── */}
       <div
-        className="card"
-        style={{ display: "flex", flexDirection: "column", padding: 0 }}
+        className="card chat-main-wrap"
+        style={{ display: "flex", padding: 0 }}
       >
         {!selectedStudentId ? (
           <div style={{ margin: "auto", color: "#888" }}>
@@ -1653,6 +1685,39 @@ function MessagesView({ t }) {
           </div>
         ) : (
           <>
+            {/* هيدر صندوق الشات المخصص للموبايل والتابلت للرجوع للخلف */}
+            <div
+              style={{
+                padding: "0.75rem 1rem",
+                borderBottom: "1px solid #eee",
+                display: "flex",
+                alignItems: "center",
+                background: "#f8fafc",
+              }}
+            >
+              <button
+                onClick={() => setSelectedStudentId(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "var(--color-primary)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                  fontSize: "0.95rem",
+                  fontWeight: "600",
+                }}
+              >
+                {lang === "ar" ? (
+                  <ChevronRight size={20} />
+                ) : (
+                  <ChevronLeft size={20} />
+                )}
+                {lang === "ar" ? "رجوع للرسائل" : "Back to messages"}
+              </button>
+            </div>
+
             <div
               style={{
                 flex: 1,
@@ -1686,6 +1751,7 @@ function MessagesView({ t }) {
                 return (
                   <div
                     key={uniqueKey}
+                    className="chat-bubble"
                     style={{
                       alignSelf: isMine ? "flex-end" : "flex-start",
                       background: isMine ? "#377C76" : "#eee",
@@ -1694,7 +1760,6 @@ function MessagesView({ t }) {
                       borderRadius: isMine
                         ? "1rem 1rem 0 1rem"
                         : "1rem 1rem 1rem 0",
-                      maxWidth: "70%",
                       opacity: m.optimistic ? 0.6 : 1,
                     }}
                   >
@@ -1779,7 +1844,6 @@ function MessagesView({ t }) {
     </div>
   );
 }
-
 function ReportsView({ t }) {
   return (
     <div>
@@ -2441,6 +2505,10 @@ export default function Dashboard() {
         className={`app-container ${lang === "ar" ? "rtl" : "ltr"}`}
         dir={lang === "ar" ? "rtl" : "ltr"}
       >
+        <div
+          className={`mobile-overlay ${sidebarOpen ? "open" : ""}`}
+          onClick={() => setSidebarOpen(false)}
+        />
         <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
           <div className="logo-area">Drago</div>
           <nav className="nav-links">
@@ -2474,14 +2542,22 @@ export default function Dashboard() {
 
         <main className="main-content">
           <header className="top-header">
-            <div className="header-left">
+            <div
+              className="header-left"
+              style={{ display: "flex", alignItems: "center", gap: "1rem" }}
+            >
+              <button
+                className="menu-toggle"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu size={24} />
+              </button>
               <h2>{t(activeTab)}</h2>
             </div>
             <div className="header-right">
               <button onClick={toggleLang} className="icon-btn">
                 <Languages size={20} />
               </button>
-              {/* شيلنا النقطة الحمرا من هنا خلاص */}
               <button
                 className="icon-btn"
                 onClick={() => {
