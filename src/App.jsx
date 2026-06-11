@@ -62,9 +62,15 @@ function Layout() {
       if (roleStr?.toLowerCase().includes("doctor")) {
         navigate("/dashboard", { replace: true });
       } else {
-        localStorage.getItem("needsPretest") === "true"
-          ? navigate("/pretest", { replace: true })
-          : navigate("/home", { replace: true });
+        // ── Pretest Gate (covers pre-existing accounts on refresh) ──────────
+        const pretestDone = localStorage.getItem("pretest_completed_scores");
+        const alreadyFlagged = localStorage.getItem("needsPretest") === "true";
+        if (!pretestDone || alreadyFlagged) {
+          localStorage.setItem("needsPretest", "true");
+          navigate("/pretest", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
       }
     } catch {
       localStorage.removeItem("authToken");

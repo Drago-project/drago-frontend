@@ -114,11 +114,71 @@ const allArtifacts = [
   { id: 6, name: "رمح حورس",        icon: "⚡" },
 ];
 
+// ─── Pretest Welcome Modal ───────────────────────────────────────────────────
+function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0, left: 0, right: 0, bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.85)",
+      backdropFilter: "blur(8px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      zIndex: 10000, direction: "rtl", padding: "20px"
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg, #1a0a00, #2b1500)",
+        border: "3px solid #ffd700",
+        borderRadius: "24px",
+        padding: "30px 24px",
+        maxWidth: "480px", width: "100%",
+        textAlign: "center",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.3)"
+      }}>
+        <div style={{ fontSize: "70px", marginBottom: "15px", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
+        <h2 style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}>مرحباً بك يا بطل!</h2>
+        <p style={{ color: "#fff", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" }}>
+          بناءً على أدائك في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها.
+          <span style={{ display: "block", marginTop: "10px", color: "#ffd700", fontWeight: "bold", fontSize: "18px" }}>
+            رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
+          </span>
+        </p>
+        <button
+          onClick={onDismiss}
+          style={{
+            background: "linear-gradient(135deg, #ffd700, #b8860b)",
+            border: "none", borderRadius: "14px",
+            color: "#1a0f00", padding: "12px 32px",
+            fontSize: "16px", fontWeight: "bold", cursor: "pointer",
+            boxShadow: "0 4px 15px rgba(212,175,55,0.4)", transition: "transform 0.2s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+        >
+          ابدأ الاكتشاف الآن! 🏺
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 function TombPuzzle() {
   // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
   const [view, setView]               = useState("levels");
   const [progress, setProgress]       = useState(loadProgress);
+  const [showPretestModal, setShowPretestModal] = useState(() => {
+    const p = loadProgress();
+    return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
+  });
+
+  const dismissPretestModal = () => {
+    setShowPretestModal(false);
+    setProgress(prev => {
+      const updated = { ...prev, showPretestWelcome: false };
+      saveProgress(updated);
+      return updated;
+    });
+  };
 
   // ── HF data ───────────────────────────────────────────────────────────────
   // allQuestions grouped by level: { "1": [...], "2": [...], ... }
@@ -225,6 +285,9 @@ function TombPuzzle() {
   // ─── Progress helpers ────────────────────────────────────────────────────────
   const isLevelUnlocked = (levelNum) => levelNum <= progress.unlockedLevel;
 
+  const isAllStagesBeforeRecommendedUnlocked = (levelNum, stageIdx) =>
+    levelNum < progress.unlockedLevel;
+
   const getLevelProgress = (levelNum) => {
     const key    = String(levelNum);
     const stages = progress.completedStages[key] || [];
@@ -236,6 +299,7 @@ function TombPuzzle() {
 
   const isStageUnlocked = (levelNum, stageIdx) => {
     if (stageIdx === 0) return true;
+    if (levelNum < progress.unlockedLevel) return true;
     return (progress.completedStages[String(levelNum)] || [])[stageIdx - 1] === true;
   };
 
@@ -467,6 +531,12 @@ function TombPuzzle() {
       ════════════════════════════════════════════════════════ */}
       {!dataLoading && view === "levels" && (
         <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", padding: "20px", boxSizing: "border-box", overflowY: "auto", maxHeight: "100vh" }}>
+          {showPretestModal && (
+            <PretestWelcomeModal
+              unlockedLevel={progress.unlockedLevel}
+              onDismiss={dismissPretestModal}
+            />
+          )}
           {/* Header */}
           <div style={{ textAlign: "center", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "20px", padding: "18px 36px", backdropFilter: "blur(8px)", animation: "fadeIn 0.5s ease" }}>
             <h1 style={{ color: "#ffd700", margin: 0, fontSize: "28px", textShadow: "0 0 16px #c0a060" }}>🏺 مقبرة الأسرار 🏺</h1>
@@ -486,6 +556,7 @@ function TombPuzzle() {
               const meta      = LEVEL_META[levelNum];
               const unlocked  = isLevelUnlocked(levelNum);
               const { done, pct, stars } = getLevelProgress(levelNum);
+              const isRecommended = levelNum === progress.recommendedLevel;
 
               return (
                 <div
@@ -495,7 +566,9 @@ function TombPuzzle() {
                     background: unlocked
                       ? `linear-gradient(145deg, rgba(${hexToRgb(meta.color)},0.8), rgba(0,0,0,0.65))`
                       : "rgba(30,20,10,0.75)",
-                    border: `2px solid ${unlocked ? meta.color : "#555"}`,
+                    border: isRecommended
+                      ? "3px solid #ffd700"
+                      : `2px solid ${unlocked ? meta.color : "#555"}`,
                     borderRadius: "20px",
                     padding: "22px 18px",
                     cursor: unlocked ? "pointer" : "not-allowed",
@@ -506,13 +579,26 @@ function TombPuzzle() {
                     direction: "rtl",
                     position: "relative",
                     overflow: "hidden",
-                    boxShadow: unlocked ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)` : "none",
+                    boxShadow: isRecommended
+                      ? `0 0 20px #ffd700, 0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
+                      : unlocked ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)` : "none",
                   }}
                   onMouseEnter={e => { if (unlocked) e.currentTarget.style.transform = "translateY(-6px)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}
                 >
                   {!unlocked && (
                     <div style={{ position: "absolute", top: "12px", left: "12px", fontSize: "20px", background: "rgba(0,0,0,0.4)", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center" }}>🔒</div>
+                  )}
+                  {isRecommended && (
+                    <div style={{
+                      position: "absolute", top: "10px", right: "10px",
+                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                      color: "#1a0f00", padding: "4px 10px",
+                      borderRadius: "12px", fontSize: "11px", fontWeight: "bold",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)", zIndex: 2
+                    }}>
+                      المستوى الموصى به ⭐
+                    </div>
                   )}
                   <div style={{ color: meta.color, fontSize: "13px", fontWeight: 800, letterSpacing: "1px" }}>
                     {meta.icon} المستوى {levelNum}
@@ -567,16 +653,31 @@ function TombPuzzle() {
               const unlocked = isStageUnlocked(selectedLevel, stageIdx);
               const stars    = getStageStars(selectedLevel, stageIdx);
               const color    = LEVEL_META[selectedLevel].color;
+              const isRecommended = selectedLevel === progress.recommendedLevel
+                && stageIdx === (progress.recommendedStage - 1 || 0);
 
               return (
-                <div key={stageIdx} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div key={stageIdx} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "28px" }}>
+                  {isRecommended && (
+                    <div style={{
+                      position: "absolute", top: "4px",
+                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                      color: "#1a0f00", padding: "2px 8px",
+                      borderRadius: "10px", fontSize: "10px", fontWeight: "bold",
+                      whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(0,0,0,0.25)", zIndex: 2
+                    }}>
+                      بداية المسار 🚀
+                    </div>
+                  )}
                   <div
                     onClick={() => { if (unlocked) launchStage(selectedLevel, stageIdx); }}
                     style={{
                       width: "88px", height: "88px", borderRadius: "50%",
                       background: unlocked ? `radial-gradient(circle at 35% 35%, #fff8e0, ${color})` : "radial-gradient(circle at 35% 35%, #ccc, #777)",
-                      border: `5px solid ${unlocked ? "#fff" : "#bbb"}`,
-                      boxShadow: unlocked ? `0 8px 20px rgba(${hexToRgb(color)},0.5)` : "0 4px 10px rgba(0,0,0,0.3)",
+                      border: isRecommended ? `5px solid #ffd700` : `5px solid ${unlocked ? "#fff" : "#bbb"}`,
+                      boxShadow: isRecommended
+                        ? `0 0 18px #ffd700, 0 8px 20px rgba(${hexToRgb(color)},0.5)`
+                        : unlocked ? `0 8px 20px rgba(${hexToRgb(color)},0.5)` : "0 4px 10px rgba(0,0,0,0.3)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "32px", fontWeight: 900,
                       color: unlocked ? "#3d1f00" : "#666",
