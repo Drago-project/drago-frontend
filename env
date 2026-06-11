@@ -1,0 +1,4 @@
+VITE_API_URL = https://drago-back.runasp.net
+HF_API_KEY = 
+HF_API_BASE = https://mohamed4111-dyslexia-v2.hf.space
+HF_TOMB_URL = https://huggingface.co/spaces/T1a2T3a4/tartiiiiib/raw/main/generated_questions.json
