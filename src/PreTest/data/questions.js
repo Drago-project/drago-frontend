@@ -1,22 +1,39 @@
+
+import bookImg from "../../assets/pretest/book.png";
+import catImg from "../../assets/pretest/cat.jpg";
+import dogImg from "../../assets/pretest/dog.png";
+import ballImg from "../../assets/pretest/foodball.png";
+import homeImg from "../../assets/pretest/home.png";
+import pencilImg from "../../assets/pretest/pencil.png";
+import sunImg from "../../assets/pretest/sun.png";
+import flameImg from "../../assets/pretest/orangeflame.jpg";
+import moonImg from "../../assets/pretest/moon.jpg";
+import fishImg from "../../assets/pretest/fish.jpg";
+import doorImg from "../../assets/pretest/door.jpg";
+import schoolImg from "../../assets/pretest/school.jpg";
+import treeImg from "../../assets/pretest/tree.jpg";
+import appleImg from "../../assets/pretest/apple.png";
+import boyImg from "../../assets/pretest/boy.jpg";
+
 export const emoji = {
-  كتاب: "📘",
-  قطة: "🐱",
-  كلب: "🐶",
-  كرة: "⚽",
-  بيت: "🏠",
-  قلم: "✏️",
-  شمس: "☀️",
-  نار: "🔥",
-  قمر: "🌙",
-  سمك: "🐟",
-  باب: "🚪",
-  مدرسة: "🏫",
-  شجرة: "🌳",
-  تفاحة: "🍎",
-  ولد: "🧒",
+  كتاب: bookImg,
+  قطة: catImg,
+  كلب: dogImg,
+  كرة: ballImg,
+  بيت: homeImg,
+  قلم: pencilImg,
+  شمس: sunImg,
+  نار: flameImg,
+  قمر: moonImg,
+  سمك: fishImg,
+  باب: doorImg,
+  مدرسة: schoolImg,
+  شجرة: treeImg,
+  تفاحة: appleImg,
+  ولد: boyImg,
 };
 
-export function option(value, icon = emoji[value] || "✨") {
+export function option(value, icon = emoji[value] || null)  {
   return { value, label: value, icon };
 }
 

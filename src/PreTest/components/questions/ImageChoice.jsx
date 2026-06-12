@@ -41,9 +41,13 @@ export function ImageChoice({ choices, selected, onSelect, onSubmit }) {
               >
                 🔉
               </span>
-              <div className="emojiCard" aria-hidden="true">
-                {c.icon}
-              </div>
+             <div className="emojiCard" aria-hidden="true">
+  <img
+    src={c.icon}
+    alt={c.label}
+    className="choiceImage"
+  />
+</div>
               <b className="choiceText">{c.label}</b>
             </button>
           );
