@@ -89,6 +89,67 @@ const LEVEL_METADATA_AR = {
   }
 };
 
+// ─── Pretest Welcome Modal ─────────────────────────────────────
+const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
+  return (
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      backdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10000,
+      direction: "rtl",
+      padding: "20px"
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg, #2b1f0d, #1a1005)",
+        border: "3px solid #ffd700",
+        borderRadius: "24px",
+        padding: "30px 24px",
+        maxWidth: "480px",
+        width: "100%",
+        textAlign: "center",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.2)",
+      }}>
+        <div style={{ fontSize: "70px", marginBottom: "15px", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
+        <h2 style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px", fontWeight: "bold" }}>مرحباً بك يا بطل!</h2>
+        <p style={{ color: "#fff", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" }}>
+          بناءً على أدائك الرائع في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها بالفعل.
+          <br />
+          <span style={{ display: "block", marginTop: "10px", color: "#ffd700", fontWeight: "bold", fontSize: "18px" }}>
+            رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
+          </span>
+        </p>
+        <button 
+          onClick={onDismiss}
+          style={{
+            background: "linear-gradient(135deg, #ffd700, #b8860b)",
+            border: "none",
+            borderRadius: "14px",
+            color: "#1a0f00",
+            padding: "12px 32px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            boxShadow: "0 4px 15px rgba(212,175,55,0.4)",
+            transition: "transform 0.2s"
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+          onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+        >
+          ابدأ المغامرة الآن! 🚀
+        </button>
+      </div>
+    </div>
+  );
+};
+
 function VolcanoWords() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -114,6 +175,23 @@ function VolcanoWords() {
     }
     return defaultProgress;
   });
+
+  const [showPretestModal, setShowPretestModal] = useState(false);
+
+  useEffect(() => {
+    if (progress?.showPretestWelcome && progress?.unlockedLevel > 1) {
+      setShowPretestModal(true);
+    }
+  }, [progress]);
+
+  const dismissPretestModal = () => {
+    setShowPretestModal(false);
+    setProgress(prev => {
+      const updated = { ...prev, showPretestWelcome: false };
+      localStorage.setItem("volcano_words_progress", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   const [words, setWords] = useState([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -214,7 +292,7 @@ function VolcanoWords() {
   };
 
   const handleSelectStage = (stageIndex) => {
-    const isStageUnlocked = stageIdx => stageIdx === 0 || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+    const isStageUnlocked = stageIdx => stageIdx === 0 || parseInt(selectedLevelId, 10) < progress.unlockedLevel || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
     if (!isStageUnlocked(stageIndex)) return;
 
     setSelectedStageIndex(stageIndex);
@@ -659,6 +737,12 @@ function VolcanoWords() {
   if (view === "levels") {
     return (
       <div className={styles.gameContainer}>
+        {showPretestModal && (
+          <PretestWelcomeModal
+            unlockedLevel={progress.unlockedLevel}
+            onDismiss={dismissPretestModal}
+          />
+        )}
         <nav className={styles.headerNav}>
           <button className={styles.exitBtn} onClick={() => navigate("/home")}>
             {t("volcanoWords.exit", "خروج")}
@@ -684,16 +768,38 @@ function VolcanoWords() {
 
               const completedCount = progress.completedStages[id]?.filter(Boolean).length || 0;
               const progressPercent = (completedCount / 5) * 100;
+              const isRecommended = levelNum === progress.recommendedLevel;
 
               return (
                 <div
                   key={id}
                   className={`${styles.levelCard} ${!isUnlocked ? styles.levelCardLocked : ""}`}
+                  style={{
+                    position: "relative",
+                    ...(isRecommended ? { border: "3px solid #ffd700", boxShadow: "0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.2)" } : {})
+                  }}
                   onClick={() => isUnlocked && handleSelectLevel(id)}
                 >
                   {!isUnlocked && (
                     <div className={styles.lockOverlay}>
                       🔒
+                    </div>
+                  )}
+                  {isRecommended && (
+                    <div style={{
+                      position: "absolute",
+                      top: "10px",
+                      left: "10px",
+                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                      color: "#1a0f00",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                      zIndex: 2
+                    }}>
+                      المستوى الموصى به ⭐
                     </div>
                   )}
                   <div className={styles.levelCardContent}>
@@ -754,13 +860,40 @@ function VolcanoWords() {
 
             <div className={styles.stagesGrid}>
               {[...Array(5)].map((_, stageIdx) => {
-                const isStageUnlocked = stageIdx === 0 || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+                const isStageUnlocked = stageIdx === 0
+                  || parseInt(selectedLevelId, 10) < progress.unlockedLevel
+                  || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
                 const earnedStars = progress.stars[selectedLevelId]?.[stageIdx] || 0;
+                const isRecommended = parseInt(selectedLevelId, 10) === progress.recommendedLevel
+                  && stageIdx === (progress.recommendedStage - 1 || 0);
 
                 return (
-                  <div key={stageIdx} className={styles.stageNodeWrapper}>
+                  <div key={stageIdx} className={styles.stageNodeWrapper} style={{ position: "relative" }}>
+                    {isRecommended && (
+                      <div style={{
+                        position: "absolute",
+                        top: "-22px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        zIndex: 2
+                      }}>
+                        بداية المسار 🚀
+                      </div>
+                    )}
                     <div
                       className={`${styles.stageNode} ${!isStageUnlocked ? styles.stageNodeLocked : ""}`}
+                      style={isRecommended ? {
+                        boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
+                        border: "3px solid #ffd700",
+                      } : {}}
                       onClick={() => isStageUnlocked && handleSelectStage(stageIdx)}
                     >
                       {isStageUnlocked ? stageIdx + 1 : "🔒"}

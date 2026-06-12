@@ -93,14 +93,19 @@ function ProtectedRoute({ children, requiredRole }) {
   }
 
   // If student still needs pretest, force pretest route before accessing other student pages.
+  // Dual-check: explicit flag OR missing completion marker — covers pre-existing accounts
+  // that never had the flag set and accounts that haven't completed the pretest yet.
   const needsPretest = localStorage.getItem("needsPretest") === "true";
+  const pretestDone  = localStorage.getItem("pretest_completed_scores");
   const isStudentRoute = requiredRole?.toLowerCase().includes("student");
 
   if (
     isStudentRoute &&
-    needsPretest &&
-    !location.pathname.startsWith("/pretest")
+    !location.pathname.startsWith("/pretest") &&
+    (needsPretest || !pretestDone)
   ) {
+    // Set the flag so other guards are consistent
+    if (!pretestDone) localStorage.setItem("needsPretest", "true");
     return <Navigate to="/pretest" replace />;
   }
 

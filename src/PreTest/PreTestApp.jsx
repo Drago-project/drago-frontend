@@ -12,6 +12,8 @@ import { questions } from "./data/questions.js";
 // Import utils
 import { adaptiveNextIndex } from "./utils/adaptive.js";
 import { warmUpSTT } from "./utils/speechToText.js";
+import { computeResults } from "./utils/scoring.js";
+import { unlockGamesProgress } from "./utils/unlocking.js";
 
 // Import layouts and screens
 import { Header } from "./components/layout/Header.jsx";
@@ -126,6 +128,13 @@ export default function PreTestApp() {
   }
 
   function finishPreTest() {
+    try {
+      const results = computeResults(responses, safety, intake);
+      unlockGamesProgress(results.domainScores);
+      localStorage.setItem("pretest_completed_scores", JSON.stringify(results.domainScores));
+    } catch (e) {
+      console.error("Error setting game progress from pretest results:", e);
+    }
     localStorage.removeItem("needsPretest");
     navigate("/home", { replace: true });
   }

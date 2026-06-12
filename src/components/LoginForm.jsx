@@ -100,7 +100,18 @@ export default function LoginForm() {
       if (roleStr.includes("doctor") || roleStr.includes("dr")) {
         navigate("/dashboard", { replace: true });
       } else {
-        navigate("/home", { replace: true });
+        // ── Pretest Gate ──────────────────────────────────────────────────────
+        // Every student MUST complete the pretest exactly once.
+        // We use "pretest_completed_scores" as the completion marker (set by
+        // PreTestApp.finishPreTest). If it's absent the user hasn't done it yet
+        // — regardless of whether they are a new or pre-existing account.
+        const pretestDone = localStorage.getItem("pretest_completed_scores");
+        if (!pretestDone) {
+          localStorage.setItem("needsPretest", "true");
+          navigate("/pretest", { replace: true });
+        } else {
+          navigate("/home", { replace: true });
+        }
       }
     } catch (err) {
       console.error("Login error:", err);
