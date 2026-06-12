@@ -6,12 +6,10 @@ export function useSignalR({ doctorId, studentId, onMessage }) {
   const [status, setStatus] = useState("disconnected");
   const latestOnMessage = useRef(onMessage);
 
-  // تحديث الدالة دايماً عشان تقرأ أحدث State
   useEffect(() => {
     latestOnMessage.current = onMessage;
   }, [onMessage]);
 
-  // 1. فتح الاتصال (بيحصل مرة واحدة بس في البداية)
   useEffect(() => {
     if (!doctorId && !studentId) return;
 
@@ -30,9 +28,7 @@ export function useSignalR({ doctorId, studentId, onMessage }) {
     return () => {
       newConnection.stop();
     };
-  }, []); // 👈 قوسين فاضيين عشان ميفصلش ويعيد الاتصال كل ما الطالب يتغير
-
-  // 2. تشغيل الاتصال والاستماع
+  }, []); 
   useEffect(() => {
     if (!connection) return;
 

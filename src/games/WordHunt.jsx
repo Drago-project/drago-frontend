@@ -3,7 +3,14 @@ import React, { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import Lottie from "lottie-react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle, Volume2, Heart, Home, ChevronRight } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  Volume2,
+  Heart,
+  Home,
+  ChevronRight,
+} from "lucide-react";
 import { hutGameAPI, profileAPI } from "../server/endpoints";
 import { getAuthUser } from "../server/auth";
 
@@ -20,28 +27,34 @@ const STORAGE_KEY = "word_hunt_progress";
 const defaultProgress = {
   unlockedLevel: 1,
   completedStages: {
-    "1": [false, false, false, false, false],
-    "2": [false, false, false, false, false],
-    "3": [false, false, false, false, false],
-    "4": [false, false, false, false, false],
-    "5": [false, false, false, false, false],
-    "6": [false, false, false, false, false],
+    1: [false, false, false, false, false],
+    2: [false, false, false, false, false],
+    3: [false, false, false, false, false],
+    4: [false, false, false, false, false],
+    5: [false, false, false, false, false],
+    6: [false, false, false, false, false],
   },
   stars: {
-    "1": [0, 0, 0, 0, 0],
-    "2": [0, 0, 0, 0, 0],
-    "3": [0, 0, 0, 0, 0],
-    "4": [0, 0, 0, 0, 0],
-    "5": [0, 0, 0, 0, 0],
-    "6": [0, 0, 0, 0, 0],
+    1: [0, 0, 0, 0, 0],
+    2: [0, 0, 0, 0, 0],
+    3: [0, 0, 0, 0, 0],
+    4: [0, 0, 0, 0, 0],
+    5: [0, 0, 0, 0, 0],
+    6: [0, 0, 0, 0, 0],
   },
 };
 
 // ─── Sound helpers ────────────────────────────────────────────
 const gameSounds = {
-  correct: new Audio("https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3"),
-  wrong:   new Audio("https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3"),
-  click:   new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3"),
+  correct: new Audio(
+    "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
+  ),
+  wrong: new Audio(
+    "https://assets.mixkit.co/active_storage/sfx/2003/2003-preview.mp3",
+  ),
+  click: new Audio(
+    "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
+  ),
 };
 
 const playSystemSound = (type) => {
@@ -51,11 +64,15 @@ const playSystemSound = (type) => {
 
 const playSound = (type) => {
   const audio = gameSounds[type];
-  if (audio) { audio.currentTime = 0; audio.play().catch(() => {}); }
+  if (audio) {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
 };
 
 const speakLetter = (e, letter) => {
-  e.stopPropagation();
+  if (e && e.stopPropagation) e.stopPropagation();
+
   if ("speechSynthesis" in window) {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(letter);
@@ -65,28 +82,71 @@ const speakLetter = (e, letter) => {
   }
 };
 
+const playOptionAudio = (e, audioUrl, letter) => {
+  if (e && e.stopPropagation) e.stopPropagation();
+
+  if (audioUrl) {
+    const audio = new Audio(audioUrl);
+    audio.play().catch((err) => {
+      console.warn(
+        "Backend audio missing or failed, falling back to Browser TTS:",
+        err,
+      );
+      speakLetter(null, letter);
+    });
+  } else {
+    speakLetter(null, letter);
+  }
+};
+
 // ─── Win / Lose Modals ─────────────────────────────────────────
 const WinModal = ({ score, starsEarned, onContinue, onReplay }) => {
   const navigate = useNavigate();
-  useEffect(() => { playSystemSound("win"); }, []);
+  useEffect(() => {
+    playSystemSound("win");
+  }, []);
   return (
     <div className="wh-modal-overlay">
-      <Confetti width={window.innerWidth} height={window.innerHeight} recycle={false} />
+      <Confetti
+        width={window.innerWidth}
+        height={window.innerHeight}
+        recycle={false}
+      />
       <div className="wh-modal win">
         <div className="wh-modal-emoji">
-          <Lottie animationData={celebrationAnimation} loop={true} autoplay={true} />
+          <Lottie
+            animationData={celebrationAnimation}
+            loop={true}
+            autoplay={true}
+          />
         </div>
         <h2 className="wh-modal-title">!أنت بطل</h2>
         <div style={{ fontSize: "2rem", margin: "8px 0" }}>
           {[1, 2, 3].map((s) => (
-            <span key={s} style={{ color: s <= starsEarned ? "#ffd700" : "rgba(255,255,255,0.3)", textShadow: s <= starsEarned ? "0 0 10px #ffd700" : "none" }}>★</span>
+            <span
+              key={s}
+              style={{
+                color: s <= starsEarned ? "#ffd700" : "rgba(255,255,255,0.3)",
+                textShadow: s <= starsEarned ? "0 0 10px #ffd700" : "none",
+              }}
+            >
+              ★
+            </span>
           ))}
         </div>
-        <p className="wh-modal-score">النتيجة: {score} / {WORDS_PER_STAGE}</p>
+        <p className="wh-modal-score">
+          النتيجة: {score} / {WORDS_PER_STAGE}
+        </p>
         <div className="wh-btn-container">
-          <button className="wh-modal-btn" onClick={onContinue}>التالي</button>
-          <button className="wh-modal-btn" onClick={onReplay}>إعادة</button>
-          <button className="wh-exit-btn" onClick={() => navigate("/home")}>خروج</button>
+          <button className="wh-modal-btn" onClick={onContinue}>
+            التالي
+          </button>
+          <button className="wh-modal-btn" onClick={onReplay}>
+            إعادة
+          </button>
+          <button className="wh-exit-btn" onClick={() => navigate("/home")}>
+            خروج
+          </button>
         </div>
       </div>
     </div>
@@ -95,7 +155,9 @@ const WinModal = ({ score, starsEarned, onContinue, onReplay }) => {
 
 const LoseModal = ({ score, onReplay }) => {
   const navigate = useNavigate();
-  useEffect(() => { playSystemSound("lose"); }, []);
+  useEffect(() => {
+    playSystemSound("lose");
+  }, []);
   return (
     <div className="wh-modal-overlay">
       <div className="wh-modal lose">
@@ -104,10 +166,16 @@ const LoseModal = ({ score, onReplay }) => {
         </div>
         <h2 className="wh-modal-title">!انتهت القلوب</h2>
         <p className="wh-modal-subtitle">لا تحزن، يمكنك المحاولة مرة أخرى</p>
-        <p className="wh-modal-score">النتيجة: {score} / {WORDS_PER_STAGE}</p>
+        <p className="wh-modal-score">
+          النتيجة: {score} / {WORDS_PER_STAGE}
+        </p>
         <div className="wh-btn-container">
-          <button className="wh-modal-btn" onClick={onReplay}>حاول مرة أخرى</button>
-          <button className="wh-exit-btn" onClick={() => navigate("/home")}>خروج</button>
+          <button className="wh-modal-btn" onClick={onReplay}>
+            حاول مرة أخرى
+          </button>
+          <button className="wh-exit-btn" onClick={() => navigate("/home")}>
+            خروج
+          </button>
         </div>
       </div>
     </div>
@@ -123,50 +191,59 @@ const loadProgress = () => {
       return {
         ...defaultProgress,
         ...parsed,
-        completedStages: { ...defaultProgress.completedStages, ...parsed.completedStages },
+        completedStages: {
+          ...defaultProgress.completedStages,
+          ...parsed.completedStages,
+        },
         stars: { ...defaultProgress.stars, ...parsed.stars },
       };
     }
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Failed to load progress from localStorage:", e);
+  }
   return defaultProgress;
 };
 
 const saveProgress = (prog) => {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prog)); } catch (e) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+  } catch (e) {
+    console.warn("Failed to save progress to localStorage:", e);
+  }
 };
 
 // ─── Main Component ───────────────────────────────────────────
 const WordHuntGame = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   // View state: "levels" | "stages" | "game"
-  const [view, setView]                         = useState("levels");
-  const [progress, setProgress]                 = useState(loadProgress);
+  const [view, setView] = useState("levels");
+  const [progress, setProgress] = useState(loadProgress);
 
   // API level data
-  const [apiLevels, setApiLevels]               = useState([]);
-  const [apiLoading, setApiLoading]             = useState(true);
-  const [apiError, setApiError]                 = useState(null);
+  const [apiLevels, setApiLevels] = useState([]);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
 
   // Selection state
-  const [selectedLevelId, setSelectedLevelId]   = useState(null);
+  const [selectedLevelId, setSelectedLevelId] = useState(null);
   const [selectedStageIndex, setSelectedStageIndex] = useState(null);
 
   // Game state
-  const [gameQuestions, setGameQuestions]       = useState([]);
-  const [currentQuestion, setCurrentQuestion]   = useState(0);
-  const [score, setScore]                       = useState(0);
-  const [lives, setLives]                       = useState(3);
-  const [showFeedback, setShowFeedback]         = useState(false);
-  const [isCorrect, setIsCorrect]               = useState(false);
-  const [gameState, setGameState]               = useState("playing"); // "playing" | "loading" | "won" | "lost"
-  const [selectedOption, setSelectedOption]     = useState(null);
-  const [starsEarned, setStarsEarned]           = useState(0);
+  const [gameQuestions, setGameQuestions] = useState([]);
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [score, setScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const [gameState, setGameState] = useState("playing"); // "playing" | "loading" | "won" | "lost"
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [starsEarned, setStarsEarned] = useState(0);
 
   // Session tracking
-  const [sessionId, setSessionId]               = useState(null);
-  const [startTime, setStartTime]               = useState(null);
-  const [userId, setUserId]                     = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [startTime, setStartTime] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   // ── Fetch levels on mount ─────────────────────────────────
   useEffect(() => {
@@ -196,7 +273,13 @@ const WordHuntGame = () => {
   };
 
   const getLevelStagesCompleted = (levelNum) => {
-    const stages = progress.completedStages[String(levelNum)] || [false, false, false, false, false];
+    const stages = progress.completedStages[String(levelNum)] || [
+      false,
+      false,
+      false,
+      false,
+      false,
+    ];
     return stages.filter(Boolean).length;
   };
 
@@ -244,20 +327,35 @@ const WordHuntGame = () => {
 
       // Fetch words
       const fetches = Array.from({ length: WORDS_PER_STAGE }).map(() =>
-        hutGameAPI.getRandomWord(levelNum)
+        hutGameAPI.getRandomWord(levelNum),
       );
       const responses = await Promise.all(fetches);
 
-      const questions = responses.map((res, idx) => {
-        const d = res?.data?.data;
-        if (!d) return null;
-        const full    = d.fullWord || "";
-        const missing = d.missingLetter || d.missing || "";
-        const missIdx = full.indexOf(missing);
-        const wordBefore = missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
-        const wordAfter  = missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
-        return { id: idx + 1, wordBefore, wordAfter, missing, options: d.options || [], hint: d.hint || "" };
-      }).filter(Boolean);
+      const questions = responses
+        .map((res, idx) => {
+          const d = res?.data?.data;
+          if (!d) return null;
+          const full = d.fullWord || "";
+          const missing = d.missingLetter || d.missing || "";
+          const missIdx = full.indexOf(missing);
+          const wordBefore =
+            missIdx >= 0 ? full.slice(0, missIdx) : d.wordDisplay || "";
+          const wordAfter =
+            missIdx >= 0 ? full.slice(missIdx + missing.length) : "";
+          return {
+            id: idx + 1,
+            wordBefore,
+            wordAfter,
+            missing,
+            options: d.options || [],
+            hint: d.hint || "",
+            // Audio data (optional)
+            audioBasePath: d.audioBasePath || "",
+            audioFormat: d.audioFormat || "",
+            optionsAudio: d.optionsAudio || [],
+          };
+        })
+        .filter(Boolean);
 
       if (questions.length === 0) throw new Error("No questions returned");
 
@@ -306,7 +404,10 @@ const WordHuntGame = () => {
       if (newLives === 0) {
         setTimeout(() => handleStageComplete(score, 0), 1500);
       } else {
-        setTimeout(() => { setShowFeedback(false); setSelectedOption(null); }, 1500);
+        setTimeout(() => {
+          setShowFeedback(false);
+          setSelectedOption(null);
+        }, 1500);
       }
     }
   };
@@ -334,18 +435,22 @@ const WordHuntGame = () => {
       setProgress((prev) => {
         const levelKey = String(selectedLevelId);
         const newCompleted = { ...prev.completedStages };
-        const newStars    = { ...prev.stars };
+        const newStars = { ...prev.stars };
 
-        if (!newCompleted[levelKey]) newCompleted[levelKey] = [false, false, false, false, false];
-        if (!newStars[levelKey])     newStars[levelKey]     = [0, 0, 0, 0, 0];
+        if (!newCompleted[levelKey])
+          newCompleted[levelKey] = [false, false, false, false, false];
+        if (!newStars[levelKey]) newStars[levelKey] = [0, 0, 0, 0, 0];
 
         const levelCompleted = [...newCompleted[levelKey]];
-        const levelStars     = [...newStars[levelKey]];
+        const levelStars = [...newStars[levelKey]];
         levelCompleted[selectedStageIndex] = true;
-        levelStars[selectedStageIndex] = Math.max(levelStars[selectedStageIndex], stars);
+        levelStars[selectedStageIndex] = Math.max(
+          levelStars[selectedStageIndex],
+          stars,
+        );
 
         newCompleted[levelKey] = levelCompleted;
-        newStars[levelKey]     = levelStars;
+        newStars[levelKey] = levelStars;
 
         // Check if all stages in this level are done → unlock next level
         let newUnlocked = prev.unlockedLevel;
@@ -353,7 +458,12 @@ const WordHuntGame = () => {
           newUnlocked = Math.max(prev.unlockedLevel, selectedLevelId + 1);
         }
 
-        const updated = { ...prev, completedStages: newCompleted, stars: newStars, unlockedLevel: newUnlocked };
+        const updated = {
+          ...prev,
+          completedStages: newCompleted,
+          stars: newStars,
+          unlockedLevel: newUnlocked,
+        };
         saveProgress(updated);
         return updated;
       });
@@ -366,7 +476,9 @@ const WordHuntGame = () => {
 
   const getButtonClass = (letter) => {
     if (selectedOption !== letter) return "wh-option-btn wh-opt-default";
-    return isCorrect ? "wh-option-btn wh-opt-correct" : "wh-option-btn wh-opt-wrong";
+    return isCorrect
+      ? "wh-option-btn wh-opt-correct"
+      : "wh-option-btn wh-opt-wrong";
   };
 
   const handleContinue = () => {
@@ -387,7 +499,10 @@ const WordHuntGame = () => {
   // ─── Page wrapper ──────────────────────────────────────────
   const PageWrapper = ({ children, wide = false }) => (
     <div className="wh-full-page">
-      <div className={wide ? "wh-wrapper" : "wh-wrapper"} style={wide ? { maxWidth: "900px", width: "95%" } : {}}>
+      <div
+        className={wide ? "wh-wrapper" : "wh-wrapper"}
+        style={wide ? { maxWidth: "900px", width: "95%" } : {}}
+      >
         {children}
       </div>
     </div>
@@ -403,7 +518,9 @@ const WordHuntGame = () => {
           <div className="wh-wrapper">
             <div className="wh-loading-container">
               <div className="wh-loading-spinner">⏳</div>
-              <p style={{ color: "#fef3c7", fontWeight: 700 }}>جارٍ تحميل المستويات...</p>
+              <p style={{ color: "#fef3c7", fontWeight: 700 }}>
+                جارٍ تحميل المستويات...
+              </p>
             </div>
           </div>
         </div>
@@ -418,7 +535,12 @@ const WordHuntGame = () => {
               <div className="wh-error-box">
                 <h3>⚠️ خطأ في التحميل</h3>
                 <p>{apiError}</p>
-                <button className="wh-retry-btn" onClick={() => window.location.reload()}>إعادة المحاولة</button>
+                <button
+                  className="wh-retry-btn"
+                  onClick={() => window.location.reload()}
+                >
+                  إعادة المحاولة
+                </button>
               </div>
             </div>
           </div>
@@ -426,11 +548,28 @@ const WordHuntGame = () => {
       );
     }
 
-    const levelCards = apiLevels.length > 0 ? apiLevels : Array.from({ length: 6 }, (_, i) => ({ levelNumber: i + 1, description: `المستوى ${i + 1}` }));
+    const levelCards =
+      apiLevels.length > 0
+        ? apiLevels
+        : Array.from({ length: 6 }, (_, i) => ({
+            levelNumber: i + 1,
+            description: `المستوى ${i + 1}`,
+          }));
 
     return (
       <div className="wh-full-page">
-        <div style={{ width: "95%", maxWidth: "900px", overflowY: "auto", maxHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: "30px 0" }}>
+        <div
+          style={{
+            width: "95%",
+            maxWidth: "900px",
+            overflowY: "auto",
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "30px 0",
+          }}
+        >
           {/* Header */}
           <div className="wh-map-title-container">
             <h1 className="wh-map-title">🏠 كوخ الكلمات</h1>
@@ -440,11 +579,11 @@ const WordHuntGame = () => {
           {/* Level Cards */}
           <div className="wh-levels-grid">
             {levelCards.map((level, idx) => {
-              const levelNum    = level.levelNumber ?? idx + 1;
-              const isUnlocked  = isLevelUnlocked(idx);
-              const completed   = getLevelStagesCompleted(levelNum);
-              const totalStars  = getTotalStarsForLevel(levelNum);
-              const pct         = Math.round((completed / STAGES_PER_LEVEL) * 100);
+              const levelNum = level.levelNumber ?? idx + 1;
+              const isUnlocked = isLevelUnlocked(idx);
+              const completed = getLevelStagesCompleted(levelNum);
+              const totalStars = getTotalStarsForLevel(levelNum);
+              const pct = Math.round((completed / STAGES_PER_LEVEL) * 100);
 
               return (
                 <div
@@ -477,7 +616,9 @@ const WordHuntGame = () => {
                   <div className="wh-level-footer">
                     <div className="wh-level-progress-text">
                       <span>{pct}%</span>
-                      <span>{completed}/{STAGES_PER_LEVEL} مراحل</span>
+                      <span>
+                        {completed}/{STAGES_PER_LEVEL} مراحل
+                      </span>
                     </div>
                     <div className="wh-progress-bar-bg">
                       <div
@@ -500,15 +641,36 @@ const WordHuntGame = () => {
   // ═══════════════════════════════════════════════════════════
   if (view === "stages") {
     const levelNum = selectedLevelId;
-    const levelInfo = apiLevels.find((l) => (l.levelNumber ?? 0) === levelNum) || { description: `المستوى ${levelNum}` };
+    const levelInfo = apiLevels.find(
+      (l) => (l.levelNumber ?? 0) === levelNum,
+    ) || { description: `المستوى ${levelNum}` };
 
     return (
       <div className="wh-full-page">
-        <div style={{ width: "95%", maxWidth: "900px", display: "flex", flexDirection: "column", alignItems: "center", padding: "30px 0", overflowY: "auto", maxHeight: "100vh" }}>
+        <div
+          style={{
+            width: "95%",
+            maxWidth: "900px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "30px 0",
+            overflowY: "auto",
+            maxHeight: "100vh",
+          }}
+        >
           {/* Header */}
-          <div className="wh-stages-header" style={{ width: "100%", boxSizing: "border-box", marginBottom: "40px" }}>
+          <div
+            className="wh-stages-header"
+            style={{
+              width: "100%",
+              boxSizing: "border-box",
+              marginBottom: "40px",
+            }}
+          >
             <h2 className="wh-stages-header-title">
-              🏠 <span>المستوى {levelNum}</span> — {levelInfo.description || `المستوى ${levelNum}`}
+              🏠 <span>المستوى {levelNum}</span> —{" "}
+              {levelInfo.description || `المستوى ${levelNum}`}
             </h2>
             <button className="wh-back-btn" onClick={() => setView("levels")}>
               ← العودة للخريطة
@@ -519,20 +681,27 @@ const WordHuntGame = () => {
           <div className="wh-stages-grid">
             {Array.from({ length: STAGES_PER_LEVEL }, (_, stageIdx) => {
               const unlocked = isStageUnlocked(levelNum, stageIdx);
-              const stars    = getStageStars(levelNum, stageIdx);
+              const stars = getStageStars(levelNum, stageIdx);
 
               return (
                 <div key={stageIdx} className="wh-stage-node-wrapper">
                   <div
                     className={`wh-stage-node${!unlocked ? " wh-stage-node-locked" : ""}`}
-                    onClick={() => { if (unlocked) startStage(levelNum, stageIdx); }}
+                    onClick={() => {
+                      if (unlocked) startStage(levelNum, stageIdx);
+                    }}
                   >
                     {unlocked ? stageIdx + 1 : "🔒"}
                   </div>
                   <div className="wh-stage-label">المرحلة {stageIdx + 1}</div>
                   <div className="wh-stage-stars">
                     {[1, 2, 3].map((s) => (
-                      <span key={s} className={`wh-star ${s <= stars ? "wh-star-active" : "wh-star-inactive"}`}>★</span>
+                      <span
+                        key={s}
+                        className={`wh-star ${s <= stars ? "wh-star-active" : "wh-star-inactive"}`}
+                      >
+                        ★
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -553,7 +722,9 @@ const WordHuntGame = () => {
         <div className="wh-wrapper">
           <div className="wh-loading-container">
             <div className="wh-loading-spinner">⏳</div>
-            <p style={{ color: "#fef3c7", fontWeight: 700 }}>جارٍ تحضير الكلمات...</p>
+            <p style={{ color: "#fef3c7", fontWeight: 700 }}>
+              جارٍ تحضير الكلمات...
+            </p>
           </div>
         </div>
       </div>
@@ -577,7 +748,10 @@ const WordHuntGame = () => {
 
   // Playing
   const currentData = gameQuestions[currentQuestion];
-  const progressPercentage = gameQuestions.length > 0 ? (currentQuestion / gameQuestions.length) * 100 : 0;
+  const progressPercentage =
+    gameQuestions.length > 0
+      ? (currentQuestion / gameQuestions.length) * 100
+      : 0;
 
   if (!currentData) return null;
 
@@ -586,9 +760,18 @@ const WordHuntGame = () => {
       <div className="wh-wrapper">
         {/* Game Header */}
         <div className="wh-header">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "bold" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              fontWeight: "bold",
+            }}
+          >
             <Home size={24} />
-            <span>المستوى {selectedLevelId} — المرحلة {selectedStageIndex + 1}</span>
+            <span>
+              المستوى {selectedLevelId} — المرحلة {selectedStageIndex + 1}
+            </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div style={{ display: "flex", gap: "4px" }}>
@@ -603,8 +786,18 @@ const WordHuntGame = () => {
               ))}
             </div>
             <button
-              onClick={() => { setView("stages"); setGameState("playing"); }}
-              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "12px", opacity: 0.8 }}
+              onClick={() => {
+                setView("stages");
+                setGameState("playing");
+              }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: "12px",
+                opacity: 0.8,
+              }}
             >
               ✕ خروج
             </button>
@@ -615,19 +808,51 @@ const WordHuntGame = () => {
         <div className="wh-game-container">
           {/* Progress bar */}
           <div className="wh-progress-bar">
-            <div className="wh-progress-fill" style={{ width: `${progressPercentage}%` }} />
+            <div
+              className="wh-progress-fill"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
 
           {/* Question counter */}
-          <div style={{ textAlign: "center", fontSize: "0.9rem", color: "#6b7280", fontWeight: 600, marginBottom: "8px" }}>
+          <div
+            style={{
+              textAlign: "center",
+              fontSize: "0.9rem",
+              color: "#6b7280",
+              fontWeight: 600,
+              marginBottom: "8px",
+            }}
+          >
             {currentQuestion + 1} / {gameQuestions.length}
           </div>
 
-          <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div
+            style={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
             {/* Hint */}
             {currentData.hint && (
               <div style={{ textAlign: "center", marginBottom: "20px" }}>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", backgroundColor: "#fffbeb", color: "#d97706", padding: "8px 20px", borderRadius: "9999px", fontWeight: "bold", fontSize: "1.2rem", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", border: "1px solid #fde68a" }}>
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    backgroundColor: "#fffbeb",
+                    color: "#d97706",
+                    padding: "8px 20px",
+                    borderRadius: "9999px",
+                    fontWeight: "bold",
+                    fontSize: "1.2rem",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                    border: "1px solid #fde68a",
+                  }}
+                >
                   <span>💡</span>
                   <span>{currentData.hint}</span>
                 </div>
@@ -646,34 +871,108 @@ const WordHuntGame = () => {
 
           {/* Options */}
           <div className="wh-options-grid">
-            {currentData.options.map((letter, index) => (
-              <div
-                key={index}
-                className={getButtonClass(letter)}
-                style={{
-                  position: "relative", padding: 0,
-                  display: "flex", overflow: "hidden",
-                  cursor: showFeedback || selectedOption !== null ? "default" : "pointer",
-                  opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
-                }}
-              >
+            {currentData.options.map((letter, index) => {
+              const audioFileName = currentData.optionsAudio?.[index];
+              let audioUrl = null;
+              console.log(import.meta.env.VITE_API_URL);
+              console.log(audioUrl);
+
+              if (audioFileName) {
+                if (
+                  audioFileName.includes("/") ||
+                  audioFileName.includes(".")
+                ) {
+                  audioUrl = audioFileName;
+                } else {
+                  let basePath = currentData.audioBasePath || "";
+                  let format = currentData.audioFormat || "";
+
+                  if (basePath && !basePath.endsWith("/")) basePath += "/";
+                  if (format && !format.startsWith(".")) format = "." + format;
+
+                  audioUrl = `${basePath}${audioFileName}${format}`;
+                }
+
+                if (
+                  audioUrl &&
+                  !audioUrl.startsWith("http") &&
+                  !audioUrl.startsWith("/")
+                ) {
+                  audioUrl = "/" + audioUrl;
+                }
+                const backendBaseUrl = import.meta.env.VITE_API_URL;
+
+                if (audioUrl && !audioUrl.startsWith("http")) {
+                  const cleanBaseUrl = backendBaseUrl.endsWith("/")
+                    ? backendBaseUrl.slice(0, -1)
+                    : backendBaseUrl;
+
+                  audioUrl = `${cleanBaseUrl}${audioUrl}`;
+                }
+              }
+              console.log(`Audio URL for letter ${letter}:`, audioUrl);
+              return (
                 <div
-                  onClick={() => { if (!showFeedback && selectedOption === null) handleAnswer(letter); }}
-                  style={{ flexGrow: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+                  key={index}
+                  className={getButtonClass(letter)}
+                  style={{
+                    position: "relative",
+                    padding: 0,
+                    display: "flex",
+                    overflow: "hidden",
+                    cursor:
+                      showFeedback || selectedOption !== null
+                        ? "default"
+                        : "pointer",
+                    opacity: showFeedback || selectedOption !== null ? 0.7 : 1,
+                  }}
                 >
-                  <span>{letter}</span>
+                  <div
+                    onClick={() => {
+                      if (!showFeedback && selectedOption === null)
+                        handleAnswer(letter);
+                    }}
+                    style={{
+                      flexGrow: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "16px",
+                    }}
+                  >
+                    <span>{letter}</span>
+                  </div>
+                  <div
+                    style={{ width: "2px", background: "rgba(0,0,0,0.1)" }}
+                  />
+                  <div
+                    onClick={(e) => {
+                      if (!showFeedback && selectedOption === null) {
+                        playOptionAudio(e, audioUrl, letter);
+                      }
+                    }}
+                    style={{
+                      width: "70px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "rgba(255,255,255,0.4)",
+                      transition: "background 0.2s",
+                    }}
+                    onMouseOver={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.6)")
+                    }
+                    onMouseOut={(e) =>
+                      (e.currentTarget.style.background =
+                        "rgba(255,255,255,0.4)")
+                    }
+                  >
+                    <Volume2 size={24} color="#2563eb" />
+                  </div>
                 </div>
-                <div style={{ width: "2px", background: "rgba(0,0,0,0.1)" }} />
-                <div
-                  onClick={(e) => { if (!showFeedback && selectedOption === null) speakLetter(e, letter); }}
-                  style={{ width: "70px", display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.4)", transition: "background 0.2s" }}
-                  onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.6)")}
-                  onMouseOut={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.4)")}
-                >
-                  <Volume2 size={24} color="#2563eb" />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Feedback overlay */}
@@ -681,14 +980,40 @@ const WordHuntGame = () => {
             <div className={`wh-feedback ${isCorrect ? "success" : "error"}`}>
               {isCorrect ? (
                 <>
-                  <CheckCircle size={80} color="#22c55e" style={{ marginBottom: "1rem" }} />
-                  <h3 style={{ fontSize: "2rem", color: "#15803d", fontWeight: "bold" }}>مُمتاز!</h3>
+                  <CheckCircle
+                    size={80}
+                    color="#22c55e"
+                    style={{ marginBottom: "1rem" }}
+                  />
+                  <h3
+                    style={{
+                      fontSize: "2rem",
+                      color: "#15803d",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    مُمتاز!
+                  </h3>
                 </>
               ) : (
                 <>
-                  <XCircle size={80} color="#ef4444" style={{ marginBottom: "1rem" }} />
-                  <h3 style={{ fontSize: "2rem", color: "#b91c1c", fontWeight: "bold" }}>خطأ!</h3>
-                  <p style={{ color: "#dc2626", fontWeight: "bold" }}>خسرت قلب 💔</p>
+                  <XCircle
+                    size={80}
+                    color="#ef4444"
+                    style={{ marginBottom: "1rem" }}
+                  />
+                  <h3
+                    style={{
+                      fontSize: "2rem",
+                      color: "#b91c1c",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    خطأ!
+                  </h3>
+                  <p style={{ color: "#dc2626", fontWeight: "bold" }}>
+                    خسرت قلب 💔
+                  </p>
                 </>
               )}
             </div>
