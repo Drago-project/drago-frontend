@@ -6,7 +6,8 @@
   align-items: center;
   gap: 20px;
   padding: 50px;
-  padding-top: 120px; /* Add space for fixed navbar */
+  padding-top: 120px;
+  /* Add space for fixed navbar */
   min-height: 100vh;
   /* direction: ltr !important; */
 }
@@ -43,6 +44,7 @@
   /* padding: 20px; */
   /* direction: ltr !important; */
 }
+
 .islandLink {
   text-decoration: none;
   display: flex;
@@ -78,12 +80,10 @@
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 2;
   border: 1px solid #8d6e63;
-  background-image: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    rgba(255, 255, 255, 0.1) 100%
-  );
+  background-image: linear-gradient(to right,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.1) 100%);
   text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.5);
 }
 
@@ -99,22 +99,27 @@
   .homePage {
     padding-top: 0;
   }
+
   .islandRow {
     flex-direction: column;
     gap: 30px;
     width: 100%;
   }
+
   .islandLink {
     display: flex;
     justify-content: center;
   }
+
   .islandLink:hover {
     transform: scale(1.2);
   }
+
   .islandLink img {
     display: flex;
     flex: 3;
   }
+
   .empty {
     display: flex;
     flex: 1;
@@ -153,11 +158,22 @@
   }
 }
 
+/* Reading Quest Island SVG is 1024×710 (non-square) vs 1024×1024 for all other islands.
+   Width is increased to match visual size; margin-top pushes it down to align with
+   Writing Workshop Island on the right (which is taller due to its square viewport). */
+.readingIslandImg {
+  width: 85% !important;
+  height: auto;
+  margin-top: 35px;
+}
+
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-15px);
   }
@@ -168,13 +184,15 @@
   top: 70px;
   left: 30%;
   z-index: 3;
-  width: 40%; /* Desktop width */
+  width: 40%;
+  /* Desktop width */
 }
 
 .animationRow img {
   width: 100%;
   height: auto;
-  max-width: 400px; /* Maximum size limit */
+  max-width: 400px;
+  /* Maximum size limit */
 }
 
 /* Mobile Drago positioning */
@@ -183,9 +201,11 @@
     position: relative;
     top: auto;
     left: auto;
-    order: -1; /* Move Drago to the top */
+    order: -1;
+    /* Move Drago to the top */
     margin-bottom: 20px;
-    width: 70%; /* Mobile width */
+    width: 70%;
+    /* Mobile width */
     display: flex;
     justify-content: center;
   }

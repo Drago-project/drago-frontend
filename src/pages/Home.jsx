@@ -11,13 +11,13 @@ import styles from "../styles/Home.module.css";
 
 const Lottie = React.lazy(() => import("lottie-react"));
 
-const Island = React.memo(function Island({ to, label, img, alt, children }) {
+const Island = React.memo(function Island({ to, label, img, alt, imgClass, children }) {
   return (
     <Link to={to} className={styles.islandLink}>
       <div className={styles.islandWrapper}>
         <div className={styles.empty}></div>
         <div className={styles.islandLabel}>{label}</div>
-        <img src={img} alt={alt} />
+        <img src={img} alt={alt} className={imgClass || ""} />
         {children}
       </div>
     </Link>
@@ -107,6 +107,7 @@ function Home() {
           label={labels.reading}
           img={books}
           alt={labels.reading}
+          imgClass={styles.readingIslandImg}
         >
           <div className={styles.empty}></div>
         </Island>
