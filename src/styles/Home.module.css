@@ -95,7 +95,8 @@
 }
 
 .booksIsland {
-  width: calc(70% + 15px);
+  width: calc(70% + 20px);
+  transform: translateY(15px);
 }
 
 /* Mobile stairs layout */
