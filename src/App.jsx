@@ -25,7 +25,7 @@ import NavBar from "./components/NavBar";
 import NavInside from "./components/NavInside";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResetPassword from "./components/ResetPassword";
-import PreTestApp from "./preTest/PreTestApp";
+import PreTestApp from "./fix/PreTestApp";
 // Games
 import VolcanoWords from "./games/VolcanoWords";
 import ReadingQuest from "./games/ReadingQuest";
