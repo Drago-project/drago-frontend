@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, Suspense  } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { Link } from "react-router-dom";
 
 import volcano from "../assets/islands/Adventure Games Island.svg";
@@ -7,17 +7,27 @@ import pyramids from "../assets/islands/History Stories Island.svg";
 import writing from "../assets/islands/Writing Workshop Island.svg";
 import books from "../assets/islands/Reading Quest Island.svg";
 import styles from "../styles/Home.module.css";
-// import Lottie from "lottie-react";
 
 const Lottie = React.lazy(() => import("lottie-react"));
 
-const Island = React.memo(function Island({ to, label, img, alt, children }) {
+const Island = React.memo(function Island({
+  to,
+  label,
+  img,
+  alt,
+  className,
+  children,
+}) {
   return (
     <Link to={to} className={styles.islandLink}>
       <div className={styles.islandWrapper}>
         <div className={styles.empty}></div>
         <div className={styles.islandLabel}>{label}</div>
-        <img src={img} alt={alt} />
+        <img
+          src={img}
+          alt={alt}
+          className={`${styles.islandImage} ${className || ""}`}
+        />
         {children}
       </div>
     </Link>
@@ -84,7 +94,6 @@ function Home() {
           alt={labels.adventure}
         />
 
-        {/* 👇 التعديل هنا: ربطنا جزيرة التاريخ بلعبة Tomb Puzzle */}
         <Island
           to="/games/tomb-puzzle"
           label={labels.history}
@@ -107,6 +116,7 @@ function Home() {
           label={labels.reading}
           img={books}
           alt={labels.reading}
+          className={styles.booksIsland}
         >
           <div className={styles.empty}></div>
         </Island>

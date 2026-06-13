@@ -94,6 +94,10 @@
   transition: transform 0.3s ease;
 }
 
+.booksIsland {
+  width: calc(70% + 15px);
+}
+
 /* Mobile stairs layout */
 @media (max-width: 968px) {
   .homePage {
