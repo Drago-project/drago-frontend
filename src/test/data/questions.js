@@ -1,19 +1,19 @@
 
-import bookImg from "../../assets/pretest/book.png";
-import catImg from "../../assets/pretest/cat.jpg";
-import dogImg from "../../assets/pretest/dog.png";
-import ballImg from "../../assets/pretest/foodball.png";
-import homeImg from "../../assets/pretest/home.png";
-import pencilImg from "../../assets/pretest/pencil.png";
-import sunImg from "../../assets/pretest/sun.png";
-import flameImg from "../../assets/pretest/orangeflame.jpg";
-import moonImg from "../../assets/pretest/moon.jpg";
-import fishImg from "../../assets/pretest/fish.jpg";
-import doorImg from "../../assets/pretest/door.jpg";
-import schoolImg from "../../assets/pretest/school.jpg";
-import treeImg from "../../assets/pretest/tree.jpg";
-import appleImg from "../../assets/pretest/apple.png";
-import boyImg from "../../assets/pretest/boy.jpg";
+import bookImg from "../../assets/test/book.png";
+import catImg from "../../assets/test/cat.jpg";
+import dogImg from "../../assets/test/dog.png";
+import ballImg from "../../assets/test/foodball.png";
+import homeImg from "../../assets/test/home.png";
+import pencilImg from "../../assets/test/pencil.png";
+import sunImg from "../../assets/test/sun.png";
+import flameImg from "../../assets/test/orangeflame.jpg";
+import moonImg from "../../assets/test/moon.jpg";
+import fishImg from "../../assets/test/fish.jpg";
+import doorImg from "../../assets/test/door.jpg";
+import schoolImg from "../../assets/test/school.jpg";
+import treeImg from "../../assets/test/tree.jpg";
+import appleImg from "../../assets/test/apple.png";
+import boyImg from "../../assets/test/boy.jpg";
 
 export const emoji = {
   كتاب: bookImg,
