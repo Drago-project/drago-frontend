@@ -559,8 +559,13 @@ function Profile() {
           <h3>🎮 Games Progress</h3>
           <div className={styles.gamesGrid}>
             {gamesProgress.map((game) => (
-              <div key={game.id} className={styles.gameCard}>
-                <div className={styles.gameCardHeader}>
+<div
+  key={game.id}
+  className={styles.gameCard}
+  style={{
+    borderTop: `5px solid ${game.color}`,
+  }}
+>                <div className={styles.gameCardHeader}>
                   <span className={styles.gameIcon}>{game.icon}</span>
                   <div className={styles.gameNameContainer}>
                     <h4 className={styles.gameName}>{game.name}</h4>

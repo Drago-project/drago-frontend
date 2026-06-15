@@ -1,586 +1,256 @@
+/* ===== PAGE ===== */
+
 .profilePage {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa, #e3f2fd);
-  padding: 100px 16px;
+  padding: 100px 20px;
+
+  background:
+    radial-gradient(circle at top right, #fff4dc 0%, transparent 30%),
+    radial-gradient(circle at bottom left, #dff7f4 0%, transparent 35%),
+    #f8fafc;
 }
 
-.profileContainer {
-  max-width: 600px;
-  margin: auto;
-}
-
-/* Desktop Layout */
-@media (min-width: 1024px) {
-  .profilePage {
-    margin: 0px;
-    padding: 100px 40px 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .profileContainer {
-    max-width: 1400px;
-    width: 100%;
-    height: auto;
-    min-height: calc(100vh - 140px);
-    display: grid;
-    grid-template-columns: 480px 1fr;
-    grid-template-rows: auto auto auto auto;
-    gap: 16px;
-    align-items: start;
-  }
-
-  .profileHeader {
-    grid-column: 1;
-    grid-row: 1 / 5;
-    /* height: 100%; */
-    overflow-y: auto;
-  }
-
-  .dailyGoal {
-    grid-column: 2;
-    grid-row: 1;
-    margin: 0;
-  }
-
-  .achievementsSection {
-    grid-column: 2;
-    grid-row: 2;
-    margin-top: 0;
-  }
-
-  .gamesSection {
-    grid-column: 2;
-    grid-row: 3;
-    margin-top: 0;
-  }
-
-  .leaderboardBtn {
-    grid-column: 2;
-    grid-row: 4;
-    max-width: 100%;
-    align-self: start;
-  }
-}
-
-/* ===== HEADER ===== */
+/* ===== HERO PROFILE CARD ===== */
 
 .profileHeader {
   margin: 15px;
-  background: white;
-  border-radius: 20px;
-  padding: 13px;
+  padding: 30px;
+
+  background: linear-gradient(
+    135deg,
+    #377469 0%,
+    #44958e 55%,
+    #efa818 100%
+  );
+
+  border-radius: 32px;
+  color: white;
   text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+
+  box-shadow: 0 20px 40px rgba(55, 116, 105, 0.25);
 }
 
-.avatarContainer {
-  position: relative;
-  display: inline-block;
-  margin-bottom: 8px;
+.profileHeader::before {
+  content: "";
+  position: absolute;
+
+  width: 250px;
+  height: 250px;
+
+  top: -80px;
+  right: -80px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.1);
 }
+
+.profileHeader::after {
+  content: "";
+  position: absolute;
+
+  width: 180px;
+  height: 180px;
+
+  bottom: -60px;
+  left: -60px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ===== AVATAR ===== */
 
 .avatar {
   width: 140px;
-  border-radius: 50%;
-  border: 4px solid rgb(68, 150, 142);
-}
+  height: 140px;
+  object-fit: cover;
 
-.editBtn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 40px;
-  height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #22b2c5, #377469);
-  color: white;
-  border: 3px solid white;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
 
-.editBtn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  border: 5px solid rgba(255, 255, 255, 0.9);
+
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .userName {
-  margin-top: 12px;
-  font-size: 24px;
-  font-weight: 700;
+  color: white;
+  font-size: 28px;
+  margin-top: 15px;
 }
 
 .userHandle,
 .userEmail {
-  color: #6b7280;
-  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* ===== NEW STATS (FRIENDS + STREAK) ===== */
+/* ===== STATS ===== */
 
 .statsRow {
+  margin-top: 25px;
   display: flex;
   justify-content: center;
-  gap: 40px;
-  margin: 0px 0;
+  gap: 20px;
   flex-wrap: wrap;
 }
 
 .statCard {
-  background: linear-gradient(135deg, #22b2c5, #377469);
-  color: white;
-  padding: 0px 0px;
-  border-radius: 18px;
-  text-align: center;
   min-width: 170px;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  position: relative;
-  overflow: hidden;
-}
+  padding: 18px;
 
-.statCard::before {
-  content: "";
-  position: absolute;
-  width: 120%;
-  height: 120%;
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 255, 255, 0.15),
-    transparent 60%
-  );
-  top: -20%;
-  left: -20%;
+  background: rgba(255, 255, 255, 0.15);
+
+  backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  border-radius: 22px;
+
+  color: white;
+
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+
+  transition: all 0.3s ease;
 }
 
 .statCard:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
-}
-
-.statIcon {
-  font-size: 26px;
-  display: block;
-  margin-bottom: 6px;
 }
 
 .statNumber {
-  font-size: 22px;
+  display: block;
+  font-size: 24px;
   font-weight: 700;
 }
 
 .statLabel {
-  font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 /* ===== LEVEL ===== */
 
-.levelSection {
-  margin-top: 16px;
-}
-
-.levelHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .levelBadge {
-  background: rgb(68, 150, 142);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
-  padding: 4px 12px;
-  border-radius: 999px;
+  backdrop-filter: blur(8px);
 }
 
 .progressBar {
-  height: 22px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  margin: 10px 0;
-  overflow: hidden;
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .progressFill {
-  height: 100%;
-  background: linear-gradient(90deg, #4d9dac, #285f79);
-  border-radius: 999px;
-  transition: width 0.4s ease;
+  background: linear-gradient(
+    90deg,
+    #efa818,
+    #ffd36a
+  );
 }
 
 /* ===== DAILY GOAL ===== */
-.dailyGoal p {
-  margin: 20px;
-}
+
 .dailyGoal {
   margin: 15px;
-  background: #ecfeff;
   padding: 30px;
-  height: 200px;
-  border-radius: 20px;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+  border-radius: 30px;
+
+  background: white;
+
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+
+  border: 1px solid #eef2f7;
+}
+
+.dailyGoal h3 {
+  color: #377469;
+  margin-bottom: 20px;
 }
 
 /* ===== ACHIEVEMENTS ===== */
 
 .achievementsSection {
-  margin: 15px;
   background: white;
-  margin-top: 0px;
-  padding: 20px;
-  height: auto;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
 
-.achievementsGrid {
-  display: grid;
-  margin-top: 50px;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
+  border-radius: 30px;
 
-@media (max-width: 480px) {
-  .achievementsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
+  padding: 25px;
 
-.chatSection {
-  margin: 15px;
-  background: white;
-  padding: 20px;
-  min-height: 360px;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-}
-
-.chatHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.chatSubtitle {
-  color: #6b7280;
-  margin-top: 6px;
-  font-size: 0.95rem;
-}
-
-.chatBody {
-  flex: 1;
-  overflow-y: auto;
-  background: #f8fafc;
-  border-radius: 20px;
-  padding: 16px;
-  border: 1px solid #e5e7eb;
-}
-
-.chatMessages {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.messageBubble {
-  max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 20px;
-  line-height: 1.4;
-  font-size: 0.95rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-}
-
-.mine {
-  align-self: flex-end;
-  background: linear-gradient(135deg, #22b2c5, #377469);
-  color: white;
-  border-bottom-right-radius: 6px;
-}
-
-.their {
-  align-self: flex-start;
-  background: white;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  border-bottom-left-radius: 6px;
-}
-
-.messageMeta {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #6b7280;
-  text-align: right;
-}
-
-.chatInputRow {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.chatInputRow input {
-  flex: 1;
-  padding: 14px 16px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  outline: none;
-  font-family: inherit;
-}
-
-.chatSendBtn {
-  width: 120px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #22b2c5, #377469);
-  color: white;
-  cursor: pointer;
-  font-weight: 700;
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.chatSendBtn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
 }
 
 .achievementCard {
-  background: #f9fafb;
-  padding: 15px;
-  border-radius: 16px;
-  text-align: center;
-  position: relative;
+  background: #f8fafc;
+
+  border-radius: 20px;
+
+  padding: 18px;
+
+  transition: 0.3s;
+}
+
+.achievementCard:hover {
+  transform: translateY(-6px);
 }
 
 .unlocked {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  background: linear-gradient(
+    135deg,
+    #fff7e6,
+    #ffe0a0
+  );
 }
 
-.lock {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-}
-
-/* ===== BUTTON ===== */
-
-/* .leaderboardBtn {
-  width: 100%;
-  margin: 20px 0;
-  background: linear-gradient(90deg, #22b2c5, #377469);
-  color: white;
-  border: none;
-  padding: 14px;
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-} */
-
-.leaderboardBtn:hover {
-  transform: scale(1.03);
-}
-
-/* ===== MODAL ===== */
-
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  padding: 24px;
-  border-radius: 20px;
-  width: 90%;
-  max-width: 400px;
-}
-
-.modal input {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.passwordTitle {
-  margin: 12px 0 6px;
-  font-size: 14px;
-  color: #374151;
-}
-
-.modalActions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.modalActions button {
-  font-weight: bold;
-  font-size: 14px;
-  border-radius: 999px;
-  padding: 10px;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-  flex: 1;
-}
-
-.modalActions button:first-child {
-  background: linear-gradient(90deg, #306e68, #629c96);
-  color: white;
-  border: none;
-}
-
-.modalActions button:last-child {
-  background: #ef4444;
-  color: white;
-  border: none;
-}
-
-.modalActions button:hover {
-  transform: scale(1.05);
-  opacity: 0.95;
-}
-
-/* ===== GAMES PROGRESS SECTION ===== */
+/* ===== GAMES ===== */
 
 .gamesSection {
-  margin: 15px;
   background: white;
-  padding: 24px;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
 
-.gamesSection h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-}
+  border-radius: 30px;
 
-.gamesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  padding: 25px;
+
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
 }
 
 .gameCard {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  padding: 16px;
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  background: white;
+
+  border-radius: 24px;
+
+  padding: 18px;
+
+  border-top: 5px solid #efa818;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+
   transition: all 0.3s ease;
 }
 
 .gameCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
-  border-color: #d1d5db;
-}
-
-.gameCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  transform: translateY(-6px);
 }
 
 .gameIcon {
-  font-size: 28px;
-  background: white;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  width: 50px;
+  height: 50px;
+
+  border-radius: 14px;
+
+  background: #f8fafc;
 }
 
-.gameNameContainer {
-  display: flex;
-  flex-direction: column;
-}
+/* ===== CHAT BUTTON ===== */
 
-.gameName {
-  font-weight: 700;
-  font-size: 15px;
-  margin: 0;
-  color: #1f2937;
-}
+.chatFab {
+  background: linear-gradient(
+    135deg,
+    #efa818,
+    #ffcb57
+  );
 
-.gameArabicName {
-  font-size: 12px;
-  color: #6b7280;
-  margin: 0;
+  box-shadow: 0 10px 25px rgba(239, 168, 24, 0.4);
 }
-
-.gameStats {
-  font-size: 13px;
-  color: #4b5563;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.gameStatRow {
-  display: flex;
-  justify-content: space-between;
-}
-
-.gameProgressContainer {
-  margin-top: 6px;
-}
-
-.gameProgressBarBg {
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.gameProgressBarFill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.5s ease;
-}
-
-.gameProgressPercent {
-  font-size: 12px;
-  font-weight: 700;
-  color: #4b5563;
-  text-align: right;
-}
-
