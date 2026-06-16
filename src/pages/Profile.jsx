@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { profileAPI, messagesAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
-
-// SignalR hook integration
+import dragoAvatar from "../assets/poses/drago(front).svg";// SignalR hook integration
 import { useSignalR } from "../hooks/useSignalR";
 
 const getLevelData = (xp) => {
@@ -54,7 +53,7 @@ const loadGameProgress = () => {
       totalLevels: 6,
       stagesPerLevel: 5,
       icon: "🏠",
-      color: "#f59e0b"
+      color: "#f59e0b",
     },
     {
       id: "reading_quest",
@@ -64,7 +63,7 @@ const loadGameProgress = () => {
       totalLevels: 4,
       stagesPerLevel: 5,
       icon: "📖",
-      color: "#3b82f6"
+      color: "#3b82f6",
     },
     {
       id: "volcano_words",
@@ -74,7 +73,7 @@ const loadGameProgress = () => {
       totalLevels: 6,
       stagesPerLevel: 5,
       icon: "🌋",
-      color: "#ef4444"
+      color: "#ef4444",
     },
     {
       id: "tomb_puzzle",
@@ -84,11 +83,11 @@ const loadGameProgress = () => {
       totalLevels: 6,
       stagesPerLevel: 5,
       icon: "🏺",
-      color: "#8b5cf6"
-    }
+      color: "#8b5cf6",
+    },
   ];
 
-  return games.map(game => {
+  return games.map((game) => {
     let completedStagesCount = 0;
     let totalStars = 0;
     let unlockedLevel = 1;
@@ -99,7 +98,7 @@ const loadGameProgress = () => {
         unlockedLevel = parsed.unlockedLevel || 1;
 
         if (parsed.completedStages) {
-          Object.keys(parsed.completedStages).forEach(level => {
+          Object.keys(parsed.completedStages).forEach((level) => {
             const stages = parsed.completedStages[level];
             if (Array.isArray(stages)) {
               completedStagesCount += stages.filter(Boolean).length;
@@ -108,7 +107,7 @@ const loadGameProgress = () => {
         }
 
         if (parsed.stars) {
-          Object.keys(parsed.stars).forEach(level => {
+          Object.keys(parsed.stars).forEach((level) => {
             const stars = parsed.stars[level];
             if (Array.isArray(stars)) {
               totalStars += stars.reduce((sum, s) => sum + (Number(s) || 0), 0);
@@ -122,7 +121,10 @@ const loadGameProgress = () => {
 
     const maxStages = game.totalLevels * game.stagesPerLevel;
     const maxStars = maxStages * 3;
-    const progressPercent = Math.min(100, Math.round((completedStagesCount / maxStages) * 100));
+    const progressPercent = Math.min(
+      100,
+      Math.round((completedStagesCount / maxStages) * 100),
+    );
 
     return {
       ...game,
@@ -131,7 +133,7 @@ const loadGameProgress = () => {
       maxStages,
       totalStars,
       maxStars,
-      progressPercent
+      progressPercent,
     };
   });
 };
@@ -429,39 +431,30 @@ function Profile() {
       <div className={styles.profileContainer}>
         {/* HEADER */}
         <div className={styles.profileHeader}>
+          <div className={styles.dragoBanner}>
+            <div>
+              <h2>Welcome Back ✨</h2>
+              <p>Let's continue learning!</p>
+            </div>
+
+            <img src={dragoAvatar} alt="Drago" className={styles.dragoHero} />
+          </div>
           <div className={styles.avatarContainer}>
-            {userData.avatarUrl ? (
-              <img
-                src={userData.avatarUrl}
-                className={styles.avatar}
-                alt="avatar"
-              />
-            ) : (
-              <div
-                className={styles.avatar}
-                style={{
-                  background: "#44958e",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "white",
-                  fontSize: "2rem",
-                  fontWeight: "bold",
-                }}
-              >
-                {userData.firstName?.[0]}
-                {userData.lastName?.[0]}
-              </div>
-            )}
+            <img
+              src={userData.avatarUrl || dragoAvatar}
+              className={styles.avatar}
+              alt="avatar"
+            />
             <button
-              className={styles.editBtn}
-              onClick={() => {
-                setFormData(userData);
-                setShowEdit(true);
-              }}
-            >
-              ✏️
-            </button>
+  type="button"
+  className={styles.editBtn}
+  onClick={() => {
+    console.log("Edit clicked");
+    setShowEdit(true);
+  }}
+>
+  ✏️
+</button>
           </div>
 
           <h1 className={styles.userName}>
@@ -502,11 +495,10 @@ function Profile() {
               XP {userData.xp} / {levelData.maxXP}
             </p>
             <button className={styles.addXpBtn} onClick={handleAddXp}>
-              + Gain 50 XP
+              ⭐ Earn XP
             </button>
           </div>
         </div>
-
         {/* DAILY GOAL */}
         <div className={styles.dailyGoal}>
           <h3>🎯 Daily Goal</h3>
@@ -522,7 +514,6 @@ function Profile() {
               : `${Math.floor(dailyProgress)}% completed`}
           </p>
         </div>
-
         {/* ACHIEVEMENTS */}
         <div className={styles.achievementsSection}>
           <h3>🏆 Achievements</h3>
@@ -553,33 +544,51 @@ function Profile() {
             </div>
           )}
         </div>
-
+        {/* GAMES PROGRESS */}
         {/* GAMES PROGRESS */}
         <div className={styles.gamesSection}>
           <h3>🎮 Games Progress</h3>
+
           <div className={styles.gamesGrid}>
             {gamesProgress.map((game) => (
-              <div key={game.id} className={styles.gameCard}>
+              <div
+                key={game.id}
+                className={styles.gameCard}
+                style={{
+                  borderTop: `5px solid ${game.color}`,
+                }}
+              >
                 <div className={styles.gameCardHeader}>
                   <span className={styles.gameIcon}>{game.icon}</span>
+
                   <div className={styles.gameNameContainer}>
                     <h4 className={styles.gameName}>{game.name}</h4>
-                    <span className={styles.gameArabicName}>{game.arabicName}</span>
+                    <span className={styles.gameArabicName}>
+                      {game.arabicName}
+                    </span>
                   </div>
                 </div>
 
                 <div className={styles.gameStats}>
                   <div className={styles.gameStatRow}>
                     <span>Unlocked Level:</span>
-                    <strong>Level {game.unlockedLevel} / {game.totalLevels}</strong>
+                    <strong>
+                      Level {game.unlockedLevel} / {game.totalLevels}
+                    </strong>
                   </div>
+
                   <div className={styles.gameStatRow}>
                     <span>Completed Stages:</span>
-                    <strong>{game.completedStagesCount} / {game.maxStages}</strong>
+                    <strong>
+                      {game.completedStagesCount} / {game.maxStages}
+                    </strong>
                   </div>
+
                   <div className={styles.gameStatRow}>
                     <span>Stars Earned:</span>
-                    <strong>⭐ {game.totalStars} / {game.maxStars}</strong>
+                    <strong>
+                      ⭐ {game.totalStars} / {game.maxStars}
+                    </strong>
                   </div>
                 </div>
 
@@ -593,6 +602,7 @@ function Profile() {
                       }}
                     />
                   </div>
+
                   <div className={styles.gameProgressPercent}>
                     {game.progressPercent}% Completed
                   </div>
@@ -600,7 +610,7 @@ function Profile() {
               </div>
             ))}
           </div>
-        </div>
+        </div>{" "}
         {/* FLOATING CHAT BUTTON */}
         <button
           onClick={() => setIsChatOpen(true)}
@@ -628,7 +638,6 @@ function Profile() {
         >
           💬
         </button>
-
         {/* POPUP CHAT WINDOW */}
         {isChatOpen && (
           <div
