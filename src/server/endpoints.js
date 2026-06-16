@@ -172,6 +172,15 @@ export const profileAPI = {
 };
 
 // ─────────────────────────────────────────
+// GAME PROGRESS
+// ─────────────────────────────────────────
+export const gameProgressAPI = {
+  getByUser: (userId) => api.get(`/api/GameProgress/${userId}`),
+  update: (userId, data) =>
+    api.post(`/api/GameProgress/${userId}/update`, data),
+};
+
+// ─────────────────────────────────────────
 // HUT GAME
 // ─────────────────────────────────────────
 export const hutGameAPI = {
