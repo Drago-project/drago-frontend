@@ -1,5 +1,5 @@
-// src/games/TombPuzzle.jsx
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import style from "../styles/TombPuzzle.module.css";
 import { fallbackQuestions } from "../data/tombPuzzleFallback";
 import { gameProgressAPI } from "../server/endpoints";
@@ -202,6 +202,7 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 function TombPuzzle() {
+  const navigate = useNavigate();
   // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
   const [view, setView]               = useState("levels");
   const [progress, setProgress]       = useState(loadProgress);
@@ -631,6 +632,14 @@ function TombPuzzle() {
               onDismiss={dismissPretestModal}
             />
           )}
+          {/* Top Bar with Exit */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "700px", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "18px", padding: "14px 24px", boxSizing: "border-box", direction: "rtl", backdropFilter: "blur(8px)" }}>
+            <span style={{ color: "#ffd700", fontWeight: 800, fontSize: "18px", textShadow: "0 0 10px #c0a060" }}>🏺 مقبرة الأسرار</span>
+            <button onClick={() => navigate("/home")} style={{ background: "#c0a060", border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+              خروج 🚪
+            </button>
+          </div>
+
           {/* Header */}
           <div style={{ textAlign: "center", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "20px", padding: "18px 36px", backdropFilter: "blur(8px)", animation: "fadeIn 0.5s ease" }}>
             <h1 style={{ color: "#ffd700", margin: 0, fontSize: "28px", textShadow: "0 0 16px #c0a060" }}>🏺 مقبرة الأسرار 🏺</h1>
@@ -736,9 +745,14 @@ function TombPuzzle() {
               </div>
               <h2 style={{ color: "#fff", margin: "4px 0 0", fontSize: "18px" }}>{LEVEL_META[selectedLevel].name}</h2>
             </div>
-            <button onClick={() => setView("levels")} style={{ background: LEVEL_META[selectedLevel].color, border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
-              ← الخريطة
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => navigate("/home")} style={{ background: "transparent", border: `2px solid ${LEVEL_META[selectedLevel].color}`, borderRadius: "10px", color: "#ffd700", padding: "9px 14px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+                خروج 🚪
+              </button>
+              <button onClick={() => setView("levels")} style={{ background: LEVEL_META[selectedLevel].color, border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+                ← الخريطة
+              </button>
+            </div>
           </div>
 
           {/* Stage nodes */}
