@@ -1,12 +1,9 @@
 .profilePage {
-  margin-top: 50px;
+  margin-top: 60px;
   min-height: 100vh;
   padding: 40px 24px;
   background-color: #f8fafc;
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  
   color: #1e293b;
 }
 

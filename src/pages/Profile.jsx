@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { profileAPI, messagesAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
 import dragoAvatar from "../assets/poses/drago(front).svg";
@@ -149,6 +150,7 @@ const loadGameProgress = () => {
 
 function Profile() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const dailyGoal = 50;
 
   const [userId] = useState(() => getUserId());
@@ -156,7 +158,7 @@ function Profile() {
   const [formData, setFormData] = useState({});
   const [showEdit, setShowEdit] = useState(false);
   const [achievements, setAchievements] = useState([]);
-  const [gamesProgress, setGamesProgress] = useState(() => loadGameProgress());
+  const [gamesProgress] = useState(() => loadGameProgress());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -247,11 +249,11 @@ function Profile() {
       }
     } catch (err) {
       console.error("Chat load error:", err);
-      setChatError("فشل في تحميل الرسائل السابقة.");
+      setChatError(t("profile.chatLoadError"));
     } finally {
       setChatLoading(false);
     }
-  }, [userId, doctorId]);
+  }, [userId, doctorId, t]);
 
   useEffect(() => {
     if (isChatOpen && doctorId) {
@@ -267,7 +269,7 @@ function Profile() {
     const text = chatInput.trim();
     if (!text || !userId || chatSending) return;
     if (!doctorId) {
-      setChatError("No doctor assigned to your profile yet.");
+      setChatError(t("profile.noDoctorAssignedYet"));
       return;
     }
 
@@ -314,7 +316,7 @@ function Profile() {
       console.error("Chat send error:", err);
       setChatMessages((prev) => prev.filter((m) => m.messageId !== tempId));
       setChatInput(text);
-      setChatError("Failed to send message. Please try again.");
+      setChatError(t("profile.chatSendError"));
     } finally {
       setChatSending(false);
     }
@@ -354,19 +356,21 @@ function Profile() {
   if (loading)
     return (
       <div className={styles.loadingContainer}>
-        <p>Loading your profile adventure...</p>
+        <p>{t("profile.loadingProfile")}</p>
       </div>
     );
   if (!userId)
     return (
       <div className={styles.errorContainer}>
-        <button onClick={() => navigate("/auth/login")}>Go to Login</button>
+        <button onClick={() => navigate("/auth/login")}>
+          {t("profile.goToLogin")}
+        </button>
       </div>
     );
   if (error || !userData)
     return (
       <div className={styles.errorContainer}>
-        <p>{error || "Profile not found"}</p>
+        <p>{error || t("profile.profileNotFound")}</p>
       </div>
     );
 
@@ -392,14 +396,18 @@ function Profile() {
         <div className={styles.mainColumn}>
           <div className={styles.heroCard}>
             <div className={styles.heroInfo}>
-              <h2>Hi {userData.firstName}!</h2>
-              <p className={styles.subtitle}>Ready to reach today's goals?</p>
+              <h2>{t("profile.welcome", { name: userData.firstName })}</h2>
+              <p className={styles.subtitle}>{t("profile.subtitle")}</p>
               <div className={styles.badgeRow}>
                 <span className={styles.premiumBadge}>
-                  ⚡ Level {levelData.level}: {levelData.name}
+                  ⚡{" "}
+                  {t("profile.level", {
+                    level: levelData.level,
+                    name: levelData.name,
+                  })}
                 </span>
                 <span className={styles.streakBadge}>
-                  🔥 {userData.streak} Day Streak
+                  🔥 {t("profile.streak", { days: userData.streak })}
                 </span>
               </div>
             </div>
@@ -415,8 +423,8 @@ function Profile() {
           {/* Activity Section with Chart */}
           <div className={styles.sectionCard}>
             <div className={styles.cardHeader}>
-              <h3>🎮 Learning Activity</h3>
-              <p>Completed stages per mini-game</p>
+              <h3>{t("profile.activityTitle")}</h3>
+              <p>{t("profile.activitySubtitle")}</p>
             </div>
             <div className={styles.chartWrapper}>
               <ResponsiveContainer width="100%" height={240}>
@@ -500,7 +508,7 @@ function Profile() {
               <img
                 src={userData.avatarUrl || dragoAvatar}
                 className={styles.userAvatar}
-                alt="Profile Avatar"
+                alt={t("profile.avatarAlt")}
               />
               <button
                 className={styles.editButton}
@@ -512,30 +520,20 @@ function Profile() {
             <h3>
               {userData.firstName} {userData.lastName}
             </h3>
-            <p>@{userData.username || "student"}</p>
-
-            <div className={styles.xpBox}>
-              <div className={styles.xpHeader}>
-                <span>XP Progress</span>
-                <strong>
-                  {userData.xp} / {levelData.maxXP}
-                </strong>
-              </div>
-              <div className={styles.trackBar}>
-                <div
-                  className={styles.fillBar}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <button className={styles.actionXpBtn} onClick={handleAddXp}>
-                ⭐ Claim Daily XP
-              </button>
+            <p>@{userData.username || t("profile.defaultUsername")}</p>
+            <div className={styles.trackBar}>
+              <div
+                className={styles.fillBar}
+                style={{ width: `${progress}%` }}
+              />
             </div>
+            <button className={styles.actionXpBtn} onClick={handleAddXp}>
+              ⭐ {t("profile.claimDailyXp")}
+            </button>
           </div>
 
-          {/* Daily Circular Goal Chart */}
           <div className={styles.sectionCard}>
-            <h3>🎯 Today's Goal</h3>
+            <h3>{t("profile.dailyGoalTitle")}</h3>
             <div className={styles.radialChartContainer}>
               <ResponsiveContainer width="100%" height={160}>
                 <PieChart>
@@ -557,23 +555,20 @@ function Profile() {
               </ResponsiveContainer>
               <div className={styles.radialLabel}>
                 <h2>{Math.floor(dailyProgress)}%</h2>
-                <p>Finished</p>
+                <p>{t("profile.goalFinished")}</p>
               </div>
             </div>
             <p className={styles.centerText}>
               {dailyProgress >= 100
-                ? "🎉 Daily target reached!"
-                : "Keep exploring islands to clear your plan!"}
+                ? t("profile.dailyTargetReached")
+                : t("profile.dailyTargetProgress")}
             </p>
           </div>
 
-          {/* Badges Grid Panel */}
           <div className={styles.sectionCard}>
-            <h3>🏆 Unlocked Badges</h3>
+            <h3>{t("profile.unlockedBadges")}</h3>
             {achievements.length === 0 ? (
-              <p className={styles.emptyText}>
-                Keep exploring to unlock badges!
-              </p>
+              <p className={styles.emptyText}>{t("profile.noBadgesMessage")}</p>
             ) : (
               <div className={styles.badgeGrid}>
                 {achievements.slice(0, 4).map((a) => (
@@ -658,7 +653,7 @@ function Profile() {
                 gap: "8px",
               }}
             >
-              💬 Chat with Doctor
+              {t("profile.chatWithDoctor")}
               {wsStatus === "Connected" && (
                 <span
                   style={{
@@ -667,7 +662,7 @@ function Profile() {
                     borderRadius: "50%",
                     background: "#4ade80",
                   }}
-                  title="Online"
+                  title={t("profile.online")}
                 />
               )}
             </h3>
@@ -706,7 +701,7 @@ function Profile() {
                   margin: "auto",
                 }}
               >
-                Loading chat...
+                {t("profile.loadingChat")}
               </p>
             ) : chatError ? (
               <p
@@ -730,7 +725,7 @@ function Profile() {
                     cursor: "pointer",
                   }}
                 >
-                  Retry
+                  {t("profile.retry")}
                 </button>
               </p>
             ) : chatMessages.length === 0 ? (
@@ -742,8 +737,8 @@ function Profile() {
                 }}
               >
                 {!doctorId
-                  ? "No doctor assigned yet."
-                  : "No messages yet. Say hi to your doctor!"}
+                  ? t("profile.noDoctorAssignedYet")
+                  : t("profile.noMessagesYet")}
               </p>
             ) : (
               <>
@@ -782,7 +777,9 @@ function Profile() {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
-                        {msg.optimistic && <span> (Sending...)</span>}
+                        {msg.optimistic && (
+                          <span> ({t("profile.sending")})</span>
+                        )}
                       </div>
                     </div>
                   );
@@ -803,7 +800,7 @@ function Profile() {
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input
                 type="text"
-                placeholder="Write a message..."
+                placeholder={t("profile.writeMessage")}
                 value={chatInput}
                 disabled={!doctorId || chatLoading}
                 onChange={(e) => setChatInput(e.target.value)}
@@ -853,10 +850,10 @@ function Profile() {
       {showEdit && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h3>Edit Profile</h3>
+            <h3>{t("profile.editProfile")}</h3>
             <input
               type="text"
-              placeholder="Username"
+              placeholder={t("profile.usernameLabel")}
               value={formData.username ?? userData.username ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, username: e.target.value })
@@ -864,15 +861,19 @@ function Profile() {
             />
             <input
               type="text"
-              placeholder="Avatar URL"
+              placeholder={t("profile.avatarUrlLabel")}
               value={formData.avatarUrl ?? userData.avatarUrl ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, avatarUrl: e.target.value })
               }
             />
             <div className={styles.modalActions}>
-              <button onClick={handleSaveChanges}>Save Changes</button>
-              <button onClick={() => setShowEdit(false)}>Cancel</button>
+              <button onClick={handleSaveChanges}>
+                {t("profile.saveChanges")}
+              </button>
+              <button onClick={() => setShowEdit(false)}>
+                {t("profile.cancel")}
+              </button>
             </div>
           </div>
         </div>
