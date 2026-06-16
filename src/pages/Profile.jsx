@@ -148,6 +148,73 @@ const loadGameProgress = () => {
   });
 };
 
+const mapGamesProgress = (backendProgress) => {
+  const games = [
+    {
+      id: "word_hunt",
+      name: "Word Hunt",
+      arabicName: "كوخ الكلمات",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🏠",
+      color: "#44958E",
+    },
+    {
+      id: "reading_quest",
+      name: "Reading Quest",
+      arabicName: "مغامرة القراءة",
+      totalLevels: 4,
+      stagesPerLevel: 5,
+      icon: "📖",
+      color: "#EFA818",
+    },
+    {
+      id: "volcano_words",
+      name: "Volcano Words",
+      arabicName: "بركان الكلمات",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🌋",
+      color: "#ef4444",
+    },
+    {
+      id: "tomb_puzzle",
+      name: "Tomb Puzzle",
+      arabicName: "مقبرة الأسرار",
+      totalLevels: 6,
+      stagesPerLevel: 5,
+      icon: "🏺",
+      color: "#8b5cf6",
+    },
+  ];
+
+  return games.map((game) => {
+    const bgProgress = backendProgress.find(
+      (bg) => bg.gameKey === game.id
+    );
+
+    const unlockedLevel = bgProgress ? bgProgress.levelReached : 1;
+    const completedStagesCount = bgProgress ? bgProgress.completedStages : 0;
+    const totalStars = bgProgress ? bgProgress.starsEarned : 0;
+
+    const maxStages = game.totalLevels * game.stagesPerLevel;
+    const maxStars = maxStages * 3;
+    const progressPercent = bgProgress && bgProgress.completionPercent !== undefined
+      ? bgProgress.completionPercent
+      : Math.min(100, Math.round((completedStagesCount / maxStages) * 100));
+
+    return {
+      ...game,
+      unlockedLevel,
+      completedStagesCount,
+      maxStages,
+      totalStars,
+      maxStars,
+      progressPercent,
+    };
+  });
+};
+
 function Profile() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -158,7 +225,7 @@ function Profile() {
   const [formData, setFormData] = useState({});
   const [showEdit, setShowEdit] = useState(false);
   const [achievements, setAchievements] = useState([]);
-  const [gamesProgress] = useState(() => loadGameProgress());
+  const [gamesProgress, setGamesProgress] = useState(() => loadGameProgress());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -220,6 +287,10 @@ function Profile() {
               unlocked: a.isUnlocked,
             })),
           );
+        }
+
+        if (data.gamesProgress) {
+          setGamesProgress(mapGamesProgress(data.gamesProgress));
         }
       })
       .catch((err) => {

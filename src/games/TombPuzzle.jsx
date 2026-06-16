@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from "react";
 import style from "../styles/TombPuzzle.module.css";
 import { fallbackQuestions } from "../data/tombPuzzleFallback";
+import { gameProgressAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 
 // ─── Local Proxy / Vercel Serverless API source ───────────────────────────────
 const HF_QUESTIONS_URL = "/api/tomb/questions";
@@ -161,6 +163,43 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   );
 }
 
+const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+  const levelReached = bgProgress?.levelReached || 1;
+  const completedStagesCount = bgProgress?.completedStages || 0;
+  const starsEarned = bgProgress?.starsEarned || 0;
+
+  const completedStages = {};
+  const stars = {};
+
+  let stagesRemaining = completedStagesCount;
+  let starsRemaining = starsEarned;
+
+  for (let l = 1; l <= totalLevels; l++) {
+    completedStages[l.toString()] = [];
+    stars[l.toString()] = [];
+
+    for (let s = 0; s < stagesPerLevel; s++) {
+      if (stagesRemaining > 0) {
+        completedStages[l.toString()].push(true);
+        stagesRemaining--;
+
+        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        stars[l.toString()].push(allocated);
+        starsRemaining -= allocated;
+      } else {
+        completedStages[l.toString()].push(false);
+        stars[l.toString()].push(0);
+      }
+    }
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    completedStages,
+    stars
+  };
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 function TombPuzzle() {
   // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
@@ -170,6 +209,32 @@ function TombPuzzle() {
     const p = loadProgress();
     return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
   });
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+      const userId = authUser?.userId;
+      if (!userId) return;
+
+      try {
+        const res = await gameProgressAPI.getByUser(userId);
+        const progressList = res.data?.data || res.data;
+        const bgProgress = Array.isArray(progressList)
+          ? progressList.find(p => p.gameKey === "tomb_puzzle")
+          : null;
+
+        if (bgProgress) {
+          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
+          setProgress(reconstructed);
+          saveProgress(reconstructed);
+        }
+      } catch (err) {
+        console.error("Failed to fetch backend progress for tomb_puzzle:", err);
+      }
+    };
+
+    fetchProgress();
+  }, []);
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
@@ -440,6 +505,35 @@ function TombPuzzle() {
 
         const updated = { ...prev, unlockedLevel: newUnlocked, completedStages: newComp, stars: newStar };
         saveProgress(updated);
+
+        // Synchronize with backend
+        let totalCompletedStages = 0;
+        Object.keys(newComp).forEach((level) => {
+          totalCompletedStages += newComp[level].filter(Boolean).length;
+        });
+
+        let totalStars = 0;
+        Object.keys(newStar).forEach((level) => {
+          totalStars += newStar[level].reduce((sum, s) => sum + s, 0);
+        });
+
+        const maxStages = 6 * 5;
+        const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+
+        const authUser = getAuthUser();
+        const userId = authUser?.userId;
+        if (userId) {
+          gameProgressAPI.update(userId, {
+            gameKey: "tomb_puzzle",
+            levelReached: newUnlocked,
+            completedStages: totalCompletedStages,
+            starsEarned: totalStars,
+            completionPercent,
+          }).catch(err => {
+            console.error("Failed to update backend progress:", err);
+          });
+        }
+
         return updated;
       });
     }
