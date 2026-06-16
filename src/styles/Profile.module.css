@@ -2,8 +2,10 @@
   margin-top: 60px;
   min-height: 100vh;
   padding: 40px 24px;
-  background-color: #f8fafc;
-  
+  /* background-color: #f8fafc; */
+  background:
+    radial-gradient(circle at top right, #fff4dc 0%, transparent 30%),
+    radial-gradient(circle at bottom left, #dff7f4 0%, transparent 35%), #f8fafc;
   color: #1e293b;
 }
 
@@ -47,15 +49,20 @@
 
 /* Header Character Banner Card */
 .heroCard {
-  background: linear-gradient(135deg, #44958e 0%, #377c76 100%);
+  /* background: linear-gradient(135deg, #44958e 0%, #377c76 100%); */
+  background: linear-gradient(135deg, #377469 0%, #44958e 55%, #efa818 100%);
   border-radius: 28px;
   padding: 32px;
-  color: #ffffff;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-radius: 32px;
+  color: white;
+  text-align: center;
+  position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 35px rgba(68, 149, 142, 0.2);
+
+  box-shadow: 0 20px 40px rgba(55, 116, 105, 0.25);
 }
 
 .heroInfo h2 {
