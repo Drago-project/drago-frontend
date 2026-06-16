@@ -2,8 +2,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { profileAPI, messagesAPI } from "../server/endpoints";
 import styles from "../styles/Profile.module.css";
-import dragoAvatar from "../assets/poses/drago(front).svg";// SignalR hook integration
+import dragoAvatar from "../assets/poses/drago(front).svg";
 import { useSignalR } from "../hooks/useSignalR";
+
+// Import Recharts components for beautiful analytics
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 const getLevelData = (xp) => {
   const levels = [
@@ -15,7 +28,6 @@ const getLevelData = (xp) => {
   return levels.find((l) => xp >= l.minXP && xp < l.maxXP) || levels[0];
 };
 
-// Get userId from JWT token or userData
 const getUserId = () => {
   try {
     const token = localStorage.getItem("authToken");
@@ -53,7 +65,7 @@ const loadGameProgress = () => {
       totalLevels: 6,
       stagesPerLevel: 5,
       icon: "🏠",
-      color: "#f59e0b",
+      color: "#44958E",
     },
     {
       id: "reading_quest",
@@ -63,7 +75,7 @@ const loadGameProgress = () => {
       totalLevels: 4,
       stagesPerLevel: 5,
       icon: "📖",
-      color: "#3b82f6",
+      color: "#EFA818",
     },
     {
       id: "volcano_words",
@@ -96,16 +108,13 @@ const loadGameProgress = () => {
       if (stored) {
         const parsed = JSON.parse(stored);
         unlockedLevel = parsed.unlockedLevel || 1;
-
         if (parsed.completedStages) {
           Object.keys(parsed.completedStages).forEach((level) => {
             const stages = parsed.completedStages[level];
-            if (Array.isArray(stages)) {
+            if (Array.isArray(stages))
               completedStagesCount += stages.filter(Boolean).length;
-            }
           });
         }
-
         if (parsed.stars) {
           Object.keys(parsed.stars).forEach((level) => {
             const stars = parsed.stars[level];
@@ -151,7 +160,7 @@ function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Chat states
+  // Original Chat states
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState("");
@@ -159,14 +168,12 @@ function Profile() {
   const [chatSending, setChatSending] = useState(false);
   const chatEndRef = useRef(null);
 
-  // Dynamic conversation and doctor states
   const [conversationId, setConversationId] = useState(null);
   const [doctorId, setDoctorId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
 
-  // SignalR hook initialization
   const { status: wsStatus } = useSignalR({
-    doctorId: doctorId || 0, // Dynamic doctorId resolved from profile/conversations
+    doctorId: doctorId || 0,
     studentId: userId,
     onMessage: (message) => {
       setChatMessages((prev) => {
@@ -177,7 +184,6 @@ function Profile() {
     },
   });
 
-  // 1. Load Profile & Resolve Doctor ID on Mount
   useEffect(() => {
     if (!userId) {
       setError("Not logged in");
@@ -201,12 +207,8 @@ function Profile() {
           avatarUrl: data.avatarUrl || "",
         });
 
-        // Resolve Doctor ID directly from Profile Response
-        if (data.doctorId) {
-          setDoctorId(data.doctorId);
-        }
+        if (data.doctorId) setDoctorId(data.doctorId);
 
-        // Load achievements if returned
         if (data.allAchievements) {
           setAchievements(
             data.allAchievements.map((a) => ({
@@ -225,31 +227,21 @@ function Profile() {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  // 2. Load Conversation Details dynamically
   const loadChatData = useCallback(async () => {
-    // لازم ننتظر لحد ما الـ doctorId ييجي من البروفايل
     if (!userId || !doctorId) return;
-
     setChatError("");
     setChatLoading(true);
-
     try {
-      // 1. نطلب المحادثة المحددة بين الطالب والدكتور ده مباشرة
       const convRes = await messagesAPI.getOrCreateConversation({
         doctorId: Number(doctorId),
         studentId: Number(userId),
       });
-
-      // استخراج الـ ID بتاع المحادثة
       const activeConvId =
         convRes.data?.data?.conversationId ||
         convRes.data?.conversationId ||
         convRes.data?.id;
-
       if (activeConvId) {
         setConversationId(activeConvId);
-
-        // 2. نجيب الهيستوري بتاع المحادثة دي
         const msgRes = await messagesAPI.getMessages(activeConvId);
         setChatMessages(msgRes.data?.data ?? msgRes.data ?? []);
       }
@@ -259,31 +251,26 @@ function Profile() {
     } finally {
       setChatLoading(false);
     }
-  }, [userId, doctorId]); // ضفنا doctorId هنا
+  }, [userId, doctorId]);
 
-  // 3. Load chat data when the chat window is opened and doctorId is available
   useEffect(() => {
     if (isChatOpen && doctorId) {
       loadChatData();
     }
   }, [loadChatData, isChatOpen, doctorId]);
 
-  // Auto-scroll to the bottom of the chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages, isChatOpen]);
 
-  // 3. Handle Send Chat Message
   const handleSendChat = async () => {
     const text = chatInput.trim();
     if (!text || !userId || chatSending) return;
-
     if (!doctorId) {
       setChatError("No doctor assigned to your profile yet.");
       return;
     }
 
-    // Optimistic message UI update
     const tempId = `opt-${Date.now()}`;
     const optimistic = {
       messageId: tempId,
@@ -300,25 +287,19 @@ function Profile() {
 
     try {
       let activeConvId = conversationId;
-
-      // 1. لو دي أول رسالة ومفيش ID للمحادثة، ننشئها الأول
       if (!activeConvId) {
         const convRes = await messagesAPI.getOrCreateConversation({
           doctorId: Number(doctorId),
           studentId: Number(userId),
         });
-
-        // استخراج الـ ID بناءً على شكل الرد من الباك إند
         activeConvId =
           convRes.data?.data?.conversationId ||
           convRes.data?.conversationId ||
           convRes.data?.id ||
           0;
-
         setConversationId(activeConvId);
       }
 
-      // 2. إرسال الرسالة باستخدام الـ ID الصحيح
       const payload = {
         content: text,
         receiverId: Number(doctorId),
@@ -328,12 +309,9 @@ function Profile() {
       };
 
       await messagesAPI.send(payload);
-
-      // Success: Remove optimistic item
       setChatMessages((prev) => prev.filter((m) => m.messageId !== tempId));
     } catch (err) {
       console.error("Chat send error:", err);
-      // Rollback UI state on failure
       setChatMessages((prev) => prev.filter((m) => m.messageId !== tempId));
       setChatInput(text);
       setChatError("Failed to send message. Please try again.");
@@ -341,6 +319,7 @@ function Profile() {
       setChatSending(false);
     }
   };
+
   const handleAddXp = () => {
     if (!userId) return;
     profileAPI
@@ -352,16 +331,6 @@ function Profile() {
           xp: data.totalXp,
           streak: data.streakDays,
         }));
-        if (data.allAchievements) {
-          setAchievements(
-            data.allAchievements.map((a) => ({
-              id: a.achievementId,
-              name: a.name,
-              icon: a.icon || "🏆",
-              unlocked: a.isUnlocked,
-            })),
-          );
-        }
       })
       .catch((err) => console.error("XP error:", err));
   };
@@ -382,40 +351,24 @@ function Profile() {
       .catch((err) => console.error("Update error:", err));
   };
 
-  // Loading state
-  if (loading) {
+  if (loading)
     return (
-      <div className={styles.profilePage}>
-        <div style={{ textAlign: "center", padding: "100px" }}>
-          <p>Loading profile...</p>
-        </div>
+      <div className={styles.loadingContainer}>
+        <p>Loading your profile adventure...</p>
       </div>
     );
-  }
-
-  // Not logged in state
-  if (!userId) {
+  if (!userId)
     return (
-      <div className={styles.profilePage}>
-        <div style={{ textAlign: "center", padding: "100px" }}>
-          <p>Please log in to view your profile.</p>
-          <button onClick={() => navigate("/auth/login")}>Go to Login</button>
-        </div>
+      <div className={styles.errorContainer}>
+        <button onClick={() => navigate("/auth/login")}>Go to Login</button>
       </div>
     );
-  }
-
-  // API error state
-  if (error || !userData) {
+  if (error || !userData)
     return (
-      <div className={styles.profilePage}>
-        <div style={{ textAlign: "center", padding: "100px" }}>
-          <p>{error || "Profile not found"} 😢</p>
-          <button onClick={() => navigate("/home")}>Go Home</button>
-        </div>
+      <div className={styles.errorContainer}>
+        <p>{error || "Profile not found"}</p>
       </div>
     );
-  }
 
   const levelData = getLevelData(userData.xp);
   const progress =
@@ -426,449 +379,477 @@ function Profile() {
     100,
   );
 
+  const barChartData = gamesProgress.map((g) => ({
+    name: g.name,
+    Completed: g.completedStagesCount,
+    Total: g.maxStages,
+  }));
+
   return (
     <div className={styles.profilePage}>
-      <div className={styles.profileContainer}>
-        {/* HEADER */}
-        <div className={styles.profileHeader}>
-          <div className={styles.dragoBanner}>
-            <div>
-              <h2>Welcome Back ✨</h2>
-              <p>Let's continue learning!</p>
+      <div className={styles.dashboardLayout}>
+        {/* LEFT COLUMN */}
+        <div className={styles.mainColumn}>
+          <div className={styles.heroCard}>
+            <div className={styles.heroInfo}>
+              <h2>Hi {userData.firstName}!</h2>
+              <p className={styles.subtitle}>Ready to reach today's goals?</p>
+              <div className={styles.badgeRow}>
+                <span className={styles.premiumBadge}>
+                  ⚡ Level {levelData.level}: {levelData.name}
+                </span>
+                <span className={styles.streakBadge}>
+                  🔥 {userData.streak} Day Streak
+                </span>
+              </div>
             </div>
-
-            <img src={dragoAvatar} alt="Drago" className={styles.dragoHero} />
-          </div>
-          <div className={styles.avatarContainer}>
-            <img
-              src={userData.avatarUrl || dragoAvatar}
-              className={styles.avatar}
-              alt="avatar"
-            />
-            <button
-  type="button"
-  className={styles.editBtn}
-  onClick={() => {
-    console.log("Edit clicked");
-    setShowEdit(true);
-  }}
->
-  ✏️
-</button>
-          </div>
-
-          <h1 className={styles.userName}>
-            {userData.firstName} {userData.lastName}
-          </h1>
-          {userData.username && (
-            <p className={styles.userHandle}>@{userData.username}</p>
-          )}
-          <p className={styles.userEmail}>{userData.email}</p>
-
-          <div className={styles.statsRow}>
-            <div className={styles.statCard}>
-              <span className={styles.statIcon}>👥</span>
-              <strong className={styles.statNumber}>
-                {userData.followers + userData.following}
-              </strong>
-              <span className={styles.statLabel}>Friends</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statIcon}>🔥</span>
-              <strong className={styles.statNumber}>{userData.streak}</strong>
-              <span className={styles.statLabel}>Day Streak</span>
-            </div>
-          </div>
-
-          <div className={styles.levelSection}>
-            <div className={styles.levelHeader}>
-              <span className={styles.levelBadge}>Level {levelData.level}</span>
-              <span>{levelData.name}</span>
-            </div>
-            <div className={styles.progressBar}>
-              <div
-                className={styles.progressFill}
-                style={{ width: `${progress}%` }}
+            <div className={styles.mascotContainer}>
+              <img
+                src={dragoAvatar}
+                alt="Drago"
+                className={styles.dragoMascot}
               />
             </div>
-            <p>
-              XP {userData.xp} / {levelData.maxXP}
-            </p>
-            <button className={styles.addXpBtn} onClick={handleAddXp}>
-              ⭐ Earn XP
-            </button>
           </div>
-        </div>
-        {/* DAILY GOAL */}
-        <div className={styles.dailyGoal}>
-          <h3>🎯 Daily Goal</h3>
-          <div className={styles.progressBar}>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${dailyProgress}%` }}
-            />
-          </div>
-          <p>
-            {dailyProgress >= 100
-              ? "🎉 Goal Completed!"
-              : `${Math.floor(dailyProgress)}% completed`}
-          </p>
-        </div>
-        {/* ACHIEVEMENTS */}
-        <div className={styles.achievementsSection}>
-          <h3>🏆 Achievements</h3>
-          {achievements.length === 0 ? (
-            <p
-              style={{
-                color: "#9ca3af",
-                textAlign: "center",
-                marginTop: "1rem",
-              }}
-            >
-              No achievements yet. Keep playing!
-            </p>
-          ) : (
-            <div className={styles.achievementsGrid}>
-              {achievements.map((a) => (
-                <div
-                  key={a.id}
-                  className={`${styles.achievementCard} ${
-                    a.unlocked ? styles.unlocked : styles.locked
-                  }`}
-                >
-                  <span>{a.icon}</span>
-                  <p>{a.name}</p>
-                  {!a.unlocked && <span className={styles.lock}>🔒</span>}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        {/* GAMES PROGRESS */}
-        {/* GAMES PROGRESS */}
-        <div className={styles.gamesSection}>
-          <h3>🎮 Games Progress</h3>
 
-          <div className={styles.gamesGrid}>
+          {/* Activity Section with Chart */}
+          <div className={styles.sectionCard}>
+            <div className={styles.cardHeader}>
+              <h3>🎮 Learning Activity</h3>
+              <p>Completed stages per mini-game</p>
+            </div>
+            <div className={styles.chartWrapper}>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={barChartData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fill: "#64748b", fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "#64748b" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip cursor={{ fill: "rgba(68, 149, 142, 0.05)" }} />
+                  <Bar
+                    dataKey="Completed"
+                    fill="#44958E"
+                    radius={[8, 8, 0, 0]}
+                    barSize={28}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Individual Games Stats Grid */}
+          <div className={styles.gridContainer}>
             {gamesProgress.map((game) => (
               <div
                 key={game.id}
-                className={styles.gameCard}
-                style={{
-                  borderTop: `5px solid ${game.color}`,
-                }}
+                className={styles.metricRowCard}
+                style={{ borderRight: `6px solid ${game.color}` }}
               >
-                <div className={styles.gameCardHeader}>
-                  <span className={styles.gameIcon}>{game.icon}</span>
-
-                  <div className={styles.gameNameContainer}>
-                    <h4 className={styles.gameName}>{game.name}</h4>
-                    <span className={styles.gameArabicName}>
+                <div
+                  className={styles.metricIconBox}
+                  style={{
+                    backgroundColor: `${game.color}15`,
+                    color: game.color,
+                  }}
+                >
+                  {game.icon}
+                </div>
+                <div className={styles.metricDetails}>
+                  <h4>
+                    {game.name}{" "}
+                    <span className={styles.arabicLabel}>
                       {game.arabicName}
                     </span>
-                  </div>
-                </div>
-
-                <div className={styles.gameStats}>
-                  <div className={styles.gameStatRow}>
-                    <span>Unlocked Level:</span>
-                    <strong>
-                      Level {game.unlockedLevel} / {game.totalLevels}
-                    </strong>
-                  </div>
-
-                  <div className={styles.gameStatRow}>
-                    <span>Completed Stages:</span>
-                    <strong>
-                      {game.completedStagesCount} / {game.maxStages}
-                    </strong>
-                  </div>
-
-                  <div className={styles.gameStatRow}>
-                    <span>Stars Earned:</span>
-                    <strong>
-                      ⭐ {game.totalStars} / {game.maxStars}
-                    </strong>
-                  </div>
-                </div>
-
-                <div className={styles.gameProgressContainer}>
-                  <div className={styles.gameProgressBarBg}>
+                  </h4>
+                  <p>
+                    Level {game.unlockedLevel} • ⭐ {game.totalStars}/
+                    {game.maxStars} Stars
+                  </p>
+                  <div className={styles.compactProgressTrack}>
                     <div
-                      className={styles.gameProgressBarFill}
+                      className={styles.compactProgressFill}
                       style={{
                         width: `${game.progressPercent}%`,
                         backgroundColor: game.color,
                       }}
                     />
                   </div>
-
-                  <div className={styles.gameProgressPercent}>
-                    {game.progressPercent}% Completed
-                  </div>
+                </div>
+                <div className={styles.metricValue}>
+                  {game.progressPercent}%
                 </div>
               </div>
             ))}
           </div>
-        </div>{" "}
-        {/* FLOATING CHAT BUTTON */}
-        <button
-          onClick={() => setIsChatOpen(true)}
-          style={{
-            position: "fixed",
-            bottom: "30px",
-            right: "30px",
-            width: "65px",
-            height: "65px",
-            borderRadius: "50%",
-            background: "#EFA818",
-            color: "white",
-            border: "none",
-            boxShadow: "0 10px 20px rgba(239, 168, 24, 0.4)",
-            cursor: "pointer",
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "28px",
-            transition: "transform 0.2s",
-          }}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          💬
-        </button>
-        {/* POPUP CHAT WINDOW */}
-        {isChatOpen && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "105px",
-              right: "30px",
-              width: "360px",
-              height: "500px",
-              background: "white",
-              borderRadius: "1rem",
-              boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
-              display: "flex",
-              flexDirection: "column",
-              zIndex: 1000,
-              overflow: "hidden",
-            }}
-          >
-            {/* Chat Header */}
-            <div
-              style={{
-                background: "#377C76",
-                padding: "1rem",
-                color: "white",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: "1.1rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-              >
-                💬 Chat with Doctor
-                {wsStatus === "Connected" && (
-                  <span
-                    style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      background: "#4ade80",
-                    }}
-                    title="Online"
-                  />
-                )}
-              </h3>
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div className={styles.sideColumn}>
+          <div className={styles.userCard}>
+            <div className={styles.avatarWrapper}>
+              <img
+                src={userData.avatarUrl || dragoAvatar}
+                className={styles.userAvatar}
+                alt="Profile Avatar"
+              />
               <button
-                onClick={() => setIsChatOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "white",
-                  cursor: "pointer",
-                  fontSize: "1.2rem",
-                  fontWeight: "bold",
-                }}
+                className={styles.editButton}
+                onClick={() => setShowEdit(true)}
               >
-                ✕
+                ✏️
               </button>
             </div>
+            <h3>
+              {userData.firstName} {userData.lastName}
+            </h3>
+            <p>@{userData.username || "student"}</p>
 
-            {/* Chat Body */}
-            <div
-              style={{
-                flex: 1,
-                overflowY: "auto",
-                padding: "1rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-                background: "#f8fafc",
-              }}
-            >
-              {chatLoading ? (
-                <p
-                  style={{
-                    color: "#6b7280",
-                    textAlign: "center",
-                    margin: "auto",
-                  }}
-                >
-                  Loading chat...
-                </p>
-              ) : chatError ? (
-                <p
-                  style={{
-                    color: "#dc2626",
-                    textAlign: "center",
-                    margin: "auto",
-                  }}
-                >
-                  {chatError}
-                  <button
-                    onClick={loadChatData}
-                    style={{
-                      display: "block",
-                      margin: "10px auto",
-                      padding: "5px 10px",
-                      background: "#377C76",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Retry
-                  </button>
-                </p>
-              ) : chatMessages.length === 0 ? (
-                <p
-                  style={{
-                    color: "#6b7280",
-                    textAlign: "center",
-                    margin: "auto",
-                  }}
-                >
-                  {!doctorId
-                    ? "No doctor assigned yet."
-                    : "No messages yet. Say hi to your doctor!"}
-                </p>
-              ) : (
-                <>
-                  {chatMessages.map((msg, index) => {
-                    const isMine =
-                      msg.senderRole === "Student" || msg.senderId === userId;
-                    return (
-                      <div
-                        key={msg.id || msg.messageId || index}
-                        style={{
-                          alignSelf: isMine ? "flex-end" : "flex-start",
-                          maxWidth: "75%",
-                          padding: "0.6rem 1rem",
-                          borderRadius: isMine
-                            ? "1rem 1rem 0.25rem 1rem"
-                            : "1rem 1rem 1rem 0.25rem",
-                          background: isMine ? "#377C76" : "white",
-                          color: isMine ? "white" : "#1e293b",
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                          fontSize: "0.9rem",
-                          opacity: msg.optimistic ? 0.7 : 1,
-                        }}
-                      >
-                        <div>{msg.content || msg.message || msg.text}</div>
-                        <div
-                          style={{
-                            fontSize: "0.7rem",
-                            marginTop: "4px",
-                            textAlign: isMine ? "right" : "left",
-                            opacity: 0.7,
-                          }}
-                        >
-                          {new Date(
-                            msg.sentAt || msg.createdAt || Date.now(),
-                          ).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                          {msg.optimistic && <span> (Sending...)</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={chatEndRef} />
-                </>
-              )}
-            </div>
-
-            {/* Chat Input Area */}
-            <div
-              style={{
-                padding: "0.75rem",
-                background: "white",
-                borderTop: "1px solid #e2e8f0",
-              }}
-            >
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input
-                  type="text"
-                  placeholder="Write a message..."
-                  value={chatInput}
-                  disabled={!doctorId || chatLoading}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendChat();
-                    }
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: "0.6rem 1rem",
-                    borderRadius: "2rem",
-                    border: "1px solid #e2e8f0",
-                    outline: "none",
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSendChat}
-                  disabled={chatSending || !chatInput.trim() || !doctorId}
-                  style={{
-                    background:
-                      !chatInput.trim() || !doctorId ? "#ccc" : "#EFA818",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "50%",
-                    width: "40px",
-                    height: "40px",
-                    cursor:
-                      chatSending || !chatInput.trim() || !doctorId
-                        ? "not-allowed"
-                        : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  ➤
-                </button>
+            <div className={styles.xpBox}>
+              <div className={styles.xpHeader}>
+                <span>XP Progress</span>
+                <strong>
+                  {userData.xp} / {levelData.maxXP}
+                </strong>
               </div>
+              <div className={styles.trackBar}>
+                <div
+                  className={styles.fillBar}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <button className={styles.actionXpBtn} onClick={handleAddXp}>
+                ⭐ Claim Daily XP
+              </button>
             </div>
           </div>
-        )}
+
+          {/* Daily Circular Goal Chart */}
+          <div className={styles.sectionCard}>
+            <h3>🎯 Today's Goal</h3>
+            <div className={styles.radialChartContainer}>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { value: dailyProgress },
+                      { value: 100 - dailyProgress },
+                    ]}
+                    innerRadius={55}
+                    outerRadius={70}
+                    startAngle={90}
+                    endAngle={-270}
+                    dataKey="value"
+                  >
+                    <Cell fill="#EFA818" radius={10} />
+                    <Cell fill="#f1f5f9" />
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className={styles.radialLabel}>
+                <h2>{Math.floor(dailyProgress)}%</h2>
+                <p>Finished</p>
+              </div>
+            </div>
+            <p className={styles.centerText}>
+              {dailyProgress >= 100
+                ? "🎉 Daily target reached!"
+                : "Keep exploring islands to clear your plan!"}
+            </p>
+          </div>
+
+          {/* Badges Grid Panel */}
+          <div className={styles.sectionCard}>
+            <h3>🏆 Unlocked Badges</h3>
+            {achievements.length === 0 ? (
+              <p className={styles.emptyText}>
+                Keep exploring to unlock badges!
+              </p>
+            ) : (
+              <div className={styles.badgeGrid}>
+                {achievements.slice(0, 4).map((a) => (
+                  <div
+                    key={a.id}
+                    className={`${styles.badgeNode} ${a.unlocked ? styles.activeBadge : styles.lockedBadge}`}
+                    title={a.name}
+                  >
+                    <span className={styles.badgeIcon}>{a.icon}</span>
+                    <span className={styles.badgeNodeName}>{a.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* EDIT MODAL */}
+      {/* ORIGINAL FLOATING CHAT TRIGGER BUTTON */}
+      <button
+        onClick={() => setIsChatOpen(true)}
+        style={{
+          position: "fixed",
+          bottom: "30px",
+          right: "30px",
+          width: "65px",
+          height: "65px",
+          borderRadius: "50%",
+          background: "#EFA818",
+          color: "white",
+          border: "none",
+          boxShadow: "0 10px 20px rgba(239, 168, 24, 0.4)",
+          cursor: "pointer",
+          zIndex: 1000,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "28px",
+          transition: "transform 0.2s",
+        }}
+        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        💬
+      </button>
+
+      {/* ORIGINAL POPUP CHAT WINDOW CODE */}
+      {isChatOpen && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "105px",
+            right: "30px",
+            width: "360px",
+            height: "500px",
+            background: "white",
+            borderRadius: "1rem",
+            boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
+            display: "flex",
+            flexDirection: "column",
+            zIndex: 1000,
+            overflow: "hidden",
+          }}
+        >
+          {/* Chat Header */}
+          <div
+            style={{
+              background: "#377C76",
+              padding: "1rem",
+              color: "white",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontSize: "1.1rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              💬 Chat with Doctor
+              {wsStatus === "Connected" && (
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: "#4ade80",
+                  }}
+                  title="Online"
+                />
+              )}
+            </h3>
+            <button
+              onClick={() => setIsChatOpen(false)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "white",
+                cursor: "pointer",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Chat Body */}
+          <div
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              padding: "1rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem",
+              background: "#f8fafc",
+            }}
+          >
+            {chatLoading ? (
+              <p
+                style={{
+                  color: "#6b7280",
+                  textAlign: "center",
+                  margin: "auto",
+                }}
+              >
+                Loading chat...
+              </p>
+            ) : chatError ? (
+              <p
+                style={{
+                  color: "#dc2626",
+                  textAlign: "center",
+                  margin: "auto",
+                }}
+              >
+                {chatError}
+                <button
+                  onClick={loadChatData}
+                  style={{
+                    display: "block",
+                    margin: "10px auto",
+                    padding: "5px 10px",
+                    background: "#377C76",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Retry
+                </button>
+              </p>
+            ) : chatMessages.length === 0 ? (
+              <p
+                style={{
+                  color: "#6b7280",
+                  textAlign: "center",
+                  margin: "auto",
+                }}
+              >
+                {!doctorId
+                  ? "No doctor assigned yet."
+                  : "No messages yet. Say hi to your doctor!"}
+              </p>
+            ) : (
+              <>
+                {chatMessages.map((msg, index) => {
+                  const isMine =
+                    msg.senderRole === "Student" || msg.senderId === userId;
+                  return (
+                    <div
+                      key={msg.id || msg.messageId || index}
+                      style={{
+                        alignSelf: isMine ? "flex-end" : "flex-start",
+                        maxWidth: "75%",
+                        padding: "0.6rem 1rem",
+                        borderRadius: isMine
+                          ? "1rem 1rem 0.25rem 1rem"
+                          : "1rem 1rem 1rem 0.25rem",
+                        background: isMine ? "#377C76" : "white",
+                        color: isMine ? "white" : "#1e293b",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                        fontSize: "0.9rem",
+                        opacity: msg.optimistic ? 0.7 : 1,
+                      }}
+                    >
+                      <div>{msg.content || msg.message || msg.text}</div>
+                      <div
+                        style={{
+                          fontSize: "0.7rem",
+                          marginTop: "4px",
+                          textAlign: isMine ? "right" : "left",
+                          opacity: 0.7,
+                        }}
+                      >
+                        {new Date(
+                          msg.sentAt || msg.createdAt || Date.now(),
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        {msg.optimistic && <span> (Sending...)</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+                <div ref={chatEndRef} />
+              </>
+            )}
+          </div>
+
+          {/* Chat Input Area */}
+          <div
+            style={{
+              padding: "0.75rem",
+              background: "white",
+              borderTop: "1px solid #e2e8f0",
+            }}
+          >
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <input
+                type="text"
+                placeholder="Write a message..."
+                value={chatInput}
+                disabled={!doctorId || chatLoading}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendChat();
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: "0.6rem 1rem",
+                  borderRadius: "2rem",
+                  border: "1px solid #e2e8f0",
+                  outline: "none",
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSendChat}
+                disabled={chatSending || !chatInput.trim() || !doctorId}
+                style={{
+                  background:
+                    !chatInput.trim() || !doctorId ? "#ccc" : "#EFA818",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "40px",
+                  height: "40px",
+                  cursor:
+                    chatSending || !chatInput.trim() || !doctorId
+                      ? "not-allowed"
+                      : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RE-CONNECTED MODAL WINDOW */}
       {showEdit && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
@@ -876,7 +857,7 @@ function Profile() {
             <input
               type="text"
               placeholder="Username"
-              value={formData.username || ""}
+              value={formData.username ?? userData.username ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, username: e.target.value })
               }
@@ -884,7 +865,7 @@ function Profile() {
             <input
               type="text"
               placeholder="Avatar URL"
-              value={formData.avatarUrl || ""}
+              value={formData.avatarUrl ?? userData.avatarUrl ?? ""}
               onChange={(e) =>
                 setFormData({ ...formData, avatarUrl: e.target.value })
               }
