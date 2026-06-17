@@ -1,30 +1,36 @@
-export function unlockGamesProgress(domainScores) {
-  if (!domainScores) return;
+import { gameProgressAPI } from "../../server/endpoints";
+
+export async function unlockGamesProgress(userId, domainScores) {
+  if (!domainScores || !userId) return;
 
   const gameMappings = [
     {
       key: "volcano_words_progress",
+      gameKey: "volcano_words",
       domain: "phonological",
       maxLevels: 6,
     },
     {
       key: "word_hunt_progress",
+      gameKey: "word_hunt",
       domain: "orthographic",
       maxLevels: 6,
     },
     {
       key: "tomb_puzzle_progress",
+      gameKey: "tomb_puzzle",
       domain: "spellingMemory",
       maxLevels: 6,
     },
     {
       key: "reading_quest_progress",
+      gameKey: "reading_quest",
       domain: "decoding",
       maxLevels: 4,
     },
   ];
 
-  gameMappings.forEach(({ key, domain, maxLevels }) => {
+  for (const { key, gameKey, domain, maxLevels } of gameMappings) {
     const score = domainScores[domain] ?? 0;
 
     let recommendedLevel = 1;
@@ -59,5 +65,19 @@ export function unlockGamesProgress(domainScores) {
     };
 
     localStorage.setItem(key, JSON.stringify(progress));
-  });
+
+    // Update backend progress
+    try {
+      await gameProgressAPI.update(userId, {
+        gameKey,
+        levelReached: recommendedLevel,
+        completedStages: 0,
+        starsEarned: 0,
+        completionPercent: 0,
+      });
+    } catch (e) {
+      console.error(`Failed to initialize backend game progress for ${gameKey}:`, e);
+    }
+  }
 }
+

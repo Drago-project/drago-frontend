@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./styles/app.css";
+import { getAuthUser } from "../server/auth";
+
 
 // Import hooks
 import { useLocalStorage } from "./hooks/useLocalStorage.js";
@@ -127,10 +129,13 @@ export default function PreTestApp() {
     clearSaved();
   }
 
-  function finishPreTest() {
+  async function finishPreTest() {
     try {
       const results = computeResults(responses, safety, intake);
-      unlockGamesProgress(results.domainScores);
+      const authUser = getAuthUser();
+      if (authUser?.userId) {
+        await unlockGamesProgress(authUser.userId, results.domainScores);
+      }
       localStorage.setItem("pretest_completed_scores", JSON.stringify(results.domainScores));
     } catch (e) {
       console.error("Error setting game progress from pretest results:", e);

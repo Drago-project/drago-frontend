@@ -1,7 +1,9 @@
-// src/games/TombPuzzle.jsx
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import style from "../styles/TombPuzzle.module.css";
 import { fallbackQuestions } from "../data/tombPuzzleFallback";
+import { gameProgressAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 
 // ─── Local Proxy / Vercel Serverless API source ───────────────────────────────
 const HF_QUESTIONS_URL = "/api/tomb/questions";
@@ -161,8 +163,46 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   );
 }
 
+const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+  const levelReached = bgProgress?.levelReached || 1;
+  const completedStagesCount = bgProgress?.completedStages || 0;
+  const starsEarned = bgProgress?.starsEarned || 0;
+
+  const completedStages = {};
+  const stars = {};
+
+  let stagesRemaining = completedStagesCount;
+  let starsRemaining = starsEarned;
+
+  for (let l = 1; l <= totalLevels; l++) {
+    completedStages[l.toString()] = [];
+    stars[l.toString()] = [];
+
+    for (let s = 0; s < stagesPerLevel; s++) {
+      if (stagesRemaining > 0) {
+        completedStages[l.toString()].push(true);
+        stagesRemaining--;
+
+        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        stars[l.toString()].push(allocated);
+        starsRemaining -= allocated;
+      } else {
+        completedStages[l.toString()].push(false);
+        stars[l.toString()].push(0);
+      }
+    }
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    completedStages,
+    stars
+  };
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 function TombPuzzle() {
+  const navigate = useNavigate();
   // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
   const [view, setView]               = useState("levels");
   const [progress, setProgress]       = useState(loadProgress);
@@ -170,6 +210,32 @@ function TombPuzzle() {
     const p = loadProgress();
     return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
   });
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+      const userId = authUser?.userId;
+      if (!userId) return;
+
+      try {
+        const res = await gameProgressAPI.getByUser(userId);
+        const progressList = res.data?.data || res.data;
+        const bgProgress = Array.isArray(progressList)
+          ? progressList.find(p => p.gameKey === "tomb_puzzle")
+          : null;
+
+        if (bgProgress) {
+          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
+          setProgress(reconstructed);
+          saveProgress(reconstructed);
+        }
+      } catch (err) {
+        console.error("Failed to fetch backend progress for tomb_puzzle:", err);
+      }
+    };
+
+    fetchProgress();
+  }, []);
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
@@ -440,6 +506,35 @@ function TombPuzzle() {
 
         const updated = { ...prev, unlockedLevel: newUnlocked, completedStages: newComp, stars: newStar };
         saveProgress(updated);
+
+        // Synchronize with backend
+        let totalCompletedStages = 0;
+        Object.keys(newComp).forEach((level) => {
+          totalCompletedStages += newComp[level].filter(Boolean).length;
+        });
+
+        let totalStars = 0;
+        Object.keys(newStar).forEach((level) => {
+          totalStars += newStar[level].reduce((sum, s) => sum + s, 0);
+        });
+
+        const maxStages = 6 * 5;
+        const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+
+        const authUser = getAuthUser();
+        const userId = authUser?.userId;
+        if (userId) {
+          gameProgressAPI.update(userId, {
+            gameKey: "tomb_puzzle",
+            levelReached: newUnlocked,
+            completedStages: totalCompletedStages,
+            starsEarned: totalStars,
+            completionPercent,
+          }).catch(err => {
+            console.error("Failed to update backend progress:", err);
+          });
+        }
+
         return updated;
       });
     }
@@ -537,6 +632,14 @@ function TombPuzzle() {
               onDismiss={dismissPretestModal}
             />
           )}
+          {/* Top Bar with Exit */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "700px", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "18px", padding: "14px 24px", boxSizing: "border-box", direction: "rtl", backdropFilter: "blur(8px)" }}>
+            <span style={{ color: "#ffd700", fontWeight: 800, fontSize: "18px", textShadow: "0 0 10px #c0a060" }}>🏺 مقبرة الأسرار</span>
+            <button onClick={() => navigate("/home")} style={{ background: "#c0a060", border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+              خروج 🚪
+            </button>
+          </div>
+
           {/* Header */}
           <div style={{ textAlign: "center", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "20px", padding: "18px 36px", backdropFilter: "blur(8px)", animation: "fadeIn 0.5s ease" }}>
             <h1 style={{ color: "#ffd700", margin: 0, fontSize: "28px", textShadow: "0 0 16px #c0a060" }}>🏺 مقبرة الأسرار 🏺</h1>
@@ -642,9 +745,14 @@ function TombPuzzle() {
               </div>
               <h2 style={{ color: "#fff", margin: "4px 0 0", fontSize: "18px" }}>{LEVEL_META[selectedLevel].name}</h2>
             </div>
-            <button onClick={() => setView("levels")} style={{ background: LEVEL_META[selectedLevel].color, border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
-              ← الخريطة
-            </button>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <button onClick={() => navigate("/home")} style={{ background: "transparent", border: `2px solid ${LEVEL_META[selectedLevel].color}`, borderRadius: "10px", color: "#ffd700", padding: "9px 14px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+                خروج 🚪
+              </button>
+              <button onClick={() => setView("levels")} style={{ background: LEVEL_META[selectedLevel].color, border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+                ← الخريطة
+              </button>
+            </div>
           </div>
 
           {/* Stage nodes */}

@@ -8,6 +8,8 @@ import {
 } from "react-router-dom";
 import { useEffect } from "react";
 import "./styles/App.css";
+import { gameProgressAPI } from "./server/endpoints";
+import { getAuthUser } from "./server/auth";
 
 // Pages
 import Home from "./pages/Home";
@@ -62,15 +64,34 @@ function Layout() {
       if (roleStr?.toLowerCase().includes("doctor")) {
         navigate("/dashboard", { replace: true });
       } else {
-        // ── Pretest Gate (covers pre-existing accounts on refresh) ──────────
-        const pretestDone = localStorage.getItem("pretest_completed_scores");
-        const alreadyFlagged = localStorage.getItem("needsPretest") === "true";
-        if (!pretestDone || alreadyFlagged) {
-          localStorage.setItem("needsPretest", "true");
-          navigate("/pretest", { replace: true });
-        } else {
-          navigate("/home", { replace: true });
-        }
+        const checkProgressAndRedirect = async () => {
+          const authUser = getAuthUser();
+          if (authUser?.userId) {
+            try {
+              const res = await gameProgressAPI.getByUser(authUser.userId);
+              const progressData = res.data?.data || res.data;
+              if (Array.isArray(progressData) && progressData.length > 0) {
+                localStorage.setItem("pretest_completed_scores", JSON.stringify({}));
+                localStorage.setItem("needsPretest", "false");
+                navigate("/home", { replace: true });
+                return;
+              }
+            } catch (e) {
+              console.warn("Could not check game progress on load:", e);
+            }
+          }
+
+          const pretestDone = localStorage.getItem("pretest_completed_scores");
+          const alreadyFlagged = localStorage.getItem("needsPretest") === "true";
+          if (!pretestDone || alreadyFlagged) {
+            localStorage.setItem("needsPretest", "true");
+            navigate("/pretest", { replace: true });
+          } else {
+            navigate("/home", { replace: true });
+          }
+        };
+
+        checkProgressAndRedirect();
       }
     } catch {
       localStorage.removeItem("authToken");

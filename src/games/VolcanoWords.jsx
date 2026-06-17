@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import styles from "../styles/VolcanoWords.module.css";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { gameProgressAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 
 import reading from "../assets/emotions/drago(reading).svg";
 import sitting from "../assets/poses/drago(sitting).svg";
@@ -150,6 +152,43 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   );
 };
 
+const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+  const levelReached = bgProgress?.levelReached || 1;
+  const completedStagesCount = bgProgress?.completedStages || 0;
+  const starsEarned = bgProgress?.starsEarned || 0;
+
+  const completedStages = {};
+  const stars = {};
+
+  let stagesRemaining = completedStagesCount;
+  let starsRemaining = starsEarned;
+
+  for (let l = 1; l <= totalLevels; l++) {
+    completedStages[l.toString()] = [];
+    stars[l.toString()] = [];
+
+    for (let s = 0; s < stagesPerLevel; s++) {
+      if (stagesRemaining > 0) {
+        completedStages[l.toString()].push(true);
+        stagesRemaining--;
+
+        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        stars[l.toString()].push(allocated);
+        starsRemaining -= allocated;
+      } else {
+        completedStages[l.toString()].push(false);
+        stars[l.toString()].push(0);
+      }
+    }
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    completedStages,
+    stars
+  };
+};
+
 function VolcanoWords() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
@@ -177,6 +216,32 @@ function VolcanoWords() {
   });
 
   const [showPretestModal, setShowPretestModal] = useState(false);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+      const userId = authUser?.userId;
+      if (!userId) return;
+
+      try {
+        const res = await gameProgressAPI.getByUser(userId);
+        const progressList = res.data?.data || res.data;
+        const bgProgress = Array.isArray(progressList)
+          ? progressList.find(p => p.gameKey === "volcano_words")
+          : null;
+
+        if (bgProgress) {
+          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
+          setProgress(reconstructed);
+          localStorage.setItem("volcano_words_progress", JSON.stringify(reconstructed));
+        }
+      } catch (err) {
+        console.error("Failed to fetch backend progress for volcano_words:", err);
+      }
+    };
+
+    fetchProgress();
+  }, []);
 
   useEffect(() => {
     if (progress?.showPretestWelcome && progress?.unlockedLevel > 1) {
@@ -356,6 +421,35 @@ function VolcanoWords() {
       };
 
       localStorage.setItem("volcano_words_progress", JSON.stringify(updatedProgress));
+
+      // Synchronize with backend
+      let totalCompletedStages = 0;
+      Object.keys(completedStages).forEach((level) => {
+        totalCompletedStages += completedStages[level].filter(Boolean).length;
+      });
+
+      let totalStars = 0;
+      Object.keys(stars).forEach((level) => {
+        totalStars += stars[level].reduce((sum, s) => sum + s, 0);
+      });
+
+      const maxStages = 6 * 5;
+      const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+
+      const authUser = getAuthUser();
+      const userId = authUser?.userId;
+      if (userId) {
+        gameProgressAPI.update(userId, {
+          gameKey: "volcano_words",
+          levelReached: unlockedLevel,
+          completedStages: totalCompletedStages,
+          starsEarned: totalStars,
+          completionPercent,
+        }).catch(err => {
+          console.error("Failed to update backend progress:", err);
+        });
+      }
+
       return updatedProgress;
     });
   };

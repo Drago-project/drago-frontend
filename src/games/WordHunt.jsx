@@ -11,7 +11,7 @@ import {
   Home,
   ChevronRight,
 } from "lucide-react";
-import { hutGameAPI, profileAPI } from "../server/endpoints";
+import { hutGameAPI, profileAPI, gameProgressAPI } from "../server/endpoints";
 import { getAuthUser } from "../server/auth";
 
 import "../styles/WordHut.css";
@@ -234,6 +234,43 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   );
 };
 
+const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+  const levelReached = bgProgress?.levelReached || 1;
+  const completedStagesCount = bgProgress?.completedStages || 0;
+  const starsEarned = bgProgress?.starsEarned || 0;
+
+  const completedStages = {};
+  const stars = {};
+
+  let stagesRemaining = completedStagesCount;
+  let starsRemaining = starsEarned;
+
+  for (let l = 1; l <= totalLevels; l++) {
+    completedStages[l.toString()] = [];
+    stars[l.toString()] = [];
+
+    for (let s = 0; s < stagesPerLevel; s++) {
+      if (stagesRemaining > 0) {
+        completedStages[l.toString()].push(true);
+        stagesRemaining--;
+
+        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        stars[l.toString()].push(allocated);
+        starsRemaining -= allocated;
+      } else {
+        completedStages[l.toString()].push(false);
+        stars[l.toString()].push(0);
+      }
+    }
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    completedStages,
+    stars
+  };
+};
+
 // ─── Main Component ───────────────────────────────────────────
 const WordHuntGame = () => {
   // const navigate = useNavigate();
@@ -242,6 +279,32 @@ const WordHuntGame = () => {
   const [view, setView]                         = useState("levels");
   const [progress, setProgress]                 = useState(loadProgress);
   const [showPretestModal, setShowPretestModal] = useState(false);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+      const uId = authUser?.userId;
+      if (!uId) return;
+
+      try {
+        const res = await gameProgressAPI.getByUser(uId);
+        const progressList = res.data?.data || res.data;
+        const bgProgress = Array.isArray(progressList)
+          ? progressList.find(p => p.gameKey === "word_hunt")
+          : null;
+
+        if (bgProgress) {
+          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
+          setProgress(reconstructed);
+          saveProgress(reconstructed);
+        }
+      } catch (err) {
+        console.error("Failed to fetch backend progress for word_hunt:", err);
+      }
+    };
+
+    fetchProgress();
+  }, []);
 
   useEffect(() => {
     if (progress?.showPretestWelcome && progress?.unlockedLevel > 1) {
@@ -504,6 +567,33 @@ const WordHuntGame = () => {
           unlockedLevel: newUnlocked,
         };
         saveProgress(updated);
+
+        // Synchronize with backend
+        let totalCompletedStages = 0;
+        Object.keys(newCompleted).forEach((level) => {
+          totalCompletedStages += newCompleted[level].filter(Boolean).length;
+        });
+
+        let totalStars = 0;
+        Object.keys(newStars).forEach((level) => {
+          totalStars += newStars[level].reduce((sum, s) => sum + s, 0);
+        });
+
+        const maxStages = 6 * 5;
+        const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+
+        if (userId) {
+          gameProgressAPI.update(userId, {
+            gameKey: "word_hunt",
+            levelReached: newUnlocked,
+            completedStages: totalCompletedStages,
+            starsEarned: totalStars,
+            completionPercent,
+          }).catch(err => {
+            console.error("Failed to update backend progress:", err);
+          });
+        }
+
         return updated;
       });
 

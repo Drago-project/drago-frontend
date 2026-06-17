@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../styles/Auth.module.css";
 import { Link, useNavigate } from "react-router-dom";
-import { authAPI } from "../server/endpoints";
+import { authAPI, gameProgressAPI } from "../server/endpoints";
+import { getAuthUser } from "../server/auth";
 import ForgotPassword from "./ForgotPassword";
 import ResetPasswordWithCode from "./ResetPasswordCode";
 
@@ -100,17 +101,30 @@ export default function LoginForm() {
       if (roleStr.includes("doctor") || roleStr.includes("dr")) {
         navigate("/dashboard", { replace: true });
       } else {
-        // ── Pretest Gate ──────────────────────────────────────────────────────
-        // Every student MUST complete the pretest exactly once.
-        // We use "pretest_completed_scores" as the completion marker (set by
-        // PreTestApp.finishPreTest). If it's absent the user hasn't done it yet
-        // — regardless of whether they are a new or pre-existing account.
-        const pretestDone = localStorage.getItem("pretest_completed_scores");
-        if (!pretestDone) {
-          localStorage.setItem("needsPretest", "true");
-          navigate("/pretest", { replace: true });
-        } else {
+        // Fetch progress from backend to check if pretest was completed
+        let hasProgress = false;
+        const authUser = getAuthUser();
+        const userId = authUser?.userId || data.user?.userId || data.userId || data?.result?.userId;
+        if (userId) {
+          try {
+            const progressRes = await gameProgressAPI.getByUser(userId);
+            const progressData = progressRes.data?.data || progressRes.data;
+            if (Array.isArray(progressData) && progressData.length > 0) {
+              hasProgress = true;
+            }
+          } catch (err) {
+            console.warn("Could not fetch game progress on login:", err);
+          }
+        }
+
+        if (hasProgress) {
+          localStorage.setItem("pretest_completed_scores", JSON.stringify({}));
+          localStorage.setItem("needsPretest", "false");
           navigate("/home", { replace: true });
+        } else {
+          localStorage.setItem("needsPretest", "true");
+          localStorage.removeItem("pretest_completed_scores");
+          navigate("/pretest", { replace: true });
         }
       }
     } catch (err) {
