@@ -104,7 +104,11 @@ export default function LoginForm() {
         // Fetch progress from backend to check if pretest was completed
         let hasProgress = false;
         const authUser = getAuthUser();
-        const userId = authUser?.userId || data.user?.userId || data.userId || data?.result?.userId;
+        const userId =
+          authUser?.userId ||
+          data.user?.userId ||
+          data.userId ||
+          data?.result?.userId;
         if (userId) {
           try {
             const progressRes = await gameProgressAPI.getByUser(userId);
@@ -126,6 +130,9 @@ export default function LoginForm() {
           localStorage.removeItem("pretest_completed_scores");
           navigate("/pretest", { replace: true });
         }
+        // localStorage.setItem("needsPretest", "true");
+        // localStorage.removeItem("pretest_completed_scores");
+        // navigate("/pretest", { replace: true });
       }
     } catch (err) {
       console.error("Login error:", err);

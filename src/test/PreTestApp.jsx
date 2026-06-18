@@ -28,7 +28,6 @@ import { Safety } from "./components/screens/Safety.jsx";
 import { Mission } from "./components/screens/Mission.jsx";
 import { Results } from "./components/screens/Results.jsx";
 
-// غيرنا الاسم هنا لـ PreTestApp
 export default function PreTestApp() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
