@@ -31,11 +31,16 @@
   /* justify-content: center; <-- ممكن نشيل دي لو المحتوى طويل */
 }
 
+/* Direction controlled by document lang attribute; provide RTL override when needed */
+[dir="rtl"] .game-container {
+  direction: rtl;
+}
+
 /* زرار الموسيقى */
 .music-toggle {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  inset-block-start: 20px; /* top */
+  inset-inline-start: 20px; /* logical left */
   width: 50px;
   height: 50px;
   border-radius: 50%;

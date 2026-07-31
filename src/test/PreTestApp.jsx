@@ -141,6 +141,9 @@ export default function PreTestApp() {
     }
     localStorage.removeItem("needsPretest");
     navigate("/home", { replace: true });
+    if (typeof window !== "undefined" && window.history && window.history.pushState) {
+      window.history.pushState({}, "", "/home");
+    }
   }
 
   return (

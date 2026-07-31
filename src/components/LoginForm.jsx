@@ -100,6 +100,9 @@ export default function LoginForm() {
       const roleStr = (role || "").toString().toLowerCase();
       if (roleStr.includes("doctor") || roleStr.includes("dr")) {
         navigate("/dashboard", { replace: true });
+        if (typeof window !== "undefined" && window.history && window.history.pushState) {
+          window.history.pushState({}, "", "/dashboard");
+        }
       } else {
         // Fetch progress from backend to check if pretest was completed
         let hasProgress = false;
@@ -125,6 +128,9 @@ export default function LoginForm() {
           localStorage.setItem("pretest_completed_scores", JSON.stringify({}));
           localStorage.setItem("needsPretest", "false");
           navigate("/home", { replace: true });
+          if (typeof window !== "undefined" && window.history && window.history.pushState) {
+            window.history.pushState({}, "", "/home");
+          }
         } else {
           localStorage.setItem("needsPretest", "true");
           localStorage.removeItem("pretest_completed_scores");

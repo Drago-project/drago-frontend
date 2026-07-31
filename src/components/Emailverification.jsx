@@ -126,9 +126,16 @@ function EmailVerification({ email, userType, onClose, onVerified }) {
         onVerified();
       } else if (userType === "doctor") {
         navigate("/dashboard", { replace: true });
+        if (typeof window !== "undefined" && window.history && window.history.pushState) {
+          window.history.pushState({}, "", "/dashboard");
+        }
       } else {
         const needsPretest = localStorage.getItem("needsPretest") === "true";
-        navigate(needsPretest ? "/pretest" : "/home", { replace: true });
+        const target = needsPretest ? "/pretest" : "/home";
+        navigate(target, { replace: true });
+        if (target === "/home" && typeof window !== "undefined" && window.history && window.history.pushState) {
+          window.history.pushState({}, "", "/home");
+        }
       }
     } catch (err) {
       console.error("Verification error:", err);

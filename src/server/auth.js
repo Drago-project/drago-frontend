@@ -28,5 +28,6 @@ export const isAuthenticated = () => {
 
 export const logout = () => {
   localStorage.removeItem("authToken");
-  window.location.href = "/auth/login";
+  // Redirect to landing page after logout
+  window.location.href = "/";
 };

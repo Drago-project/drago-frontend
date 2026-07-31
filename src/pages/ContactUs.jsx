@@ -31,7 +31,7 @@ function ContactUs() {
 
   return (
     <>
-      <div className={`${styles.contactPage} ${isArabic ? "rtl" : "ltr"}`}>
+      <div className={styles.contactPage} dir={isArabic ? "rtl" : "ltr"}>
         <div className="container">
           <h1 className={styles.pageTitle}>{t("contact.title")}</h1>
 

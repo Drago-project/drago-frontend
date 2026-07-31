@@ -34,12 +34,14 @@ function LanguageToggle({ onLanguageChange }) {
         gap: "8px",
       }}
       onMouseOver={(e) => {
-        e.target.style.backgroundColor = "#44968e";
-        e.target.style.color = "white";
+        const el = e.currentTarget;
+        el.style.backgroundColor = "#44968e";
+        el.style.color = "white";
       }}
       onMouseOut={(e) => {
-        e.target.style.backgroundColor = "transparent";
-        e.target.style.color = "#44968e";
+        const el = e.currentTarget;
+        el.style.backgroundColor = "transparent";
+        el.style.color = "#44968e";
       }}
     >
       <span>{isArabic ? "English" : "العربية"}</span>

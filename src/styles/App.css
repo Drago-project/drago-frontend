@@ -202,11 +202,13 @@ select {
 }
 
 /* RTL Support */
-[dir="rtl"] {
+[dir="rtl"], .rtl {
+  direction: rtl;
   text-align: right;
 }
 
-[dir="ltr"] {
+[dir="ltr"], .ltr {
+  direction: ltr;
   text-align: left;
 }
 

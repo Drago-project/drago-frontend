@@ -134,3 +134,19 @@
   transform: translateY(-3px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
+
+/* Stack buttons on very small screens to avoid overflow */
+@media (max-width: 420px) {
+  .btnContainer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .modalBtn,
+  .exitBtn {
+    max-width: none;
+    width: 100%;
+    padding: 12px 20px;
+  }
+}

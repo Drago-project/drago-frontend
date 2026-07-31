@@ -88,8 +88,8 @@ body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 
 .nav-links { flex: 1; padding: 1.5rem 0; display: flex; flex-direction: column; gap: 0.25rem; }
 .nav-item { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1.5rem; color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-size: 1rem; transition: all 0.2s; position: relative; font-family: inherit; }
 .nav-item:hover { background-color: rgba(255,255,255,0.1); color: white; }
-.nav-item.active { background-color: rgba(0,0,0,0.2); color: white; font-weight: 600; border-left: 4px solid var(--color-secondary); }
-.rtl .nav-item.active { border-left: none; border-right: 4px solid var(--color-secondary); }
+  .nav-item.active { background-color: rgba(0,0,0,0.2); color: white; font-weight: 600; border-inline-start: 4px solid var(--color-secondary); }
+  .rtl .nav-item.active { border-inline-start: none; border-inline-end: 4px solid var(--color-secondary); }
 .sidebar-footer { padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); }
 .top-header { background: var(--bg-white); height: 80px; padding: 0 2rem; display: flex; justify-content: space-between; align-items: center; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 2rem; }
 .header-left h2 { margin: 0; font-size: 1.5rem; color: var(--color-primary); font-weight: 700; }
@@ -98,7 +98,7 @@ body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, 
 .search-bar input { border: none; background: transparent; outline: none; width: 100%; margin: 0 0.5rem; font-family: inherit; }
 .icon-btn { background: var(--bg-light); border: none; padding: 0.6rem; border-radius: 50%; cursor: pointer; color: var(--color-text-light); transition: 0.2s; position: relative; display: flex; align-items: center; justify-content: center; }
 .icon-btn:hover { background: #e2e8f0; color: var(--color-primary); }
-.badge-dot { position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: red; border-radius: 50%; border: 2px solid white; }
+  .badge-dot { position: absolute; top: 0; inset-inline-end: 0; width: 10px; height: 10px; background: red; border-radius: 50%; border: 2px solid white; }
 .profile-pic { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
 .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
 .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }

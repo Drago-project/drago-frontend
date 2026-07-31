@@ -206,6 +206,9 @@
 
 /* Mobile */
 @media (max-width: 968px) {
+  .heroSection {
+    margin-top: 0;
+  }
   .featuresGrid {
     grid-template-columns: 1fr;
     gap: var(--spacing-xl);

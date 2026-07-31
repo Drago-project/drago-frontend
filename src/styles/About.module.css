@@ -1112,8 +1112,10 @@
   }
 
   .wheelArea {
-    transform: scale(0.7);
+    /* Avoid transform scaling — use explicit dimensions so the layout box shrinks on mobile */
     margin: -50px auto;
+    width: min(450px, 90vw);
+    height: auto;
   }
 
   .difficultiesGrid {
@@ -1127,8 +1129,8 @@
     width: 150px;
   }
   .wheelArea {
-    width: 450px;
-    height: 450px;
+    width: min(450px, 90vw);
+    height: auto;
   }
   .cabin {
     width: 130px;
@@ -1153,7 +1155,10 @@
 
 @media (max-width: 480px) {
   .wheelArea {
-    transform: scale(0.55);
+    /* Smaller fixed dimensions on very small screens to avoid horizontal overflow */
+    width: min(320px, 94vw);
+    height: auto;
+    margin: 0 auto;
   }
 
   .progressBadge {
