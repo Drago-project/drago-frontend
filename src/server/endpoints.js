@@ -178,6 +178,8 @@ export const gameProgressAPI = {
   getByUser: (userId) => api.get(`/api/GameProgress/${userId}`),
   update: (userId, data) =>
     api.post(`/api/GameProgress/${userId}/update`, data),
+  completeStage: (userId, data) =>
+    api.post(`/api/GameProgress/${userId}/complete-stage`, data),
 };
 
 // ─────────────────────────────────────────

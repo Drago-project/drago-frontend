@@ -12,82 +12,123 @@ import { useTranslation } from "react-i18next";
 const defaultProgress = {
   unlockedLevel: 1,
   completedStages: {
-    "1": [false, false, false, false, false],
-    "2": [false, false, false, false, false],
-    "3": [false, false, false, false, false],
-    "4": [false, false, false, false, false]
+    1: [false, false, false, false, false],
+    2: [false, false, false, false, false],
+    3: [false, false, false, false, false],
+    4: [false, false, false, false, false],
   },
   stars: {
-    "1": [0, 0, 0, 0, 0],
-    "2": [0, 0, 0, 0, 0],
-    "3": [0, 0, 0, 0, 0],
-    "4": [0, 0, 0, 0, 0]
-  }
+    1: [0, 0, 0, 0, 0],
+    2: [0, 0, 0, 0, 0],
+    3: [0, 0, 0, 0, 0],
+    4: [0, 0, 0, 0, 0],
+  },
 };
 
 const LEVEL_METADATA_EN = {
-  "1": {
+  1: {
     name: "Level 1: Basics",
-    focus: "Basic reading comprehension and short sentences"
+    focus: "Basic reading comprehension and short sentences",
   },
-  "2": {
+  2: {
     name: "Level 2: Daily Life",
-    focus: "Reading about daily routines, school, and activities"
+    focus: "Reading about daily routines, school, and activities",
   },
-  "3": {
+  3: {
     name: "Level 3: Hobbies & Interests",
-    focus: "Reading about sports, instruments, and creative pursuits"
+    focus: "Reading about sports, instruments, and creative pursuits",
   },
-  "4": {
+  4: {
     name: "Level 4: Science & Nature",
-    focus: "Complex stories about ecosystems, space, and anatomy"
-  }
+    focus: "Complex stories about ecosystems, space, and anatomy",
+  },
 };
 
 const LEVEL_METADATA_AR = {
-  "1": {
+  1: {
     name: "المستوى 1: الأساسيات",
-    focus: "فهم المقروء الأساسي والجمل البسيطة"
+    focus: "فهم المقروء الأساسي والجمل البسيطة",
   },
-  "2": {
+  2: {
     name: "المستوى 2: الحياة اليومية",
-    focus: "قراءة حول الروتين اليومي والمدرسة والأنشطة"
+    focus: "قراءة حول الروتين اليومي والمدرسة والأنشطة",
   },
-  "3": {
+  3: {
     name: "المستوى 3: الهوايات والاهتمامات",
-    focus: "قراءة حول الرياضة والآلات الموسيقية والاهتمامات الإبداعية"
+    focus: "قراءة حول الرياضة والآلات الموسيقية والاهتمامات الإبداعية",
   },
-  "4": {
+  4: {
     name: "المستوى 4: العلوم والطبيعة",
-    focus: "قصص علمية حول الأنظمة البيئية والفضاء والجسد"
-  }
+    focus: "قصص علمية حول الأنظمة البيئية والفضاء والجسد",
+  },
 };
 
 // ─── Pretest Welcome Modal ─────────────────────────────────────
 function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   return (
-    <div style={{
-      position: "fixed",
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.85)",
-      backdropFilter: "blur(8px)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 10000, direction: "rtl", padding: "20px"
-    }}>
-      <div style={{
-        background: "linear-gradient(135deg, #0a1f2b, #051015)",
-        border: "3px solid #ffd700",
-        borderRadius: "24px",
-        padding: "30px 24px",
-        maxWidth: "480px", width: "100%",
-        textAlign: "center",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.3)"
-      }}>
-        <div style={{ fontSize: "70px", marginBottom: "15px", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
-        <h2 style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}>مرحباً بك يا بطل!</h2>
-        <p style={{ color: "#fff", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" }}>
-          بناءً على أدائك في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها.
-          <span style={{ display: "block", marginTop: "10px", color: "#ffd700", fontWeight: "bold", fontSize: "18px" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10000,
+        direction: "rtl",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #0a1f2b, #051015)",
+          border: "3px solid #ffd700",
+          borderRadius: "24px",
+          padding: "30px 24px",
+          maxWidth: "480px",
+          width: "100%",
+          textAlign: "center",
+          boxShadow:
+            "0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.3)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "70px",
+            marginBottom: "15px",
+            filter: "drop-shadow(0 0 10px #ffd700)",
+          }}
+        >
+          🌟
+        </div>
+        <h2
+          style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}
+        >
+          مرحباً بك يا بطل!
+        </h2>
+        <p
+          style={{
+            color: "#fff",
+            fontSize: "16px",
+            lineHeight: "1.6",
+            margin: "0 0 24px 0",
+          }}
+        >
+          بناءً على أدائك في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي
+          المهارات التي تتقنها.
+          <span
+            style={{
+              display: "block",
+              marginTop: "10px",
+              color: "#ffd700",
+              fontWeight: "bold",
+              fontSize: "18px",
+            }}
+          >
             رحلتك تبدأ من المستوى {unlockedLevel}!
           </span>
         </p>
@@ -95,13 +136,20 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
           onClick={onDismiss}
           style={{
             background: "linear-gradient(135deg, #ffd700, #b8860b)",
-            border: "none", borderRadius: "14px",
-            color: "#1a0f00", padding: "12px 32px",
-            fontSize: "16px", fontWeight: "bold", cursor: "pointer",
-            boxShadow: "0 4px 15px rgba(212,175,55,0.4)", transition: "transform 0.2s"
+            border: "none",
+            borderRadius: "14px",
+            color: "#1a0f00",
+            padding: "12px 32px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            boxShadow: "0 4px 15px rgba(212,175,55,0.4)",
+            transition: "transform 0.2s",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-          onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.transform = "scale(1.05)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
         >
           ابدأ الرحلة الآن! 🚲
         </button>
@@ -110,7 +158,11 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   );
 }
 
-const reconstructDetailedProgress = (bgProgress, totalLevels = 4, stagesPerLevel = 5) => {
+const reconstructDetailedProgress = (
+  bgProgress,
+  totalLevels = 4,
+  stagesPerLevel = 5,
+) => {
   const levelReached = bgProgress?.levelReached || 1;
   const completedStagesCount = bgProgress?.completedStages || 0;
   const starsEarned = bgProgress?.starsEarned || 0;
@@ -130,7 +182,10 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 4, stagesPerLevel
         completedStages[l.toString()].push(true);
         stagesRemaining--;
 
-        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        const allocated = Math.min(
+          3,
+          Math.max(1, starsRemaining - stagesRemaining),
+        );
         stars[l.toString()].push(allocated);
         starsRemaining -= allocated;
       } else {
@@ -143,7 +198,7 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 4, stagesPerLevel
   return {
     unlockedLevel: levelReached,
     completedStages,
-    stars
+    stars,
   };
 };
 
@@ -161,7 +216,10 @@ function ReadingQuest() {
       if (stored) {
         const parsed = JSON.parse(stored);
         const newProgress = { ...defaultProgress, ...parsed };
-        newProgress.completedStages = { ...defaultProgress.completedStages, ...parsed.completedStages };
+        newProgress.completedStages = {
+          ...defaultProgress.completedStages,
+          ...parsed.completedStages,
+        };
         newProgress.stars = { ...defaultProgress.stars, ...parsed.stars };
         return newProgress;
       }
@@ -178,13 +236,15 @@ function ReadingQuest() {
         const p = JSON.parse(stored);
         return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Failed to parse progress for pretest modal", e);
+    }
     return false;
   });
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
-    setProgress(prev => {
+    setProgress((prev) => {
       const updated = { ...prev, showPretestWelcome: false };
       localStorage.setItem("reading_quest_progress", JSON.stringify(updated));
       return updated;
@@ -216,17 +276,25 @@ function ReadingQuest() {
         const res = await gameProgressAPI.getByUser(userId);
         const progressList = res.data?.data || res.data;
         const bgProgress = Array.isArray(progressList)
-          ? progressList.find(p => p.gameKey === "reading_quest")
+          ? progressList.find((p) => p.gameKey === "reading_quest")
           : null;
 
         if (bgProgress) {
           const reconstructed = reconstructDetailedProgress(bgProgress, 4, 5);
           setProgress(reconstructed);
-          localStorage.setItem("reading_quest_progress", JSON.stringify(reconstructed));
+          localStorage.setItem(
+            "reading_quest_progress",
+            JSON.stringify(reconstructed),
+          );
         }
       } catch (err) {
         console.error("Failed to fetch backend progress:", err);
-        setApiError(t("readingQuest.errLoadingProgress", "Failed to sync progress with backend."));
+        setApiError(
+          t(
+            "readingQuest.errLoadingProgress",
+            "Failed to sync progress with backend.",
+          ),
+        );
       } finally {
         setLoading(false);
       }
@@ -251,9 +319,10 @@ function ReadingQuest() {
 
   const handleSelectStage = (stageIndex) => {
     const levelNum = parseInt(selectedLevelId, 10);
-    const isStageUnlocked = stageIndex === 0
-      || levelNum < progress.unlockedLevel
-      || progress.completedStages[selectedLevelId]?.[stageIndex - 1];
+    const isStageUnlocked =
+      stageIndex === 0 ||
+      levelNum < progress.unlockedLevel ||
+      progress.completedStages[selectedLevelId]?.[stageIndex - 1];
     if (!isStageUnlocked) return;
 
     setSelectedStageIndex(stageIndex);
@@ -265,7 +334,10 @@ function ReadingQuest() {
     const numStages = 5;
     const stageSize = Math.ceil(totalQuestions.length / numStages);
 
-    let questions = totalQuestions.slice(stageIndex * stageSize, (stageIndex + 1) * stageSize);
+    let questions = totalQuestions.slice(
+      stageIndex * stageSize,
+      (stageIndex + 1) * stageSize,
+    );
     if (questions.length === 0) {
       questions = totalQuestions.slice(0, 4);
     }
@@ -296,55 +368,93 @@ function ReadingQuest() {
       const completedStages = { ...prev.completedStages };
       const stars = { ...prev.stars };
 
-      const currentLevelStages = [...(completedStages[selectedLevelId] || [false, false, false, false, false])];
+      const currentLevelStages = [
+        ...(completedStages[selectedLevelId] || [
+          false,
+          false,
+          false,
+          false,
+          false,
+        ]),
+      ];
       currentLevelStages[selectedStageIndex] = true;
       completedStages[selectedLevelId] = currentLevelStages;
 
-      const currentLevelStars = [...(stars[selectedLevelId] || [0, 0, 0, 0, 0])];
-      currentLevelStars[selectedStageIndex] = Math.max(currentLevelStars[selectedStageIndex] || 0, earnedStars);
+      const currentLevelStars = [
+        ...(stars[selectedLevelId] || [0, 0, 0, 0, 0]),
+      ];
+      currentLevelStars[selectedStageIndex] = Math.max(
+        currentLevelStars[selectedStageIndex] || 0,
+        earnedStars,
+      );
       stars[selectedLevelId] = currentLevelStars;
 
       // Check if all 5 stages of the current level are completed
       const allCompleted = currentLevelStages.every(Boolean);
       let unlockedLevel = prev.unlockedLevel;
       if (allCompleted) {
-        unlockedLevel = Math.min(4, Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1));
+        unlockedLevel = Math.min(
+          4,
+          Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1),
+        );
       }
 
       const updatedProgress = {
         ...prev,
         unlockedLevel,
         completedStages,
-        stars
+        stars,
       };
 
-      localStorage.setItem("reading_quest_progress", JSON.stringify(updatedProgress));
+      localStorage.setItem(
+        "reading_quest_progress",
+        JSON.stringify(updatedProgress),
+      );
 
+      // ─────────────────────────────────────────────────────────
       // Synchronize with backend
-      let totalCompletedStages = 0;
-      Object.keys(completedStages).forEach((level) => {
-        totalCompletedStages += completedStages[level].filter(Boolean).length;
-      });
-
-      let totalStars = 0;
-      Object.keys(stars).forEach((level) => {
-        totalStars += stars[level].reduce((sum, s) => sum + s, 0);
-      });
-
-      const maxStages = 4 * 5;
-      const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
-
+      // ─────────────────────────────────────────────────────────
       const userId = getUserId();
       if (userId) {
-        gameProgressAPI.update(userId, {
-          gameKey: "reading_quest",
-          levelReached: unlockedLevel,
-          completedStages: totalCompletedStages,
-          starsEarned: totalStars,
-          completionPercent,
-        }).catch(err => {
-          console.error("Failed to update backend progress:", err);
+        gameProgressAPI
+          .completeStage(userId, {
+            gameKey: "reading_quest",
+            stageNumber: selectedStageIndex + 1,
+            score: score,
+            starsEarned: earnedStars,
+          })
+          .catch((err) => {
+            console.error("Failed to complete stage on backend:", err);
+          });
+
+        // 2. تحديث التقدم العام (زي ما كان موجود عندك)
+        let totalCompletedStages = 0;
+        Object.keys(completedStages).forEach((level) => {
+          totalCompletedStages += completedStages[level].filter(Boolean).length;
         });
+
+        let totalStars = 0;
+        Object.keys(stars).forEach((level) => {
+          totalStars += stars[level].reduce((sum, s) => sum + s, 0);
+        });
+
+        const maxStages = 4 * 5;
+        const completionPercent = Math.min(
+          100,
+          Math.round((totalCompletedStages / maxStages) * 100),
+        );
+
+        gameProgressAPI
+          .update(userId, {
+            gameKey: "reading_quest",
+            levelReached: unlockedLevel,
+            completedStages: totalCompletedStages,
+            starsEarned: totalStars,
+            completionPercent,
+          })
+          .catch((err) => {
+            console.error("Failed to update backend progress:", err);
+          });
       }
 
       return updatedProgress;
@@ -478,6 +588,7 @@ function ReadingQuest() {
       }
     } catch (e) {
       /* ignore */
+      console.error("Failed to play sound", e);
     }
   };
 
@@ -490,7 +601,7 @@ function ReadingQuest() {
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     } catch (e) {
-      console.warn("TTS not supported");
+      console.warn("TTS not supported", e);
     }
   };
 
@@ -511,7 +622,9 @@ function ReadingQuest() {
           />
         )}
         <nav className={styles.headerNav}>
-          <div className={styles.scoreBoard}>📖 {t("readingQuest.title", "Reading Quest")}</div>
+          <div className={styles.scoreBoard}>
+            📖 {t("readingQuest.title", "Reading Quest")}
+          </div>
           <button className={styles.exitBtn} onClick={() => navigate("/home")}>
             {t("readingQuest.exit", "Exit Adventure")}
           </button>
@@ -523,7 +636,10 @@ function ReadingQuest() {
               {t("readingQuest.selectLevel", "Select Your Level")}
             </h1>
             <p className={styles.mapSubtitle}>
-              {t("readingQuest.selectLevelSub", "Complete all stages to unlock the next level")}
+              {t(
+                "readingQuest.selectLevelSub",
+                "Complete all stages to unlock the next level",
+              )}
             </p>
           </div>
 
@@ -532,7 +648,9 @@ function ReadingQuest() {
               const meta = LEVEL_META[id];
               const num = parseInt(id, 10);
               const isLocked = num > progress.unlockedLevel;
-              const completedCount = (progress.completedStages[id] || []).filter(Boolean).length;
+              const completedCount = (
+                progress.completedStages[id] || []
+              ).filter(Boolean).length;
               const totalStages = 5;
               const pct = Math.round((completedCount / totalStages) * 100);
               const isRecommended = num === progress.recommendedLevel;
@@ -543,19 +661,32 @@ function ReadingQuest() {
                   className={`${styles.levelCard} ${isLocked ? styles.levelCardLocked : ""}`}
                   style={{
                     position: "relative",
-                    ...(isRecommended ? { border: "3px solid #ffd700", boxShadow: "0 0 20px #ffd700" } : {})
+                    ...(isRecommended
+                      ? {
+                          border: "3px solid #ffd700",
+                          boxShadow: "0 0 20px #ffd700",
+                        }
+                      : {}),
                   }}
                   onClick={() => handleSelectLevel(id)}
                 >
                   {isLocked && <div className={styles.lockOverlay}>🔒</div>}
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute", top: "10px", left: "10px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00", padding: "4px 10px",
-                      borderRadius: "12px", fontSize: "11px", fontWeight: "bold",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)", zIndex: 2
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: "bold",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        zIndex: 2,
+                      }}
+                    >
                       المستوى الموصى به ⭐
                     </div>
                   )}
@@ -568,11 +699,16 @@ function ReadingQuest() {
                   </div>
                   <div className={styles.levelFooter}>
                     <div className={styles.levelProgressText}>
-                      <span>{completedCount} / {totalStages}</span>
+                      <span>
+                        {completedCount} / {totalStages}
+                      </span>
                       <span>{pct}%</span>
                     </div>
                     <div className={styles.progressBarBg}>
-                      <div className={styles.progressBarFill} style={{ width: `${pct}%` }} />
+                      <div
+                        className={styles.progressBarFill}
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -588,7 +724,13 @@ function ReadingQuest() {
   if (view === "stages") {
     const meta = LEVEL_META[selectedLevelId];
     const stageStars = progress.stars[selectedLevelId] || [0, 0, 0, 0, 0];
-    const stageCompleted = progress.completedStages[selectedLevelId] || [false, false, false, false, false];
+    const stageCompleted = progress.completedStages[selectedLevelId] || [
+      false,
+      false,
+      false,
+      false,
+      false,
+    ];
 
     return (
       <div className={styles.gameContainer}>
@@ -604,7 +746,10 @@ function ReadingQuest() {
             <h2 className={styles.stagesHeaderTitle}>
               {meta?.name || "Level"} — <span>{meta?.focus}</span>
             </h2>
-            <button className={styles.backBtn} onClick={() => setView("levels")}>
+            <button
+              className={styles.backBtn}
+              onClick={() => setView("levels")}
+            >
               ← {t("readingQuest.backToLevels", "Back to Levels")}
             </button>
           </div>
@@ -612,36 +757,53 @@ function ReadingQuest() {
           <div className={styles.stagesGrid}>
             {[0, 1, 2, 3, 4].map((stageIdx) => {
               const levelNum = parseInt(selectedLevelId, 10);
-              const isUnlocked = stageIdx === 0
-                || levelNum < progress.unlockedLevel
-                || stageCompleted[stageIdx - 1];
+              const isUnlocked =
+                stageIdx === 0 ||
+                levelNum < progress.unlockedLevel ||
+                stageCompleted[stageIdx - 1];
               const isComplete = stageCompleted[stageIdx];
               const starCount = stageStars[stageIdx] || 0;
-              const isRecommended = levelNum === progress.recommendedLevel
-                && stageIdx === (progress.recommendedStage - 1 || 0);
+              const isRecommended =
+                levelNum === progress.recommendedLevel &&
+                stageIdx === (progress.recommendedStage - 1 || 0);
 
               return (
-                <div key={stageIdx} className={styles.stageNodeWrapper} style={{ position: "relative" }}>
+                <div
+                  key={stageIdx}
+                  className={styles.stageNodeWrapper}
+                  style={{ position: "relative" }}
+                >
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute",
-                      top: "-22px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00", padding: "2px 8px",
-                      borderRadius: "10px", fontSize: "10px", fontWeight: "bold",
-                      whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(0,0,0,0.25)", zIndex: 2
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-22px",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        zIndex: 2,
+                      }}
+                    >
                       بداية المسار 🚀
                     </div>
                   )}
                   <div
                     className={`${styles.stageNode} ${!isUnlocked ? styles.stageNodeLocked : ""}`}
-                    style={isRecommended ? {
-                      boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
-                      border: "3px solid #ffd700",
-                    } : {}}
+                    style={
+                      isRecommended
+                        ? {
+                            boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
+                            border: "3px solid #ffd700",
+                          }
+                        : {}
+                    }
                     onClick={() => handleSelectStage(stageIdx)}
                   >
                     {!isUnlocked ? "🔒" : isComplete ? "✅" : stageIdx + 1}
@@ -675,7 +837,9 @@ function ReadingQuest() {
   return (
     <div className={styles.gameContainer}>
       <nav className={styles.headerNav}>
-        <div className={styles.scoreBoard}>⭐ {t("readingQuest.score", "Score")}: {score}</div>
+        <div className={styles.scoreBoard}>
+          ⭐ {t("readingQuest.score", "Score")}: {score}
+        </div>
         {apiError && (
           <div
             style={{
@@ -718,7 +882,8 @@ function ReadingQuest() {
           ) : (
             <div className={styles.quizMode}>
               <h2 className={styles.questionText}>
-                {q?.question || t("readingQuest.defaultQuestion", "What did you read?")}
+                {q?.question ||
+                  t("readingQuest.defaultQuestion", "What did you read?")}
               </h2>
               <div className={styles.optionsGrid}>
                 {options.map((opt, idx) => {
@@ -747,8 +912,14 @@ function ReadingQuest() {
               {feedback && (
                 <div className={`${styles.feedbackMsg} ${styles[feedback]}`}>
                   {feedback === "correct"
-                    ? t("readingQuest.correctFeedback", "Great! Boat is steady. 🚢")
-                    : t("readingQuest.wrongFeedback", "Oh no! Drifting closer! 🌊")}
+                    ? t(
+                        "readingQuest.correctFeedback",
+                        "Great! Boat is steady. 🚢",
+                      )
+                    : t(
+                        "readingQuest.wrongFeedback",
+                        "Oh no! Drifting closer! 🌊",
+                      )}
                 </div>
               )}
             </div>
@@ -756,12 +927,15 @@ function ReadingQuest() {
         </div>
 
         <div className={styles.progressText}>
-          {t("readingQuest.question", "Question")} {currentQuestionIndex + 1} / {stageQuestions.length}
+          {t("readingQuest.question", "Question")} {currentQuestionIndex + 1} /{" "}
+          {stageQuestions.length}
         </div>
       </div>
 
       <div className={styles.riverFooter}>
-        <div className={styles.dangerLabel}>⚠️ {t("readingQuest.dangerZone", "DANGER ZONE")}</div>
+        <div className={styles.dangerLabel}>
+          ⚠️ {t("readingQuest.dangerZone", "DANGER ZONE")}
+        </div>
         <div className={styles.waterSurface} />
         <div className={styles.waterPath}>
           <div

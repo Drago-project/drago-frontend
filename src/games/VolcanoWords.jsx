@@ -20,115 +20,153 @@ const API_TIMEOUT_MS = 30000; // 30 second timeout for API calls
 const defaultProgress = {
   unlockedLevel: 1,
   completedStages: {
-    "1": [false, false, false, false, false],
-    "2": [false, false, false, false, false],
-    "3": [false, false, false, false, false],
-    "4": [false, false, false, false, false],
-    "5": [false, false, false, false, false],
-    "6": [false, false, false, false, false]
+    1: [false, false, false, false, false],
+    2: [false, false, false, false, false],
+    3: [false, false, false, false, false],
+    4: [false, false, false, false, false],
+    5: [false, false, false, false, false],
+    6: [false, false, false, false, false],
   },
   stars: {
-    "1": [0, 0, 0, 0, 0],
-    "2": [0, 0, 0, 0, 0],
-    "3": [0, 0, 0, 0, 0],
-    "4": [0, 0, 0, 0, 0],
-    "5": [0, 0, 0, 0, 0],
-    "6": [0, 0, 0, 0, 0]
-  }
+    1: [0, 0, 0, 0, 0],
+    2: [0, 0, 0, 0, 0],
+    3: [0, 0, 0, 0, 0],
+    4: [0, 0, 0, 0, 0],
+    5: [0, 0, 0, 0, 0],
+    6: [0, 0, 0, 0, 0],
+  },
 };
 
 const LEVEL_METADATA_EN = {
-  "1": {
+  1: {
     name: "Level 1: Short Vowels",
-    focus: "Three-letter words with short vowels"
+    focus: "Three-letter words with short vowels",
   },
-  "2": {
+  2: {
     name: "Level 2: Long Vowels (Mudood)",
-    focus: "Alif, Waw, and Yaa"
+    focus: "Alif, Waw, and Yaa",
   },
-  "3": {
+  3: {
     name: "Level 3: Sukoon & Tanween",
-    focus: "Double vowels and silent marks"
+    focus: "Double vowels and silent marks",
   },
-  "4": {
+  4: {
     name: "Level 4: Shaddah & Ta Marbutah",
-    focus: "Doubled sounds & feminine endings"
+    focus: "Doubled sounds & feminine endings",
   },
-  "5": {
+  5: {
     name: "Level 5: Solar & Lunar Articles",
-    focus: "Definite articles (Al-)"
+    focus: "Definite articles (Al-)",
   },
-  "6": {
+  6: {
     name: "Level 6: Simple Sentences",
-    focus: "Simple sentences & reading fluency"
-  }
+    focus: "Simple sentences & reading fluency",
+  },
 };
 
 const LEVEL_METADATA_AR = {
-  "1": {
+  1: {
     name: "المستوى 1: الحركات القصيرة",
-    focus: "الكلمات الثلاثية بالحركات القصيرة"
+    focus: "الكلمات الثلاثية بالحركات القصيرة",
   },
-  "2": {
+  2: {
     name: "المستوى 2: المدود الطويلة",
-    focus: "الألف والواو والياء"
+    focus: "الألف والواو والياء",
   },
-  "3": {
+  3: {
     name: "المستوى 3: المقطع الساكن والتنوين",
-    focus: "الساكن والتنوين بالضم والفتح والكسر"
+    focus: "الساكن والتنوين بالضم والفتح والكسر",
   },
-  "4": {
+  4: {
     name: "المستوى 4: الشدة والتاء المربوطة",
-    focus: "الحروف المشددة والتاء المربوطة"
+    focus: "الحروف المشددة والتاء المربوطة",
   },
-  "5": {
+  5: {
     name: "المستوى 5: اللام الشمسية والقمرية",
-    focus: "ال التعريف الشمسية والقمرية"
+    focus: "ال التعريف الشمسية والقمرية",
   },
-  "6": {
+  6: {
     name: "المستوى 6: الجمل البسيطة",
-    focus: "الجمل البسيطة والطلاقة القرائية"
-  }
+    focus: "الجمل البسيطة والطلاقة القرائية",
+  },
 };
 
 // ─── Pretest Welcome Modal ─────────────────────────────────────
 const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   return (
-    <div style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      backdropFilter: "blur(8px)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 10000,
-      direction: "rtl",
-      padding: "20px"
-    }}>
-      <div style={{
-        background: "linear-gradient(135deg, #2b1f0d, #1a1005)",
-        border: "3px solid #ffd700",
-        borderRadius: "24px",
-        padding: "30px 24px",
-        maxWidth: "480px",
-        width: "100%",
-        textAlign: "center",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.2)",
-      }}>
-        <div style={{ fontSize: "70px", marginBottom: "15px", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
-        <h2 style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px", fontWeight: "bold" }}>مرحباً بك يا بطل!</h2>
-        <p style={{ color: "#fff", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" }}>
-          بناءً على أدائك الرائع في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها بالفعل.
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10000,
+        direction: "rtl",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #2b1f0d, #1a1005)",
+          border: "3px solid #ffd700",
+          borderRadius: "24px",
+          padding: "30px 24px",
+          maxWidth: "480px",
+          width: "100%",
+          textAlign: "center",
+          boxShadow:
+            "0 10px 30px rgba(0,0,0,0.5), 0 0 20px rgba(212, 175, 55, 0.2)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "70px",
+            marginBottom: "15px",
+            filter: "drop-shadow(0 0 10px #ffd700)",
+          }}
+        >
+          🌟
+        </div>
+        <h2
+          style={{
+            color: "#ffd700",
+            margin: "0 0 12px 0",
+            fontSize: "24px",
+            fontWeight: "bold",
+          }}
+        >
+          مرحباً بك يا بطل!
+        </h2>
+        <p
+          style={{
+            color: "#fff",
+            fontSize: "16px",
+            lineHeight: "1.6",
+            margin: "0 0 24px 0",
+          }}
+        >
+          بناءً على أدائك الرائع في التقييم القَبلي، قمنا بفتح المستويات الأولى
+          لتخطي المهارات التي تتقنها بالفعل.
           <br />
-          <span style={{ display: "block", marginTop: "10px", color: "#ffd700", fontWeight: "bold", fontSize: "18px" }}>
+          <span
+            style={{
+              display: "block",
+              marginTop: "10px",
+              color: "#ffd700",
+              fontWeight: "bold",
+              fontSize: "18px",
+            }}
+          >
             رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
           </span>
         </p>
-        <button 
+        <button
           onClick={onDismiss}
           style={{
             background: "linear-gradient(135deg, #ffd700, #b8860b)",
@@ -140,10 +178,12 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
             fontWeight: "bold",
             cursor: "pointer",
             boxShadow: "0 4px 15px rgba(212,175,55,0.4)",
-            transition: "transform 0.2s"
+            transition: "transform 0.2s",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-          onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.transform = "scale(1.05)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
         >
           ابدأ المغامرة الآن! 🚀
         </button>
@@ -152,7 +192,11 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   );
 };
 
-const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+const reconstructDetailedProgress = (
+  bgProgress,
+  totalLevels = 6,
+  stagesPerLevel = 5,
+) => {
   const levelReached = bgProgress?.levelReached || 1;
   const completedStagesCount = bgProgress?.completedStages || 0;
   const starsEarned = bgProgress?.starsEarned || 0;
@@ -172,7 +216,10 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
         completedStages[l.toString()].push(true);
         stagesRemaining--;
 
-        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        const allocated = Math.min(
+          3,
+          Math.max(1, starsRemaining - stagesRemaining),
+        );
         stars[l.toString()].push(allocated);
         starsRemaining -= allocated;
       } else {
@@ -185,7 +232,7 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
   return {
     unlockedLevel: levelReached,
     completedStages,
-    stars
+    stars,
   };
 };
 
@@ -205,7 +252,10 @@ function VolcanoWords() {
       if (stored) {
         const parsed = JSON.parse(stored);
         const newProgress = { ...defaultProgress, ...parsed };
-        newProgress.completedStages = { ...defaultProgress.completedStages, ...parsed.completedStages };
+        newProgress.completedStages = {
+          ...defaultProgress.completedStages,
+          ...parsed.completedStages,
+        };
         newProgress.stars = { ...defaultProgress.stars, ...parsed.stars };
         return newProgress;
       }
@@ -227,16 +277,22 @@ function VolcanoWords() {
         const res = await gameProgressAPI.getByUser(userId);
         const progressList = res.data?.data || res.data;
         const bgProgress = Array.isArray(progressList)
-          ? progressList.find(p => p.gameKey === "volcano_words")
+          ? progressList.find((p) => p.gameKey === "volcano_words")
           : null;
 
         if (bgProgress) {
           const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
           setProgress(reconstructed);
-          localStorage.setItem("volcano_words_progress", JSON.stringify(reconstructed));
+          localStorage.setItem(
+            "volcano_words_progress",
+            JSON.stringify(reconstructed),
+          );
         }
       } catch (err) {
-        console.error("Failed to fetch backend progress for volcano_words:", err);
+        console.error(
+          "Failed to fetch backend progress for volcano_words:",
+          err,
+        );
       }
     };
 
@@ -251,7 +307,7 @@ function VolcanoWords() {
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
-    setProgress(prev => {
+    setProgress((prev) => {
       const updated = { ...prev, showPretestWelcome: false };
       localStorage.setItem("volcano_words_progress", JSON.stringify(updated));
       return updated;
@@ -357,7 +413,10 @@ function VolcanoWords() {
   };
 
   const handleSelectStage = (stageIndex) => {
-    const isStageUnlocked = stageIdx => stageIdx === 0 || parseInt(selectedLevelId, 10) < progress.unlockedLevel || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+    const isStageUnlocked = (stageIdx) =>
+      stageIdx === 0 ||
+      parseInt(selectedLevelId, 10) < progress.unlockedLevel ||
+      progress.completedStages[selectedLevelId]?.[stageIdx - 1];
     if (!isStageUnlocked(stageIndex)) return;
 
     setSelectedStageIndex(stageIndex);
@@ -369,7 +428,10 @@ function VolcanoWords() {
     const numStages = 5;
     const stageSize = Math.ceil(totalWords.length / numStages);
 
-    let stageWords = totalWords.slice(stageIndex * stageSize, (stageIndex + 1) * stageSize);
+    let stageWords = totalWords.slice(
+      stageIndex * stageSize,
+      (stageIndex + 1) * stageSize,
+    );
     if (stageWords.length === 0) {
       stageWords = totalWords.slice(0, 5);
     }
@@ -398,29 +460,48 @@ function VolcanoWords() {
       const completedStages = { ...prev.completedStages };
       const stars = { ...prev.stars };
 
-      const currentLevelStages = [...(completedStages[selectedLevelId] || [false, false, false, false, false])];
+      const currentLevelStages = [
+        ...(completedStages[selectedLevelId] || [
+          false,
+          false,
+          false,
+          false,
+          false,
+        ]),
+      ];
       currentLevelStages[selectedStageIndex] = true;
       completedStages[selectedLevelId] = currentLevelStages;
 
-      const currentLevelStars = [...(stars[selectedLevelId] || [0, 0, 0, 0, 0])];
-      currentLevelStars[selectedStageIndex] = Math.max(currentLevelStars[selectedStageIndex] || 0, earnedStars);
+      const currentLevelStars = [
+        ...(stars[selectedLevelId] || [0, 0, 0, 0, 0]),
+      ];
+      currentLevelStars[selectedStageIndex] = Math.max(
+        currentLevelStars[selectedStageIndex] || 0,
+        earnedStars,
+      );
       stars[selectedLevelId] = currentLevelStars;
 
       // Check if all 5 stages of the current level are completed
       const allCompleted = currentLevelStages.every(Boolean);
       let unlockedLevel = prev.unlockedLevel;
       if (allCompleted) {
-        unlockedLevel = Math.min(6, Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1));
+        unlockedLevel = Math.min(
+          6,
+          Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1),
+        );
       }
 
       const updatedProgress = {
         ...prev,
         unlockedLevel,
         completedStages,
-        stars
+        stars,
       };
 
-      localStorage.setItem("volcano_words_progress", JSON.stringify(updatedProgress));
+      localStorage.setItem(
+        "volcano_words_progress",
+        JSON.stringify(updatedProgress),
+      );
 
       // Synchronize with backend
       let totalCompletedStages = 0;
@@ -434,20 +515,38 @@ function VolcanoWords() {
       });
 
       const maxStages = 6 * 5;
-      const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+      const completionPercent = Math.min(
+        100,
+        Math.round((totalCompletedStages / maxStages) * 100),
+      );
 
       const authUser = getAuthUser();
       const userId = authUser?.userId;
       if (userId) {
-        gameProgressAPI.update(userId, {
-          gameKey: "volcano_words",
-          levelReached: unlockedLevel,
-          completedStages: totalCompletedStages,
-          starsEarned: totalStars,
-          completionPercent,
-        }).catch(err => {
-          console.error("Failed to update backend progress:", err);
-        });
+        // Record this specific stage completion
+        gameProgressAPI
+          .completeStage(userId, {
+            gameKey: "volcano_words",
+            stageNumber: selectedStageIndex + 1,
+            score: score,
+            starsEarned: earnedStars,
+          })
+          .catch((err) => {
+            console.error("Failed to complete stage on backend:", err);
+          });
+
+        // Update aggregate progress
+        gameProgressAPI
+          .update(userId, {
+            gameKey: "volcano_words",
+            levelReached: unlockedLevel,
+            completedStages: totalCompletedStages,
+            starsEarned: totalStars,
+            completionPercent,
+          })
+          .catch((err) => {
+            console.error("Failed to update backend progress:", err);
+          });
       }
 
       return updatedProgress;
@@ -607,7 +706,6 @@ function VolcanoWords() {
       handleSelectStage(selectedStageIndex);
     }
   };
-
 
   // TTS Hint
   const handleUseHint = async () => {
@@ -819,7 +917,14 @@ function VolcanoWords() {
   // Render
   if (!levels) {
     return (
-      <div className={styles.gameContainer} style={{ justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+      <div
+        className={styles.gameContainer}
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+        }}
+      >
         <div style={{ color: "#fff", fontSize: 24, fontWeight: 700 }}>
           {t("volcanoWords.loading", "جاري تحميل المستويات...")}
         </div>
@@ -848,19 +953,27 @@ function VolcanoWords() {
 
         <div className={styles.selectionContainer}>
           <div className={styles.mapTitleContainer}>
-            <h1 className={styles.mapTitle}>{t("volcanoWords.mapTitle", "خريطة المغامرة")}</h1>
-            <p className={styles.mapSubtitle}>{t("volcanoWords.mapSubtitle", "اختر مستوى لتبدأ مغامرة دراغو!")}</p>
+            <h1 className={styles.mapTitle}>
+              {t("volcanoWords.mapTitle", "خريطة المغامرة")}
+            </h1>
+            <p className={styles.mapSubtitle}>
+              {t("volcanoWords.mapSubtitle", "اختر مستوى لتبدأ مغامرة دراغو!")}
+            </p>
           </div>
 
           <div className={styles.levelsGrid}>
             {Object.keys(defaultProgress.completedStages).map((id) => {
               const levelNum = parseInt(id, 10);
               const isUnlocked = levelNum <= progress.unlockedLevel;
-              const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[id] : LEVEL_METADATA_AR[id];
-              const levelName = levels?.[id]?.name || levelMeta?.name || `Level ${id}`;
+              const levelMeta = i18n.language?.startsWith("en")
+                ? LEVEL_METADATA_EN[id]
+                : LEVEL_METADATA_AR[id];
+              const levelName =
+                levels?.[id]?.name || levelMeta?.name || `Level ${id}`;
               const levelFocus = levelMeta?.focus || levels?.[id]?.focus || "";
 
-              const completedCount = progress.completedStages[id]?.filter(Boolean).length || 0;
+              const completedCount =
+                progress.completedStages[id]?.filter(Boolean).length || 0;
               const progressPercent = (completedCount / 5) * 100;
               const isRecommended = levelNum === progress.recommendedLevel;
 
@@ -870,29 +983,33 @@ function VolcanoWords() {
                   className={`${styles.levelCard} ${!isUnlocked ? styles.levelCardLocked : ""}`}
                   style={{
                     position: "relative",
-                    ...(isRecommended ? { border: "3px solid #ffd700", boxShadow: "0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.2)" } : {})
+                    ...(isRecommended
+                      ? {
+                          border: "3px solid #ffd700",
+                          boxShadow:
+                            "0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.2)",
+                        }
+                      : {}),
                   }}
                   onClick={() => isUnlocked && handleSelectLevel(id)}
                 >
-                  {!isUnlocked && (
-                    <div className={styles.lockOverlay}>
-                      🔒
-                    </div>
-                  )}
+                  {!isUnlocked && <div className={styles.lockOverlay}>🔒</div>}
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute",
-                      top: "10px",
-                      left: "10px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00",
-                      padding: "4px 10px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                      zIndex: 2
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: "bold",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        zIndex: 2,
+                      }}
+                    >
                       المستوى الموصى به ⭐
                     </div>
                   )}
@@ -907,7 +1024,9 @@ function VolcanoWords() {
                   <div className={styles.levelFooter}>
                     <div className={styles.levelProgressText}>
                       <span>{completedCount}/5</span>
-                      <span>{t("volcanoWords.progressLabel", "المراحل المكتملة")}</span>
+                      <span>
+                        {t("volcanoWords.progressLabel", "المراحل المكتملة")}
+                      </span>
                     </div>
                     <div className={styles.progressBarBg}>
                       <div
@@ -927,8 +1046,13 @@ function VolcanoWords() {
 
   // Stage Selection view
   if (view === "stages") {
-    const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[selectedLevelId] : LEVEL_METADATA_AR[selectedLevelId];
-    const levelName = levels?.[selectedLevelId]?.name || levelMeta?.name || `Level ${selectedLevelId}`;
+    const levelMeta = i18n.language?.startsWith("en")
+      ? LEVEL_METADATA_EN[selectedLevelId]
+      : LEVEL_METADATA_AR[selectedLevelId];
+    const levelName =
+      levels?.[selectedLevelId]?.name ||
+      levelMeta?.name ||
+      `Level ${selectedLevelId}`;
 
     return (
       <div className={styles.gameContainer}>
@@ -936,59 +1060,74 @@ function VolcanoWords() {
           <button className={styles.exitBtn} onClick={() => setView("levels")}>
             {t("volcanoWords.back", "رجوع")}
           </button>
-          <div className={styles.scoreBoard}>
-            {levelName}
-          </div>
+          <div className={styles.scoreBoard}>{levelName}</div>
         </nav>
 
         <div className={styles.selectionContainer}>
           <div className={styles.stagesContainer}>
             <div className={styles.stagesHeader}>
-              <button className={styles.backBtn} onClick={() => setView("levels")}>
+              <button
+                className={styles.backBtn}
+                onClick={() => setView("levels")}
+              >
                 {t("volcanoWords.backToLevels", "◀ العودة للمستويات")}
               </button>
-              <h2 className={styles.stagesHeaderTitle}>
-                {levelName}
-              </h2>
+              <h2 className={styles.stagesHeaderTitle}>{levelName}</h2>
             </div>
 
             <div className={styles.stagesGrid}>
               {[...Array(5)].map((_, stageIdx) => {
-                const isStageUnlocked = stageIdx === 0
-                  || parseInt(selectedLevelId, 10) < progress.unlockedLevel
-                  || progress.completedStages[selectedLevelId]?.[stageIdx - 1];
-                const earnedStars = progress.stars[selectedLevelId]?.[stageIdx] || 0;
-                const isRecommended = parseInt(selectedLevelId, 10) === progress.recommendedLevel
-                  && stageIdx === (progress.recommendedStage - 1 || 0);
+                const isStageUnlocked =
+                  stageIdx === 0 ||
+                  parseInt(selectedLevelId, 10) < progress.unlockedLevel ||
+                  progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+                const earnedStars =
+                  progress.stars[selectedLevelId]?.[stageIdx] || 0;
+                const isRecommended =
+                  parseInt(selectedLevelId, 10) === progress.recommendedLevel &&
+                  stageIdx === (progress.recommendedStage - 1 || 0);
 
                 return (
-                  <div key={stageIdx} className={styles.stageNodeWrapper} style={{ position: "relative" }}>
+                  <div
+                    key={stageIdx}
+                    className={styles.stageNodeWrapper}
+                    style={{ position: "relative" }}
+                  >
                     {isRecommended && (
-                      <div style={{
-                        position: "absolute",
-                        top: "-22px",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                        color: "#1a0f00",
-                        padding: "2px 8px",
-                        borderRadius: "10px",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                        zIndex: 2
-                      }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "-22px",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          background:
+                            "linear-gradient(135deg, #ffd700, #b8860b)",
+                          color: "#1a0f00",
+                          padding: "2px 8px",
+                          borderRadius: "10px",
+                          fontSize: "10px",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                          zIndex: 2,
+                        }}
+                      >
                         بداية المسار 🚀
                       </div>
                     )}
                     <div
                       className={`${styles.stageNode} ${!isStageUnlocked ? styles.stageNodeLocked : ""}`}
-                      style={isRecommended ? {
-                        boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
-                        border: "3px solid #ffd700",
-                      } : {}}
-                      onClick={() => isStageUnlocked && handleSelectStage(stageIdx)}
+                      style={
+                        isRecommended
+                          ? {
+                              boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
+                              border: "3px solid #ffd700",
+                            }
+                          : {}
+                      }
+                      onClick={() =>
+                        isStageUnlocked && handleSelectStage(stageIdx)
+                      }
                     >
                       {isStageUnlocked ? stageIdx + 1 : "🔒"}
                     </div>
@@ -1019,8 +1158,11 @@ function VolcanoWords() {
   }
 
   // Active Game View
-  const levelMeta = i18n.language?.startsWith("en") ? LEVEL_METADATA_EN[levelId] : LEVEL_METADATA_AR[levelId];
-  const levelName = levels?.[levelId]?.name || levelMeta?.name || `Level ${levelId}`;
+  const levelMeta = i18n.language?.startsWith("en")
+    ? LEVEL_METADATA_EN[levelId]
+    : LEVEL_METADATA_AR[levelId];
+  const levelName =
+    levels?.[levelId]?.name || levelMeta?.name || `Level ${levelId}`;
 
   return (
     <div className={styles.gameContainer}>
@@ -1041,10 +1183,20 @@ function VolcanoWords() {
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center", color: "#fff", fontWeight: 700 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+            color: "#fff",
+            fontWeight: 700,
+          }}
+        >
           <span>{levelName}</span>
           <span>•</span>
-          <span>{t("volcanoWords.stageLabel", "المرحلة")} {selectedStageIndex + 1}</span>
+          <span>
+            {t("volcanoWords.stageLabel", "المرحلة")} {selectedStageIndex + 1}
+          </span>
         </div>
 
         <div className={styles.scoreBoard}>
@@ -1284,9 +1436,18 @@ function WordPanal({
               icon={isRecording ? "🛑" : "🎤"}
               primary
               disabled={isGameOver || (!isRecording && phase !== "idle")}
-              onClick={handleStartRecording} />
-            <ActionBtn icon="💡" disabled={hints <= 0 || isRecording || isGameOver} onClick={handleUseHint} />
-            <ActionBtn icon="➡️" disabled={isRecording || isGameOver} onClick={handleSkipWord} />
+              onClick={handleStartRecording}
+            />
+            <ActionBtn
+              icon="💡"
+              disabled={hints <= 0 || isRecording || isGameOver}
+              onClick={handleUseHint}
+            />
+            <ActionBtn
+              icon="➡️"
+              disabled={isRecording || isGameOver}
+              onClick={handleSkipWord}
+            />
           </>
         )}
       </div>

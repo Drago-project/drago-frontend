@@ -9,34 +9,64 @@ import { getAuthUser } from "../server/auth";
 const HF_QUESTIONS_URL = "/api/tomb/questions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const TOTAL_LEVELS   = 6;
+const TOTAL_LEVELS = 6;
 const STAGES_PER_LEVEL = 5;
 const QUESTIONS_PER_STAGE = 12; // questions shown per stage session
-const STORAGE_KEY    = "tomb_puzzle_progress";
+const STORAGE_KEY = "tomb_puzzle_progress";
 
 // ─── Level Metadata ───────────────────────────────────────────────────────────
 const LEVEL_META = {
-  1: { name: "المستوى الأول",  focus: "جمل قصيرة ثلاثية الكلمات",       icon: "🏺", color: "#c0a060" },
-  2: { name: "المستوى الثاني", focus: "جمل رباعية الكلمات",              icon: "📜", color: "#c06020" },
-  3: { name: "المستوى الثالث", focus: "جمل بجملة فعلية + مضاف إليه",     icon: "🗿", color: "#8060a0" },
-  4: { name: "المستوى الرابع", focus: "جمل مكونة من خمس كلمات",          icon: "⚱️", color: "#206080" },
-  5: { name: "المستوى الخامس", focus: "جمل طويلة مع ظرف زمان",           icon: "👁️", color: "#208040" },
-  6: { name: "المستوى السادس", focus: "جمل معقدة ومتعددة العناصر",       icon: "👑", color: "#a04020" },
+  1: {
+    name: "المستوى الأول",
+    focus: "جمل قصيرة ثلاثية الكلمات",
+    icon: "🏺",
+    color: "#c0a060",
+  },
+  2: {
+    name: "المستوى الثاني",
+    focus: "جمل رباعية الكلمات",
+    icon: "📜",
+    color: "#c06020",
+  },
+  3: {
+    name: "المستوى الثالث",
+    focus: "جمل بجملة فعلية + مضاف إليه",
+    icon: "🗿",
+    color: "#8060a0",
+  },
+  4: {
+    name: "المستوى الرابع",
+    focus: "جمل مكونة من خمس كلمات",
+    icon: "⚱️",
+    color: "#206080",
+  },
+  5: {
+    name: "المستوى الخامس",
+    focus: "جمل طويلة مع ظرف زمان",
+    icon: "👁️",
+    color: "#208040",
+  },
+  6: {
+    name: "المستوى السادس",
+    focus: "جمل معقدة ومتعددة العناصر",
+    icon: "👑",
+    color: "#a04020",
+  },
 };
 
 const categoryMap = {
-  school:        "المدرسة والتعلم 🏫",
-  daily_life:    "الحياة اليومية ☀️",
-  food:          "الطعام والغذاء 🍎",
-  family:        "العائلة 👨‍👩‍👧‍👦",
-  animals:       "الحيوانات 🐾",
-  sports:        "الرياضة ⚽",
-  transportation:"وسائل النقل 🚗",
-  nature:        "الطبيعة 🌲",
-  friends:       "الأصدقاء 🤝",
-  home:          "المنزل 🏠",
-  community:     "المجتمع 👥",
-  basic:         "الجمل الأساسية 💬",
+  school: "المدرسة والتعلم 🏫",
+  daily_life: "الحياة اليومية ☀️",
+  food: "الطعام والغذاء 🍎",
+  family: "العائلة 👨‍👩‍👧‍👦",
+  animals: "الحيوانات 🐾",
+  sports: "الرياضة ⚽",
+  transportation: "وسائل النقل 🚗",
+  nature: "الطبيعة 🌲",
+  friends: "الأصدقاء 🤝",
+  home: "المنزل 🏠",
+  community: "المجتمع 👥",
+  basic: "الجمل الأساسية 💬",
 };
 
 // ─── Default progress ─────────────────────────────────────────────────────────
@@ -46,13 +76,13 @@ const makeDefaultProgress = () => ({
     Array.from({ length: TOTAL_LEVELS }, (_, i) => [
       String(i + 1),
       Array(STAGES_PER_LEVEL).fill(false),
-    ])
+    ]),
   ),
   stars: Object.fromEntries(
     Array.from({ length: TOTAL_LEVELS }, (_, i) => [
       String(i + 1),
       Array(STAGES_PER_LEVEL).fill(0),
-    ])
+    ]),
   ),
 });
 
@@ -69,12 +99,18 @@ const loadProgress = () => {
         stars: { ...def.stars, ...parsed.stars },
       };
     }
-  } catch {}
+  } catch (e) {
+    console.error("Failed to parse progress, resetting to default.", e);
+  }
   return makeDefaultProgress();
 };
 
 const saveProgress = (prog) => {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prog)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+  } catch (e) {
+    console.error("Failed to save progress.", e);
+  }
 };
 
 // ─── Star rating logic (mirrors game_engine.py) ───────────────────────────────
@@ -90,14 +126,14 @@ function calcStars(correct, total) {
 // ─── Sound helpers ────────────────────────────────────────────────────────────
 function playSound(type) {
   const map = {
-    correct:  "/sounds/correct.mp3",
-    wrong:    "/sounds/wrong.mp3",
-    win:      "/sounds/win.mp3",
+    correct: "/sounds/correct.mp3",
+    wrong: "/sounds/wrong.mp3",
+    win: "/sounds/win.mp3",
     gameover: "/sounds/tomb_lose.mp3",
-    click:    "https://s3.amazonaws.com/freecodecamp/drums/Heater-1.mp3",
-    pop:      "https://s3.amazonaws.com/freecodecamp/drums/Dsc_Oh.mp3",
-    magic:    "https://s3.amazonaws.com/freecodecamp/drums/Give_us_a_light.mp3",
-    chest:    "https://s3.amazonaws.com/freecodecamp/drums/Cev_H2.mp3",
+    click: "https://s3.amazonaws.com/freecodecamp/drums/Heater-1.mp3",
+    pop: "https://s3.amazonaws.com/freecodecamp/drums/Dsc_Oh.mp3",
+    magic: "https://s3.amazonaws.com/freecodecamp/drums/Give_us_a_light.mp3",
+    chest: "https://s3.amazonaws.com/freecodecamp/drums/Cev_H2.mp3",
   };
   const src = map[type];
   if (!src) return;
@@ -108,39 +144,80 @@ function playSound(type) {
 
 // ─── Artifacts (treasure collection) ─────────────────────────────────────────
 const allArtifacts = [
-  { id: 1, name: "القناع الذهبي",   icon: "👑" },
-  { id: 2, name: "الجعران المقدس",  icon: "🪲" },
-  { id: 3, name: "عين حورس",        icon: "👁️" },
-  { id: 4, name: "مفتاح الحياة",    icon: "☥" },
-  { id: 5, name: "تمثال باستت",     icon: "🐈" },
-  { id: 6, name: "رمح حورس",        icon: "⚡" },
+  { id: 1, name: "القناع الذهبي", icon: "👑" },
+  { id: 2, name: "الجعران المقدس", icon: "🪲" },
+  { id: 3, name: "عين حورس", icon: "👁️" },
+  { id: 4, name: "مفتاح الحياة", icon: "☥" },
+  { id: 5, name: "تمثال باستت", icon: "🐈" },
+  { id: 6, name: "رمح حورس", icon: "⚡" },
 ];
 
 // ─── Pretest Welcome Modal ───────────────────────────────────────────────────
 function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   return (
-    <div style={{
-      position: "fixed",
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.85)",
-      backdropFilter: "blur(8px)",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      zIndex: 10000, direction: "rtl", padding: "20px"
-    }}>
-      <div style={{
-        background: "linear-gradient(135deg, #1a0a00, #2b1500)",
-        border: "3px solid #ffd700",
-        borderRadius: "24px",
-        padding: "30px 24px",
-        maxWidth: "480px", width: "100%",
-        textAlign: "center",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.3)"
-      }}>
-        <div style={{ fontSize: "70px", marginBottom: "15px", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
-        <h2 style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}>مرحباً بك يا بطل!</h2>
-        <p style={{ color: "#fff", fontSize: "16px", lineHeight: "1.6", margin: "0 0 24px 0" }}>
-          بناءً على أدائك في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها.
-          <span style={{ display: "block", marginTop: "10px", color: "#ffd700", fontWeight: "bold", fontSize: "18px" }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.85)",
+        backdropFilter: "blur(8px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 10000,
+        direction: "rtl",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          background: "linear-gradient(135deg, #1a0a00, #2b1500)",
+          border: "3px solid #ffd700",
+          borderRadius: "24px",
+          padding: "30px 24px",
+          maxWidth: "480px",
+          width: "100%",
+          textAlign: "center",
+          boxShadow:
+            "0 10px 30px rgba(0,0,0,0.6), 0 0 25px rgba(212, 175, 55, 0.3)",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "70px",
+            marginBottom: "15px",
+            filter: "drop-shadow(0 0 10px #ffd700)",
+          }}
+        >
+          🌟
+        </div>
+        <h2
+          style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}
+        >
+          مرحباً بك يا بطل!
+        </h2>
+        <p
+          style={{
+            color: "#fff",
+            fontSize: "16px",
+            lineHeight: "1.6",
+            margin: "0 0 24px 0",
+          }}
+        >
+          بناءً على أدائك في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي
+          المهارات التي تتقنها.
+          <span
+            style={{
+              display: "block",
+              marginTop: "10px",
+              color: "#ffd700",
+              fontWeight: "bold",
+              fontSize: "18px",
+            }}
+          >
             رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
           </span>
         </p>
@@ -148,13 +225,20 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
           onClick={onDismiss}
           style={{
             background: "linear-gradient(135deg, #ffd700, #b8860b)",
-            border: "none", borderRadius: "14px",
-            color: "#1a0f00", padding: "12px 32px",
-            fontSize: "16px", fontWeight: "bold", cursor: "pointer",
-            boxShadow: "0 4px 15px rgba(212,175,55,0.4)", transition: "transform 0.2s"
+            border: "none",
+            borderRadius: "14px",
+            color: "#1a0f00",
+            padding: "12px 32px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+            boxShadow: "0 4px 15px rgba(212,175,55,0.4)",
+            transition: "transform 0.2s",
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
-          onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.transform = "scale(1.05)")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
         >
           ابدأ الاكتشاف الآن! 🏺
         </button>
@@ -163,7 +247,11 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   );
 }
 
-const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+const reconstructDetailedProgress = (
+  bgProgress,
+  totalLevels = 6,
+  stagesPerLevel = 5,
+) => {
   const levelReached = bgProgress?.levelReached || 1;
   const completedStagesCount = bgProgress?.completedStages || 0;
   const starsEarned = bgProgress?.starsEarned || 0;
@@ -183,7 +271,10 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
         completedStages[l.toString()].push(true);
         stagesRemaining--;
 
-        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        const allocated = Math.min(
+          3,
+          Math.max(1, starsRemaining - stagesRemaining),
+        );
         stars[l.toString()].push(allocated);
         starsRemaining -= allocated;
       } else {
@@ -196,7 +287,7 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
   return {
     unlockedLevel: levelReached,
     completedStages,
-    stars
+    stars,
   };
 };
 
@@ -204,8 +295,8 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
 function TombPuzzle() {
   const navigate = useNavigate();
   // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
-  const [view, setView]               = useState("levels");
-  const [progress, setProgress]       = useState(loadProgress);
+  const [view, setView] = useState("levels");
+  const [progress, setProgress] = useState(loadProgress);
   const [showPretestModal, setShowPretestModal] = useState(() => {
     const p = loadProgress();
     return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
@@ -221,7 +312,7 @@ function TombPuzzle() {
         const res = await gameProgressAPI.getByUser(userId);
         const progressList = res.data?.data || res.data;
         const bgProgress = Array.isArray(progressList)
-          ? progressList.find(p => p.gameKey === "tomb_puzzle")
+          ? progressList.find((p) => p.gameKey === "tomb_puzzle")
           : null;
 
         if (bgProgress) {
@@ -239,7 +330,7 @@ function TombPuzzle() {
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
-    setProgress(prev => {
+    setProgress((prev) => {
       const updated = { ...prev, showPretestWelcome: false };
       saveProgress(updated);
       return updated;
@@ -250,32 +341,36 @@ function TombPuzzle() {
   // allQuestions grouped by level: { "1": [...], "2": [...], ... }
   const [questionsByLevel, setQuestionsByLevel] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [dataError, setDataError]     = useState(null);
+  const [dataError, setDataError] = useState(null);
 
   // ── Selection ─────────────────────────────────────────────────────────────
-  const [selectedLevel, setSelectedLevel]       = useState(null);
+  const [selectedLevel, setSelectedLevel] = useState(null);
   const [selectedStageIndex, setSelectedStageIndex] = useState(null);
 
   // ── Game ──────────────────────────────────────────────────────────────────
-  const [stageQuestions, setStageQuestions]     = useState([]);
-  const [questionIndex, setQuestionIndex]       = useState(0);
-  const [shuffledWords, setShuffledWords]       = useState([]);
-  const [userAnswer, setUserAnswer]             = useState([]);
-  const [lives, setLives]                       = useState(3);
-  const [correctCount, setCorrectCount]         = useState(0);
-  const [hints, setHints]                       = useState(3);
-  const [pharaohMood, setPharaohMood]           = useState("neutral");
-  const [notification, setNotification]         = useState({ show: false, message: "", type: "" });
-  const [secretInfo, setSecretInfo]             = useState({ show: false, text: "" });
-  const [stageResult, setStageResult]           = useState(null); // { stars, correct, total, passed }
+  const [stageQuestions, setStageQuestions] = useState([]);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [shuffledWords, setShuffledWords] = useState([]);
+  const [userAnswer, setUserAnswer] = useState([]);
+  const [lives, setLives] = useState(3);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [hints, setHints] = useState(3);
+  const [pharaohMood, setPharaohMood] = useState("neutral");
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
+  const [secretInfo, setSecretInfo] = useState({ show: false, text: "" });
+  const [stageResult, setStageResult] = useState(null); // { stars, correct, total, passed }
 
   // ── Collection / Treasure ─────────────────────────────────────────────────
-  const [myCollection, setMyCollection]         = useState([]);
-  const [reward, setReward]                     = useState(null);
-  const [chestOpened, setChestOpened]           = useState(false);
+  const [myCollection, setMyCollection] = useState([]);
+  const [reward, setReward] = useState(null);
+  const [chestOpened, setChestOpened] = useState(false);
 
   // ── Music ─────────────────────────────────────────────────────────────────
-  const [isMusicPlaying, setIsMusicPlaying]     = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const musicRef = useRef(new Audio("/sounds/tomb-bg.mp3"));
 
   // ─── Load data from HF space on mount ──────────────────────────────────────
@@ -304,7 +399,7 @@ function TombPuzzle() {
         for (let l = 1; l <= TOTAL_LEVELS; l++) grouped[String(l)] = [];
         for (const q of fallbackQuestions) {
           // Distribute fallback evenly across levels
-          const key = String(((fallbackQuestions.indexOf(q) % TOTAL_LEVELS) + 1));
+          const key = String((fallbackQuestions.indexOf(q) % TOTAL_LEVELS) + 1);
           grouped[key].push({ ...q, level: parseInt(key) });
         }
         setQuestionsByLevel(grouped);
@@ -321,15 +416,19 @@ function TombPuzzle() {
       const saved = localStorage.getItem("pharaoh_treasures");
       if (saved) {
         const parsed = JSON.parse(saved);
-        const valid  = parsed.filter(s => allArtifacts.some(a => a.id === s.id));
+        const valid = parsed.filter((s) =>
+          allArtifacts.some((a) => a.id === s.id),
+        );
         setMyCollection(valid);
       }
-    } catch {}
+    } catch (e) {
+      console.error("Failed to parse collection, resetting to default.", e);
+    }
   }, []);
 
   // ── Music ─────────────────────────────────────────────────────────────────
   useEffect(() => {
-    musicRef.current.loop   = true;
+    musicRef.current.loop = true;
     musicRef.current.volume = 0.5;
     if (isMusicPlaying) musicRef.current.play().catch(() => {});
     else musicRef.current.pause();
@@ -338,7 +437,11 @@ function TombPuzzle() {
 
   // ── Reset words when question changes ──────────────────────────────────────
   useEffect(() => {
-    if (view === "game" && stageQuestions.length > 0 && questionIndex < stageQuestions.length) {
+    if (
+      view === "game" &&
+      stageQuestions.length > 0 &&
+      questionIndex < stageQuestions.length
+    ) {
       const q = stageQuestions[questionIndex];
       const words = q.sentence.trim().split(/\s+/);
       setShuffledWords([...words].sort(() => Math.random() - 0.5));
@@ -351,22 +454,24 @@ function TombPuzzle() {
   // ─── Progress helpers ────────────────────────────────────────────────────────
   const isLevelUnlocked = (levelNum) => levelNum <= progress.unlockedLevel;
 
-  const isAllStagesBeforeRecommendedUnlocked = (levelNum, stageIdx) =>
-    levelNum < progress.unlockedLevel;
+  // const isAllStagesBeforeRecommendedUnlocked = (levelNum, stageIdx) =>
+  //   levelNum < progress.unlockedLevel;
 
   const getLevelProgress = (levelNum) => {
-    const key    = String(levelNum);
+    const key = String(levelNum);
     const stages = progress.completedStages[key] || [];
-    const done   = stages.filter(Boolean).length;
-    const total  = STAGES_PER_LEVEL;
-    const stars  = (progress.stars[key] || []).reduce((a, b) => a + b, 0);
+    const done = stages.filter(Boolean).length;
+    const total = STAGES_PER_LEVEL;
+    const stars = (progress.stars[key] || []).reduce((a, b) => a + b, 0);
     return { done, total, pct: Math.round((done / total) * 100), stars };
   };
 
   const isStageUnlocked = (levelNum, stageIdx) => {
     if (stageIdx === 0) return true;
     if (levelNum < progress.unlockedLevel) return true;
-    return (progress.completedStages[String(levelNum)] || [])[stageIdx - 1] === true;
+    return (
+      (progress.completedStages[String(levelNum)] || [])[stageIdx - 1] === true
+    );
   };
 
   const getStageStars = (levelNum, stageIdx) =>
@@ -380,11 +485,14 @@ function TombPuzzle() {
 
     // Shuffle pool, slice stage
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    const size     = Math.ceil(pool.length / STAGES_PER_LEVEL);
+    const size = Math.ceil(pool.length / STAGES_PER_LEVEL);
     let slice = shuffled.slice(stageIdx * size, (stageIdx + 1) * size);
     // Ensure we always have at least QUESTIONS_PER_STAGE items (wrap around)
     while (slice.length < QUESTIONS_PER_STAGE) {
-      slice = [...slice, ...shuffled.slice(0, QUESTIONS_PER_STAGE - slice.length)];
+      slice = [
+        ...slice,
+        ...shuffled.slice(0, QUESTIONS_PER_STAGE - slice.length),
+      ];
     }
     const questions = slice.slice(0, QUESTIONS_PER_STAGE);
 
@@ -405,19 +513,25 @@ function TombPuzzle() {
   // ─── Game logic ───────────────────────────────────────────────────────────────
   const showToast = (message, type) => {
     setNotification({ show: true, message, type });
-    setTimeout(() => setNotification({ show: false, message: "", type: "" }), 2000);
+    setTimeout(
+      () => setNotification({ show: false, message: "", type: "" }),
+      2000,
+    );
   };
 
   const handleWordClick = (word) => {
     if (notification.show || secretInfo.show) return;
     playSound("click");
-    const newAnswer   = [...userAnswer, word];
+    const newAnswer = [...userAnswer, word];
     const newShuffled = [...shuffledWords];
     const idx = newShuffled.indexOf(word);
     if (idx > -1) newShuffled.splice(idx, 1);
     setUserAnswer(newAnswer);
     setShuffledWords(newShuffled);
-    if (newAnswer.length === stageQuestions[questionIndex].sentence.trim().split(/\s+/).length) {
+    if (
+      newAnswer.length ===
+      stageQuestions[questionIndex].sentence.trim().split(/\s+/).length
+    ) {
       checkAnswer(newAnswer);
     }
   };
@@ -432,9 +546,9 @@ function TombPuzzle() {
   };
 
   const checkAnswer = (answer) => {
-    const q          = stageQuestions[questionIndex];
-    const formatted  = answer.map(w => w.trim()).join(" ");
-    const isCorrect  = q.accepted.some(a => a.trim() === formatted);
+    const q = stageQuestions[questionIndex];
+    const formatted = answer.map((w) => w.trim()).join(" ");
+    const isCorrect = q.accepted.some((a) => a.trim() === formatted);
 
     if (isCorrect) {
       setPharaohMood("happy");
@@ -455,12 +569,17 @@ function TombPuzzle() {
       const newLives = lives - 1;
       if (newLives <= 0) {
         setLives(0);
-        setTimeout(() => finishStage(correctCount, stageQuestions.length, true), 500);
+        setTimeout(
+          () => finishStage(correctCount, stageQuestions.length, true),
+          500,
+        );
       } else {
         setLives(newLives);
         showToast("❌ ترتيب خاطئ! خسرت قلب 💔", "error");
         setTimeout(() => {
-          const orig = stageQuestions[questionIndex].sentence.trim().split(/\s+/);
+          const orig = stageQuestions[questionIndex].sentence
+            .trim()
+            .split(/\s+/);
           setShuffledWords([...orig].sort(() => Math.random() - 0.5));
           setUserAnswer([]);
           setPharaohMood("neutral");
@@ -480,7 +599,7 @@ function TombPuzzle() {
   };
 
   const finishStage = (correct, total, lostAllLives) => {
-    const stars  = lostAllLives ? 0 : calcStars(correct, total);
+    const stars = lostAllLives ? 0 : calcStars(correct, total);
     const passed = stars > 0;
     const result = { stars, correct, total, passed };
     setStageResult(result);
@@ -488,23 +607,36 @@ function TombPuzzle() {
 
     if (passed) {
       // Update progress
-      setProgress(prev => {
-        const key     = String(selectedLevel);
+      setProgress((prev) => {
+        const key = String(selectedLevel);
         const newComp = { ...prev.completedStages };
         const newStar = { ...prev.stars };
-        const stages  = [...(newComp[key] || Array(STAGES_PER_LEVEL).fill(false))];
-        const starArr = [...(newStar[key]  || Array(STAGES_PER_LEVEL).fill(0))];
-        stages[selectedStageIndex]  = true;
-        starArr[selectedStageIndex] = Math.max(starArr[selectedStageIndex], stars);
+        const stages = [
+          ...(newComp[key] || Array(STAGES_PER_LEVEL).fill(false)),
+        ];
+        const starArr = [...(newStar[key] || Array(STAGES_PER_LEVEL).fill(0))];
+        stages[selectedStageIndex] = true;
+        starArr[selectedStageIndex] = Math.max(
+          starArr[selectedStageIndex],
+          stars,
+        );
         newComp[key] = stages;
         newStar[key] = starArr;
 
-        const allDone     = stages.every(Boolean);
+        const allDone = stages.every(Boolean);
         const newUnlocked = allDone
-          ? Math.min(TOTAL_LEVELS, Math.max(prev.unlockedLevel, selectedLevel + 1))
+          ? Math.min(
+              TOTAL_LEVELS,
+              Math.max(prev.unlockedLevel, selectedLevel + 1),
+            )
           : prev.unlockedLevel;
 
-        const updated = { ...prev, unlockedLevel: newUnlocked, completedStages: newComp, stars: newStar };
+        const updated = {
+          ...prev,
+          unlockedLevel: newUnlocked,
+          completedStages: newComp,
+          stars: newStar,
+        };
         saveProgress(updated);
 
         // Synchronize with backend
@@ -519,20 +651,37 @@ function TombPuzzle() {
         });
 
         const maxStages = 6 * 5;
-        const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+        const completionPercent = Math.min(
+          100,
+          Math.round((totalCompletedStages / maxStages) * 100),
+        );
 
         const authUser = getAuthUser();
         const userId = authUser?.userId;
         if (userId) {
-          gameProgressAPI.update(userId, {
-            gameKey: "tomb_puzzle",
-            levelReached: newUnlocked,
-            completedStages: totalCompletedStages,
-            starsEarned: totalStars,
-            completionPercent,
-          }).catch(err => {
-            console.error("Failed to update backend progress:", err);
-          });
+          // 1. تسجيل إن المرحلة دي خلصت
+          gameProgressAPI
+            .completeStage(userId, {
+              gameKey: "tomb_puzzle",
+              stageNumber: selectedStageIndex + 1,
+              score: correct * 10,
+              starsEarned: stars,
+            })
+            .catch((err) => {
+              console.error("Failed to complete stage on backend:", err);
+            });
+
+          gameProgressAPI
+            .update(userId, {
+              gameKey: "tomb_puzzle",
+              levelReached: newUnlocked,
+              completedStages: totalCompletedStages,
+              starsEarned: totalStars,
+              completionPercent,
+            })
+            .catch((err) => {
+              console.error("Failed to update backend progress:", err);
+            });
         }
 
         return updated;
@@ -543,8 +692,13 @@ function TombPuzzle() {
   const useHint = () => {
     if (hints <= 0 || notification.show || secretInfo.show) return;
     let firstError = 0;
-    const correctWords = stageQuestions[questionIndex].sentence.trim().split(/\s+/);
-    while (firstError < userAnswer.length && userAnswer[firstError] === correctWords[firstError]) {
+    const correctWords = stageQuestions[questionIndex].sentence
+      .trim()
+      .split(/\s+/);
+    while (
+      firstError < userAnswer.length &&
+      userAnswer[firstError] === correctWords[firstError]
+    ) {
       firstError++;
     }
     const needed = correctWords[firstError];
@@ -552,13 +706,13 @@ function TombPuzzle() {
     playSound("magic");
     setHints(hints - 1);
 
-    const kept    = userAnswer.slice(0, firstError);
+    const kept = userAnswer.slice(0, firstError);
     const removed = userAnswer.slice(firstError);
-    const newAns  = [...kept, needed];
+    const newAns = [...kept, needed];
     setUserAnswer(newAns);
 
     const newShuf = [...shuffledWords, ...removed];
-    const rmIdx   = newShuf.indexOf(needed);
+    const rmIdx = newShuf.indexOf(needed);
     if (rmIdx > -1) newShuf.splice(rmIdx, 1);
     setShuffledWords(newShuf);
 
@@ -571,9 +725,10 @@ function TombPuzzle() {
     playSound("chest");
     playSound("win");
     setChestOpened(true);
-    const artifact = allArtifacts[Math.floor(Math.random() * allArtifacts.length)];
+    const artifact =
+      allArtifacts[Math.floor(Math.random() * allArtifacts.length)];
     setReward(artifact);
-    if (!myCollection.find(a => a.id === artifact.id)) {
+    if (!myCollection.find((a) => a.id === artifact.id)) {
       const newColl = [...myCollection, artifact];
       setMyCollection(newColl);
       localStorage.setItem("pharaoh_treasures", JSON.stringify(newColl));
@@ -586,7 +741,10 @@ function TombPuzzle() {
   return (
     <div className={style["game-container"]}>
       {/* Music toggle */}
-      <button className={style["music-toggle"]} onClick={() => setIsMusicPlaying(p => !p)}>
+      <button
+        className={style["music-toggle"]}
+        onClick={() => setIsMusicPlaying((p) => !p)}
+      >
         {isMusicPlaying ? "🔊" : "🔇"}
       </button>
 
@@ -597,7 +755,9 @@ function TombPuzzle() {
             <h2>📜 بردية سرية اكتشفتها!</h2>
             <p>{secretInfo.text}</p>
             <button className={style["btn-next"]} onClick={handleNextQuestion}>
-              {questionIndex + 1 < stageQuestions.length ? "السؤال التالي ➡️" : "عرض النتيجة 🏆"}
+              {questionIndex + 1 < stageQuestions.length
+                ? "السؤال التالي ➡️"
+                : "عرض النتيجة 🏆"}
             </button>
           </div>
         </div>
@@ -605,7 +765,9 @@ function TombPuzzle() {
 
       {/* Toast notification */}
       {notification.show && (
-        <div className={`${style["notification-popup"]} ${style[notification.type]}`}>
+        <div
+          className={`${style["notification-popup"]} ${style[notification.type]}`}
+        >
           {notification.message}
         </div>
       )}
@@ -615,9 +777,15 @@ function TombPuzzle() {
       ════════════════════════════════════════════════════════ */}
       {dataLoading && (
         <div className={style["start-screen"]}>
-          <div style={{ fontSize: "60px", animation: "pulse 1s infinite" }}>⏳</div>
-          <h2 style={{ color: "#ffd700", marginTop: "20px" }}>جارٍ فتح المقبرة...</h2>
-          <p style={{ color: "#d4af37", opacity: 0.8 }}>تحميل الألغاز من الخادم</p>
+          <div style={{ fontSize: "60px", animation: "pulse 1s infinite" }}>
+            ⏳
+          </div>
+          <h2 style={{ color: "#ffd700", marginTop: "20px" }}>
+            جارٍ فتح المقبرة...
+          </h2>
+          <p style={{ color: "#d4af37", opacity: 0.8 }}>
+            تحميل الألغاز من الخادم
+          </p>
         </div>
       )}
 
@@ -625,7 +793,19 @@ function TombPuzzle() {
           VIEW: LEVELS
       ════════════════════════════════════════════════════════ */}
       {!dataLoading && view === "levels" && (
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", padding: "20px", boxSizing: "border-box", overflowY: "auto", maxHeight: "100vh" }}>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "20px",
+            padding: "20px",
+            boxSizing: "border-box",
+            overflowY: "auto",
+            maxHeight: "100vh",
+          }}
+        >
           {showPretestModal && (
             <PretestWelcomeModal
               unlockedLevel={progress.unlockedLevel}
@@ -633,99 +813,277 @@ function TombPuzzle() {
             />
           )}
           {/* Top Bar with Exit */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "700px", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "18px", padding: "14px 24px", boxSizing: "border-box", direction: "rtl", backdropFilter: "blur(8px)" }}>
-            <span style={{ color: "#ffd700", fontWeight: 800, fontSize: "18px", textShadow: "0 0 10px #c0a060" }}>🏺 مقبرة الأسرار</span>
-            <button onClick={() => navigate("/home")} style={{ background: "#c0a060", border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              maxWidth: "700px",
+              background: "rgba(0,0,0,0.55)",
+              border: "2px solid #c0a060",
+              borderRadius: "18px",
+              padding: "14px 24px",
+              boxSizing: "border-box",
+              direction: "rtl",
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <span
+              style={{
+                color: "#ffd700",
+                fontWeight: 800,
+                fontSize: "18px",
+                textShadow: "0 0 10px #c0a060",
+              }}
+            >
+              🏺 مقبرة الأسرار
+            </span>
+            <button
+              onClick={() => navigate("/home")}
+              style={{
+                background: "#c0a060",
+                border: "none",
+                borderRadius: "10px",
+                color: "#1a0a00",
+                padding: "9px 18px",
+                fontWeight: 800,
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
               خروج 🚪
             </button>
           </div>
 
           {/* Header */}
-          <div style={{ textAlign: "center", background: "rgba(0,0,0,0.55)", border: "2px solid #c0a060", borderRadius: "20px", padding: "18px 36px", backdropFilter: "blur(8px)", animation: "fadeIn 0.5s ease" }}>
-            <h1 style={{ color: "#ffd700", margin: 0, fontSize: "28px", textShadow: "0 0 16px #c0a060" }}>🏺 مقبرة الأسرار 🏺</h1>
-            <p style={{ color: "#d4af37", margin: "6px 0 0", fontSize: "14px" }}>اختر مستوى وابدأ رحلتك داخل المقبرة!</p>
+          <div
+            style={{
+              textAlign: "center",
+              background: "rgba(0,0,0,0.55)",
+              border: "2px solid #c0a060",
+              borderRadius: "20px",
+              padding: "18px 36px",
+              backdropFilter: "blur(8px)",
+              animation: "fadeIn 0.5s ease",
+            }}
+          >
+            <h1
+              style={{
+                color: "#ffd700",
+                margin: 0,
+                fontSize: "28px",
+                textShadow: "0 0 16px #c0a060",
+              }}
+            >
+              🏺 مقبرة الأسرار 🏺
+            </h1>
+            <p
+              style={{ color: "#d4af37", margin: "6px 0 0", fontSize: "14px" }}
+            >
+              اختر مستوى وابدأ رحلتك داخل المقبرة!
+            </p>
           </div>
 
           {/* Error notice */}
           {dataError && (
-            <div style={{ background: "rgba(180,60,0,0.5)", border: "1px solid #c07030", borderRadius: "12px", padding: "10px 20px", color: "#ffd080", fontSize: "13px", maxWidth: "480px", textAlign: "center" }}>
+            <div
+              style={{
+                background: "rgba(180,60,0,0.5)",
+                border: "1px solid #c07030",
+                borderRadius: "12px",
+                padding: "10px 20px",
+                color: "#ffd080",
+                fontSize: "13px",
+                maxWidth: "480px",
+                textAlign: "center",
+              }}
+            >
               ⚠️ {dataError}
             </div>
           )}
 
           {/* Level cards grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "20px", width: "100%", maxWidth: "700px", paddingBottom: "30px" }}>
-            {Array.from({ length: TOTAL_LEVELS }, (_, i) => i + 1).map(levelNum => {
-              const meta      = LEVEL_META[levelNum];
-              const unlocked  = isLevelUnlocked(levelNum);
-              const { done, pct, stars } = getLevelProgress(levelNum);
-              const isRecommended = levelNum === progress.recommendedLevel;
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 1fr)",
+              gap: "20px",
+              width: "100%",
+              maxWidth: "700px",
+              paddingBottom: "30px",
+            }}
+          >
+            {Array.from({ length: TOTAL_LEVELS }, (_, i) => i + 1).map(
+              (levelNum) => {
+                const meta = LEVEL_META[levelNum];
+                const unlocked = isLevelUnlocked(levelNum);
+                const { done, pct, stars } = getLevelProgress(levelNum);
+                const isRecommended = levelNum === progress.recommendedLevel;
 
-              return (
-                <div
-                  key={levelNum}
-                  onClick={() => { if (unlocked) { setSelectedLevel(levelNum); setView("stages"); } }}
-                  style={{
-                    background: unlocked
-                      ? `linear-gradient(145deg, rgba(${hexToRgb(meta.color)},0.8), rgba(0,0,0,0.65))`
-                      : "rgba(30,20,10,0.75)",
-                    border: isRecommended
-                      ? "3px solid #ffd700"
-                      : `2px solid ${unlocked ? meta.color : "#555"}`,
-                    borderRadius: "20px",
-                    padding: "22px 18px",
-                    cursor: unlocked ? "pointer" : "not-allowed",
-                    opacity: unlocked ? 1 : 0.6,
-                    filter: unlocked ? "none" : "grayscale(70%)",
-                    transition: "all 0.3s ease",
-                    backdropFilter: "blur(8px)",
-                    direction: "rtl",
-                    position: "relative",
-                    overflow: "hidden",
-                    boxShadow: isRecommended
-                      ? `0 0 20px #ffd700, 0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
-                      : unlocked ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)` : "none",
-                  }}
-                  onMouseEnter={e => { if (unlocked) e.currentTarget.style.transform = "translateY(-6px)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}
-                >
-                  {!unlocked && (
-                    <div style={{ position: "absolute", top: "12px", left: "12px", fontSize: "20px", background: "rgba(0,0,0,0.4)", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center" }}>🔒</div>
-                  )}
-                  {isRecommended && (
-                    <div style={{
-                      position: "absolute", top: "10px", right: "10px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00", padding: "4px 10px",
-                      borderRadius: "12px", fontSize: "11px", fontWeight: "bold",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)", zIndex: 2
-                    }}>
-                      المستوى الموصى به ⭐
+                return (
+                  <div
+                    key={levelNum}
+                    onClick={() => {
+                      if (unlocked) {
+                        setSelectedLevel(levelNum);
+                        setView("stages");
+                      }
+                    }}
+                    style={{
+                      background: unlocked
+                        ? `linear-gradient(145deg, rgba(${hexToRgb(meta.color)},0.8), rgba(0,0,0,0.65))`
+                        : "rgba(30,20,10,0.75)",
+                      border: isRecommended
+                        ? "3px solid #ffd700"
+                        : `2px solid ${unlocked ? meta.color : "#555"}`,
+                      borderRadius: "20px",
+                      padding: "22px 18px",
+                      cursor: unlocked ? "pointer" : "not-allowed",
+                      opacity: unlocked ? 1 : 0.6,
+                      filter: unlocked ? "none" : "grayscale(70%)",
+                      transition: "all 0.3s ease",
+                      backdropFilter: "blur(8px)",
+                      direction: "rtl",
+                      position: "relative",
+                      overflow: "hidden",
+                      boxShadow: isRecommended
+                        ? `0 0 20px #ffd700, 0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
+                        : unlocked
+                          ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
+                          : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (unlocked)
+                        e.currentTarget.style.transform = "translateY(-6px)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                    }}
+                  >
+                    {!unlocked && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "12px",
+                          left: "12px",
+                          fontSize: "20px",
+                          background: "rgba(0,0,0,0.4)",
+                          borderRadius: "50%",
+                          width: "36px",
+                          height: "36px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        🔒
+                      </div>
+                    )}
+                    {isRecommended && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          right: "10px",
+                          background:
+                            "linear-gradient(135deg, #ffd700, #b8860b)",
+                          color: "#1a0f00",
+                          padding: "4px 10px",
+                          borderRadius: "12px",
+                          fontSize: "11px",
+                          fontWeight: "bold",
+                          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                          zIndex: 2,
+                        }}
+                      >
+                        المستوى الموصى به ⭐
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        color: meta.color,
+                        fontSize: "13px",
+                        fontWeight: 800,
+                        letterSpacing: "1px",
+                      }}
+                    >
+                      {meta.icon} المستوى {levelNum}
                     </div>
-                  )}
-                  <div style={{ color: meta.color, fontSize: "13px", fontWeight: 800, letterSpacing: "1px" }}>
-                    {meta.icon} المستوى {levelNum}
+                    <h3
+                      style={{
+                        color: "#fff",
+                        margin: "8px 0 4px",
+                        fontSize: "16px",
+                        fontWeight: 800,
+                      }}
+                    >
+                      {meta.name}
+                    </h3>
+                    <p
+                      style={{
+                        color: "#d4af37",
+                        margin: 0,
+                        fontSize: "12px",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      {meta.focus}
+                    </p>
+                    <div style={{ marginTop: "14px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          color: unlocked ? meta.color : "#888",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          marginBottom: "5px",
+                        }}
+                      >
+                        <span>
+                          {done}/{STAGES_PER_LEVEL} مراحل
+                        </span>
+                        <span>{"★".repeat(stars)}</span>
+                      </div>
+                      <div
+                        style={{
+                          height: "8px",
+                          background: "rgba(255,255,255,0.1)",
+                          borderRadius: "4px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: "100%",
+                            width: `${pct}%`,
+                            background: `linear-gradient(90deg, ${meta.color}, #ffd700)`,
+                            borderRadius: "4px",
+                            transition: "width 0.5s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <h3 style={{ color: "#fff", margin: "8px 0 4px", fontSize: "16px", fontWeight: 800 }}>{meta.name}</h3>
-                  <p style={{ color: "#d4af37", margin: 0, fontSize: "12px", fontStyle: "italic" }}>{meta.focus}</p>
-                  <div style={{ marginTop: "14px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", color: unlocked ? meta.color : "#888", fontSize: "12px", fontWeight: 700, marginBottom: "5px" }}>
-                      <span>{done}/{STAGES_PER_LEVEL} مراحل</span>
-                      <span>{'★'.repeat(stars)}</span>
-                    </div>
-                    <div style={{ height: "8px", background: "rgba(255,255,255,0.1)", borderRadius: "4px", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${meta.color}, #ffd700)`, borderRadius: "4px", transition: "width 0.5s ease" }} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              },
+            )}
           </div>
 
           {/* Collection button */}
           <button
             onClick={() => setView("collection")}
-            style={{ background: "linear-gradient(135deg, #8b6914, #c0a060)", border: "2px solid #ffd700", borderRadius: "14px", color: "#fff", padding: "12px 30px", fontSize: "16px", fontWeight: 800, cursor: "pointer" }}
+            style={{
+              background: "linear-gradient(135deg, #8b6914, #c0a060)",
+              border: "2px solid #ffd700",
+              borderRadius: "14px",
+              color: "#fff",
+              padding: "12px 30px",
+              fontSize: "16px",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
           >
             🏆 متحف الكنوز ({myCollection.length}/{allArtifacts.length})
           </button>
@@ -736,73 +1094,208 @@ function TombPuzzle() {
           VIEW: STAGES
       ════════════════════════════════════════════════════════ */}
       {!dataLoading && view === "stages" && selectedLevel && (
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", padding: "20px", boxSizing: "border-box" }}>
+        <div
+          style={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "24px",
+            padding: "20px",
+            boxSizing: "border-box",
+          }}
+        >
           {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", maxWidth: "700px", background: "rgba(0,0,0,0.55)", border: `2px solid ${LEVEL_META[selectedLevel].color}`, borderRadius: "18px", padding: "14px 24px", boxSizing: "border-box", direction: "rtl", backdropFilter: "blur(8px)" }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              maxWidth: "700px",
+              background: "rgba(0,0,0,0.55)",
+              border: `2px solid ${LEVEL_META[selectedLevel].color}`,
+              borderRadius: "18px",
+              padding: "14px 24px",
+              boxSizing: "border-box",
+              direction: "rtl",
+              backdropFilter: "blur(8px)",
+            }}
+          >
             <div>
-              <div style={{ color: LEVEL_META[selectedLevel].color, fontWeight: 800, fontSize: "13px" }}>
+              <div
+                style={{
+                  color: LEVEL_META[selectedLevel].color,
+                  fontWeight: 800,
+                  fontSize: "13px",
+                }}
+              >
                 {LEVEL_META[selectedLevel].icon} المستوى {selectedLevel}
               </div>
-              <h2 style={{ color: "#fff", margin: "4px 0 0", fontSize: "18px" }}>{LEVEL_META[selectedLevel].name}</h2>
+              <h2
+                style={{ color: "#fff", margin: "4px 0 0", fontSize: "18px" }}
+              >
+                {LEVEL_META[selectedLevel].name}
+              </h2>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
-              <button onClick={() => navigate("/home")} style={{ background: "transparent", border: `2px solid ${LEVEL_META[selectedLevel].color}`, borderRadius: "10px", color: "#ffd700", padding: "9px 14px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+              <button
+                onClick={() => navigate("/home")}
+                style={{
+                  background: "transparent",
+                  border: `2px solid ${LEVEL_META[selectedLevel].color}`,
+                  borderRadius: "10px",
+                  color: "#ffd700",
+                  padding: "9px 14px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
                 خروج 🚪
               </button>
-              <button onClick={() => setView("levels")} style={{ background: LEVEL_META[selectedLevel].color, border: "none", borderRadius: "10px", color: "#1a0a00", padding: "9px 18px", fontWeight: 800, cursor: "pointer", fontSize: "14px" }}>
+              <button
+                onClick={() => setView("levels")}
+                style={{
+                  background: LEVEL_META[selectedLevel].color,
+                  border: "none",
+                  borderRadius: "10px",
+                  color: "#1a0a00",
+                  padding: "9px 18px",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  fontSize: "14px",
+                }}
+              >
                 ← الخريطة
               </button>
             </div>
           </div>
 
           {/* Stage nodes */}
-          <div style={{ display: "flex", gap: "36px", flexWrap: "wrap", justifyContent: "center", background: "rgba(0,0,0,0.4)", borderRadius: "24px", padding: "30px 20px", backdropFilter: "blur(8px)", maxWidth: "700px", width: "100%", boxSizing: "border-box" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "36px",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              background: "rgba(0,0,0,0.4)",
+              borderRadius: "24px",
+              padding: "30px 20px",
+              backdropFilter: "blur(8px)",
+              maxWidth: "700px",
+              width: "100%",
+              boxSizing: "border-box",
+            }}
+          >
             {Array.from({ length: STAGES_PER_LEVEL }, (_, stageIdx) => {
               const unlocked = isStageUnlocked(selectedLevel, stageIdx);
-              const stars    = getStageStars(selectedLevel, stageIdx);
-              const color    = LEVEL_META[selectedLevel].color;
-              const isRecommended = selectedLevel === progress.recommendedLevel
-                && stageIdx === (progress.recommendedStage - 1 || 0);
+              const stars = getStageStars(selectedLevel, stageIdx);
+              const color = LEVEL_META[selectedLevel].color;
+              const isRecommended =
+                selectedLevel === progress.recommendedLevel &&
+                stageIdx === (progress.recommendedStage - 1 || 0);
 
               return (
-                <div key={stageIdx} style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative", paddingTop: "28px" }}>
+                <div
+                  key={stageIdx}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    position: "relative",
+                    paddingTop: "28px",
+                  }}
+                >
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute", top: "4px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00", padding: "2px 8px",
-                      borderRadius: "10px", fontSize: "10px", fontWeight: "bold",
-                      whiteSpace: "nowrap", boxShadow: "0 2px 6px rgba(0,0,0,0.25)", zIndex: 2
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "4px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        zIndex: 2,
+                      }}
+                    >
                       بداية المسار 🚀
                     </div>
                   )}
                   <div
-                    onClick={() => { if (unlocked) launchStage(selectedLevel, stageIdx); }}
+                    onClick={() => {
+                      if (unlocked) launchStage(selectedLevel, stageIdx);
+                    }}
                     style={{
-                      width: "88px", height: "88px", borderRadius: "50%",
-                      background: unlocked ? `radial-gradient(circle at 35% 35%, #fff8e0, ${color})` : "radial-gradient(circle at 35% 35%, #ccc, #777)",
-                      border: isRecommended ? `5px solid #ffd700` : `5px solid ${unlocked ? "#fff" : "#bbb"}`,
+                      width: "88px",
+                      height: "88px",
+                      borderRadius: "50%",
+                      background: unlocked
+                        ? `radial-gradient(circle at 35% 35%, #fff8e0, ${color})`
+                        : "radial-gradient(circle at 35% 35%, #ccc, #777)",
+                      border: isRecommended
+                        ? `5px solid #ffd700`
+                        : `5px solid ${unlocked ? "#fff" : "#bbb"}`,
                       boxShadow: isRecommended
                         ? `0 0 18px #ffd700, 0 8px 20px rgba(${hexToRgb(color)},0.5)`
-                        : unlocked ? `0 8px 20px rgba(${hexToRgb(color)},0.5)` : "0 4px 10px rgba(0,0,0,0.3)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: "32px", fontWeight: 900,
+                        : unlocked
+                          ? `0 8px 20px rgba(${hexToRgb(color)},0.5)`
+                          : "0 4px 10px rgba(0,0,0,0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "32px",
+                      fontWeight: 900,
                       color: unlocked ? "#3d1f00" : "#666",
                       cursor: unlocked ? "pointer" : "not-allowed",
-                      transition: "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
+                      transition:
+                        "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
                     }}
-                    onMouseEnter={e => { if (unlocked) { e.currentTarget.style.transform = "scale(1.15) translateY(-5px)"; } }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}
+                    onMouseEnter={(e) => {
+                      if (unlocked) {
+                        e.currentTarget.style.transform =
+                          "scale(1.15) translateY(-5px)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "none";
+                    }}
                   >
                     {unlocked ? stageIdx + 1 : "🔒"}
                   </div>
-                  <div style={{ color: "#fff", fontSize: "12px", fontWeight: 700, marginTop: "8px", textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}>
+                  <div
+                    style={{
+                      color: "#fff",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      marginTop: "8px",
+                      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
+                    }}
+                  >
                     المرحلة {stageIdx + 1}
                   </div>
-                  <div style={{ display: "flex", gap: "2px", marginTop: "4px" }}>
-                    {[1, 2, 3].map(s => (
-                      <span key={s} style={{ fontSize: "15px", color: s <= stars ? "#ffd700" : "rgba(255,255,255,0.2)", filter: s <= stars ? "drop-shadow(0 0 4px #ffd700)" : "none" }}>★</span>
+                  <div
+                    style={{ display: "flex", gap: "2px", marginTop: "4px" }}
+                  >
+                    {[1, 2, 3].map((s) => (
+                      <span
+                        key={s}
+                        style={{
+                          fontSize: "15px",
+                          color:
+                            s <= stars ? "#ffd700" : "rgba(255,255,255,0.2)",
+                          filter:
+                            s <= stars
+                              ? "drop-shadow(0 0 4px #ffd700)"
+                              : "none",
+                        }}
+                      >
+                        ★
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -824,38 +1317,82 @@ function TombPuzzle() {
           />
 
           <div className={style["status-bar"]}>
-            <span>المستوى {selectedLevel} | المرحلة {selectedStageIndex + 1}</span>
+            <span>
+              المستوى {selectedLevel} | المرحلة {selectedStageIndex + 1}
+            </span>
             <span style={{ display: "flex", gap: "4px", alignItems: "center" }}>
               {[...Array(3)].map((_, i) => (
-                <span key={i} style={{ opacity: i < lives ? 1 : 0.2, filter: i < lives ? "none" : "grayscale(100%)" }}>❤️</span>
+                <span
+                  key={i}
+                  style={{
+                    opacity: i < lives ? 1 : 0.2,
+                    filter: i < lives ? "none" : "grayscale(100%)",
+                  }}
+                >
+                  ❤️
+                </span>
               ))}
             </span>
           </div>
 
-          <div style={{ textAlign: "center", color: "#d4af37", fontSize: "13px", marginTop: "8px" }}>
-            السؤال {questionIndex + 1} / {stageQuestions.length} &nbsp;|&nbsp; الصحيحة: {correctCount}
+          <div
+            style={{
+              textAlign: "center",
+              color: "#d4af37",
+              fontSize: "13px",
+              marginTop: "8px",
+            }}
+          >
+            السؤال {questionIndex + 1} / {stageQuestions.length} &nbsp;|&nbsp;
+            الصحيحة: {correctCount}
           </div>
 
-          <div style={{ textAlign: "center", color: "#ffd700", fontSize: "14px", fontWeight: 700, marginTop: "6px" }}>
+          <div
+            style={{
+              textAlign: "center",
+              color: "#ffd700",
+              fontSize: "14px",
+              fontWeight: 700,
+              marginTop: "6px",
+            }}
+          >
             {categoryMap[stageQuestions[questionIndex]?.category] || ""}
           </div>
 
-          <h2 style={{ marginTop: "12px", color: "#fff", fontSize: "20px", textAlign: "center" }}>رتّب الكلمات لتكوين الجملة الصحيحة</h2>
+          <h2
+            style={{
+              marginTop: "12px",
+              color: "#fff",
+              fontSize: "20px",
+              textAlign: "center",
+            }}
+          >
+            رتّب الكلمات لتكوين الجملة الصحيحة
+          </h2>
 
           <div className={style["puzzle-container"]}>
             {/* Answer area + hint */}
             <div className={style["answer-wrapper"]}>
-              <button className={style["hint-btn"]} onClick={useHint} disabled={hints === 0} title="مساعدة">
+              <button
+                className={style["hint-btn"]}
+                onClick={useHint}
+                disabled={hints === 0}
+                title="مساعدة"
+              >
                 💡 <div className={style["hint-badge"]}>{hints}</div>
               </button>
               <div className={style["answer-box"]}>
-                {userAnswer.length === 0 ? <span style={{ opacity: 0.5 }}>رتب الكلمات هنا...</span> : null}
+                {userAnswer.length === 0 ? (
+                  <span style={{ opacity: 0.5 }}>رتب الكلمات هنا...</span>
+                ) : null}
                 {userAnswer.map((word, idx) => (
                   <span
                     key={idx}
                     className={`${style["word-card"]} ${style["user-word"]} ${style["clickable"]}`}
                     onClick={() => handleReturnWord(word, idx)}
-                  >{word}</span>
+                  >
+                    {word}
+                  </span>
                 ))}
               </div>
             </div>
@@ -863,14 +1400,24 @@ function TombPuzzle() {
             {/* Word pool */}
             <div className={style["words-pool"]}>
               {shuffledWords.map((word, idx) => (
-                <button key={idx} className={style["word-btn"]} onClick={() => handleWordClick(word)}>
+                <button
+                  key={idx}
+                  className={style["word-btn"]}
+                  onClick={() => handleWordClick(word)}
+                >
                   {word}
                 </button>
               ))}
             </div>
           </div>
 
-          <button className={style["btn-secondary"]} onClick={() => { setView("stages"); setIsMusicPlaying(false); }}>
+          <button
+            className={style["btn-secondary"]}
+            onClick={() => {
+              setView("stages");
+              setIsMusicPlaying(false);
+            }}
+          >
             انسحاب 🏃‍♂️
           </button>
         </div>
@@ -880,41 +1427,92 @@ function TombPuzzle() {
           VIEW: STAGE RESULT
       ════════════════════════════════════════════════════════ */}
       {view === "game" && stageResult && (
-        <div className={stageResult.passed ? style["victory-screen"] : style["gameover-screen"]} style={{ zIndex: 100 }}>
+        <div
+          className={
+            stageResult.passed
+              ? style["victory-screen"]
+              : style["gameover-screen"]
+          }
+          style={{ zIndex: 100 }}
+        >
           {stageResult.passed ? (
             <>
               {!chestOpened ? (
                 <>
                   <h1>🎉 مبروك يا بطل! 🎉</h1>
                   <div style={{ fontSize: "28px", margin: "8px 0" }}>
-                    {[1,2,3].map(s => (
-                      <span key={s} style={{ color: s <= stageResult.stars ? "#ffd700" : "rgba(255,255,255,0.2)", textShadow: s <= stageResult.stars ? "0 0 12px #ffd700" : "none" }}>★</span>
+                    {[1, 2, 3].map((s) => (
+                      <span
+                        key={s}
+                        style={{
+                          color:
+                            s <= stageResult.stars
+                              ? "#ffd700"
+                              : "rgba(255,255,255,0.2)",
+                          textShadow:
+                            s <= stageResult.stars
+                              ? "0 0 12px #ffd700"
+                              : "none",
+                        }}
+                      >
+                        ★
+                      </span>
                     ))}
                   </div>
-                  <p>الصحيحة: {stageResult.correct} / {stageResult.total}</p>
+                  <p>
+                    الصحيحة: {stageResult.correct} / {stageResult.total}
+                  </p>
                   <p>لقد وجدت صندوق كنز قديم!</p>
-                  <button className={style["chest-btn"]} onClick={openChest}>🎁</button>
+                  <button className={style["chest-btn"]} onClick={openChest}>
+                    🎁
+                  </button>
                   <p>اضغط لفتح الصندوق</p>
                 </>
               ) : (
                 <>
                   <div className={style["artifact-reveal"]}>
                     <h1>✨ اكتشاف مذهل! ✨</h1>
-                    <span className={style["artifact-icon"]}>{reward?.icon}</span>
+                    <span className={style["artifact-icon"]}>
+                      {reward?.icon}
+                    </span>
                     <h2 style={{ color: "#ffd700" }}>{reward?.name}</h2>
                     <p>تمت إضافته إلى متحفك</p>
                   </div>
-                  <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "12px",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     {/* Next stage if available */}
                     {selectedStageIndex + 1 < STAGES_PER_LEVEL &&
-                      isStageUnlocked(selectedLevel, selectedStageIndex + 1) && (
-                      <button onClick={() => launchStage(selectedLevel, selectedStageIndex + 1)}>
-                        المرحلة التالية ▶️
-                      </button>
-                    )}
-                    <button onClick={() => setView("collection")}>الذهاب للمتحف 🏛️</button>
-                    <button onClick={() => launchStage(selectedLevel, selectedStageIndex)}>إعادة المرحلة 🔄</button>
-                    <button onClick={() => setView("stages")}>خريطة المراحل 🗺️</button>
+                      isStageUnlocked(
+                        selectedLevel,
+                        selectedStageIndex + 1,
+                      ) && (
+                        <button
+                          onClick={() =>
+                            launchStage(selectedLevel, selectedStageIndex + 1)
+                          }
+                        >
+                          المرحلة التالية ▶️
+                        </button>
+                      )}
+                    <button onClick={() => setView("collection")}>
+                      الذهاب للمتحف 🏛️
+                    </button>
+                    <button
+                      onClick={() =>
+                        launchStage(selectedLevel, selectedStageIndex)
+                      }
+                    >
+                      إعادة المرحلة 🔄
+                    </button>
+                    <button onClick={() => setView("stages")}>
+                      خريطة المراحل 🗺️
+                    </button>
                   </div>
                 </>
               )}
@@ -922,14 +1520,35 @@ function TombPuzzle() {
           ) : (
             <>
               <div style={{ fontSize: "80px", marginBottom: "20px" }}>☠️</div>
-              <h1 style={{ color: "#e74c3c", textShadow: "0 0 10px red" }}>محاولة فاشلة!</h1>
-              <p>الصحيحة: {stageResult.correct} / {stageResult.total}</p>
+              <h1 style={{ color: "#e74c3c", textShadow: "0 0 10px red" }}>
+                محاولة فاشلة!
+              </h1>
+              <p>
+                الصحيحة: {stageResult.correct} / {stageResult.total}
+              </p>
               <p>لا تستسلم! أعد المحاولة.</p>
-              <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-                <button onClick={() => launchStage(selectedLevel, selectedStageIndex)} style={{ backgroundColor: "#e74c3c", color: "white", border: "2px solid white" }}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "12px",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  onClick={() => launchStage(selectedLevel, selectedStageIndex)}
+                  style={{
+                    backgroundColor: "#e74c3c",
+                    color: "white",
+                    border: "2px solid white",
+                  }}
+                >
                   إعادة نفس المرحلة 🔄
                 </button>
-                <button className={style["btn-secondary"]} onClick={() => setView("stages")}>
+                <button
+                  className={style["btn-secondary"]}
+                  onClick={() => setView("stages")}
+                >
                   خريطة المراحل 🗺️
                 </button>
               </div>
@@ -944,19 +1563,31 @@ function TombPuzzle() {
       {view === "collection" && (
         <div className={style["start-screen"]}>
           <h2>🏆 مجموعتي الأثرية</h2>
-          <p>لقد جمعت {myCollection.length} من {allArtifacts.length} كنوز</p>
+          <p>
+            لقد جمعت {myCollection.length} من {allArtifacts.length} كنوز
+          </p>
           <div className={style["collection-grid"]}>
-            {allArtifacts.map(artifact => {
-              const unlocked = myCollection.find(a => a.id === artifact.id);
+            {allArtifacts.map((artifact) => {
+              const unlocked = myCollection.find((a) => a.id === artifact.id);
               return (
-                <div key={artifact.id} className={`${style["artifact-slot"]} ${unlocked ? style["unlocked"] : style["locked"]}`}>
-                  <span className={style["slot-icon"]}>{unlocked ? artifact.icon : "🔒"}</span>
-                  <span className={style["slot-name"]}>{unlocked ? artifact.name : "؟؟؟"}</span>
+                <div
+                  key={artifact.id}
+                  className={`${style["artifact-slot"]} ${unlocked ? style["unlocked"] : style["locked"]}`}
+                >
+                  <span className={style["slot-icon"]}>
+                    {unlocked ? artifact.icon : "🔒"}
+                  </span>
+                  <span className={style["slot-name"]}>
+                    {unlocked ? artifact.name : "؟؟؟"}
+                  </span>
                 </div>
               );
             })}
           </div>
-          <button className={style["btn-secondary"]} onClick={() => setView("levels")}>
+          <button
+            className={style["btn-secondary"]}
+            onClick={() => setView("levels")}
+          >
             العودة للخريطة 🗺️
           </button>
         </div>

@@ -216,25 +216,66 @@ const saveProgress = (prog) => {
 const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   return (
     <div className="wh-modal-overlay" style={{ zIndex: 9999 }}>
-      <div className="wh-modal win" style={{ maxWidth: "480px", background: "linear-gradient(135deg, #1e1b4b, #311042)", border: "3px solid #ffd700" }}>
-        <div style={{ fontSize: "4.5rem", marginBottom: "1rem", filter: "drop-shadow(0 0 10px #ffd700)" }}>🌟</div>
+      <div
+        className="wh-modal win"
+        style={{
+          maxWidth: "480px",
+          background: "linear-gradient(135deg, #1e1b4b, #311042)",
+          border: "3px solid #ffd700",
+        }}
+      >
+        <div
+          style={{
+            fontSize: "4.5rem",
+            marginBottom: "1rem",
+            filter: "drop-shadow(0 0 10px #ffd700)",
+          }}
+        >
+          🌟
+        </div>
         <h2 className="wh-modal-title">مرحباً بك يا بطل!</h2>
-        <p className="wh-modal-subtitle" style={{ fontSize: "1.15rem", lineHeight: "1.6", margin: "10px 0 24px", color: "#fef3c7" }}>
-          بناءً على أدائك الرائع في التقييم القَبلي، قمنا بفتح المستويات الأولى لتخطي المهارات التي تتقنها بالفعل.
+        <p
+          className="wh-modal-subtitle"
+          style={{
+            fontSize: "1.15rem",
+            lineHeight: "1.6",
+            margin: "10px 0 24px",
+            color: "#fef3c7",
+          }}
+        >
+          بناءً على أدائك الرائع في التقييم القَبلي، قمنا بفتح المستويات الأولى
+          لتخطي المهارات التي تتقنها بالفعل.
           <br />
-          <strong style={{ color: "#ffd700", display: "block", marginTop: "8px", fontSize: "1.3rem" }}>
+          <strong
+            style={{
+              color: "#ffd700",
+              display: "block",
+              marginTop: "8px",
+              fontSize: "1.3rem",
+            }}
+          >
             تبدأ مغامرتك مباشرة من المستوى {unlockedLevel}!
           </strong>
         </p>
         <div className="wh-btn-container">
-          <button className="wh-modal-btn" onClick={onDismiss} style={{ padding: "12px 36px", fontSize: "1.2rem" }}>ابدأ اللعب الآن!</button>
+          <button
+            className="wh-modal-btn"
+            onClick={onDismiss}
+            style={{ padding: "12px 36px", fontSize: "1.2rem" }}
+          >
+            ابدأ اللعب الآن!
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel = 5) => {
+const reconstructDetailedProgress = (
+  bgProgress,
+  totalLevels = 6,
+  stagesPerLevel = 5,
+) => {
   const levelReached = bgProgress?.levelReached || 1;
   const completedStagesCount = bgProgress?.completedStages || 0;
   const starsEarned = bgProgress?.starsEarned || 0;
@@ -254,7 +295,10 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
         completedStages[l.toString()].push(true);
         stagesRemaining--;
 
-        const allocated = Math.min(3, Math.max(1, starsRemaining - stagesRemaining));
+        const allocated = Math.min(
+          3,
+          Math.max(1, starsRemaining - stagesRemaining),
+        );
         stars[l.toString()].push(allocated);
         starsRemaining -= allocated;
       } else {
@@ -267,7 +311,7 @@ const reconstructDetailedProgress = (bgProgress, totalLevels = 6, stagesPerLevel
   return {
     unlockedLevel: levelReached,
     completedStages,
-    stars
+    stars,
   };
 };
 
@@ -276,8 +320,8 @@ const WordHuntGame = () => {
   // const navigate = useNavigate();
 
   // View state: "levels" | "stages" | "game"
-  const [view, setView]                         = useState("levels");
-  const [progress, setProgress]                 = useState(loadProgress);
+  const [view, setView] = useState("levels");
+  const [progress, setProgress] = useState(loadProgress);
   const [showPretestModal, setShowPretestModal] = useState(false);
 
   useEffect(() => {
@@ -290,7 +334,7 @@ const WordHuntGame = () => {
         const res = await gameProgressAPI.getByUser(uId);
         const progressList = res.data?.data || res.data;
         const bgProgress = Array.isArray(progressList)
-          ? progressList.find(p => p.gameKey === "word_hunt")
+          ? progressList.find((p) => p.gameKey === "word_hunt")
           : null;
 
         if (bgProgress) {
@@ -314,7 +358,7 @@ const WordHuntGame = () => {
 
   const dismissPretestModal = () => {
     setShowPretestModal(false);
-    setProgress(prev => {
+    setProgress((prev) => {
       const updated = { ...prev, showPretestWelcome: false };
       saveProgress(updated);
       return updated;
@@ -580,18 +624,36 @@ const WordHuntGame = () => {
         });
 
         const maxStages = 6 * 5;
-        const completionPercent = Math.min(100, Math.round((totalCompletedStages / maxStages) * 100));
+        const completionPercent = Math.min(
+          100,
+          Math.round((totalCompletedStages / maxStages) * 100),
+        );
 
         if (userId) {
-          gameProgressAPI.update(userId, {
-            gameKey: "word_hunt",
-            levelReached: newUnlocked,
-            completedStages: totalCompletedStages,
-            starsEarned: totalStars,
-            completionPercent,
-          }).catch(err => {
-            console.error("Failed to update backend progress:", err);
-          });
+          // Record this specific stage completion
+          gameProgressAPI
+            .completeStage(userId, {
+              gameKey: "word_hunt",
+              stageNumber: selectedStageIndex + 1,
+              score: finalScore,
+              starsEarned: stars,
+            })
+            .catch((err) => {
+              console.error("Failed to complete stage on backend:", err);
+            });
+
+          // Update aggregate progress
+          gameProgressAPI
+            .update(userId, {
+              gameKey: "word_hunt",
+              levelReached: newUnlocked,
+              completedStages: totalCompletedStages,
+              starsEarned: totalStars,
+              completionPercent,
+            })
+            .catch((err) => {
+              console.error("Failed to update backend progress:", err);
+            });
         }
 
         return updated;
@@ -693,7 +755,18 @@ const WordHuntGame = () => {
             onDismiss={dismissPretestModal}
           />
         )}
-        <div style={{ width: "95%", maxWidth: "900px", overflowY: "auto", maxHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: "30px 0" }}>
+        <div
+          style={{
+            width: "95%",
+            maxWidth: "900px",
+            overflowY: "auto",
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "30px 0",
+          }}
+        >
           {/* Header */}
           <div className="wh-map-title-container">
             <h1 className="wh-map-title">🏠 كوخ الكلمات</h1>
@@ -703,11 +776,11 @@ const WordHuntGame = () => {
           {/* Level Cards */}
           <div className="wh-levels-grid">
             {levelCards.map((level, idx) => {
-              const levelNum    = level.levelNumber ?? idx + 1;
-              const isUnlocked  = isLevelUnlocked(idx);
-              const completed   = getLevelStagesCompleted(levelNum);
-              const totalStars  = getTotalStarsForLevel(levelNum);
-              const pct         = Math.round((completed / STAGES_PER_LEVEL) * 100);
+              const levelNum = level.levelNumber ?? idx + 1;
+              const isUnlocked = isLevelUnlocked(idx);
+              const completed = getLevelStagesCompleted(levelNum);
+              const totalStars = getTotalStarsForLevel(levelNum);
+              const pct = Math.round((completed / STAGES_PER_LEVEL) * 100);
               const isRecommended = levelNum === progress.recommendedLevel;
 
               return (
@@ -716,7 +789,13 @@ const WordHuntGame = () => {
                   className={`wh-level-card${!isUnlocked ? " wh-level-card-locked" : ""}`}
                   style={{
                     position: "relative",
-                    ...(isRecommended ? { border: "3px solid #ffd700", boxShadow: "0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.2)" } : {})
+                    ...(isRecommended
+                      ? {
+                          border: "3px solid #ffd700",
+                          boxShadow:
+                            "0 0 20px #ffd700, inset 0 0 10px rgba(255, 215, 0, 0.2)",
+                        }
+                      : {}),
                   }}
                   onClick={() => {
                     if (!isUnlocked) return;
@@ -726,19 +805,21 @@ const WordHuntGame = () => {
                 >
                   {!isUnlocked && <div className="wh-lock-overlay">🔒</div>}
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute",
-                      top: "10px",
-                      left: "10px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00",
-                      padding: "4px 10px",
-                      borderRadius: "12px",
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                      zIndex: 2
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "10px",
+                        left: "10px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: "bold",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        zIndex: 2,
+                      }}
+                    >
                       المستوى الموصى به ⭐
                     </div>
                   )}
@@ -827,36 +908,50 @@ const WordHuntGame = () => {
           <div className="wh-stages-grid">
             {Array.from({ length: STAGES_PER_LEVEL }, (_, stageIdx) => {
               const unlocked = isStageUnlocked(levelNum, stageIdx);
-              const stars    = getStageStars(levelNum, stageIdx);
-              const isRecommended = levelNum === progress.recommendedLevel && stageIdx === (progress.recommendedStage - 1 || 0);
+              const stars = getStageStars(levelNum, stageIdx);
+              const isRecommended =
+                levelNum === progress.recommendedLevel &&
+                stageIdx === (progress.recommendedStage - 1 || 0);
 
               return (
-                <div key={stageIdx} className="wh-stage-node-wrapper" style={{ position: "relative" }}>
+                <div
+                  key={stageIdx}
+                  className="wh-stage-node-wrapper"
+                  style={{ position: "relative" }}
+                >
                   {isRecommended && (
-                    <div style={{
-                      position: "absolute",
-                      top: "-22px",
-                      background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                      color: "#1a0f00",
-                      padding: "2px 8px",
-                      borderRadius: "10px",
-                      fontSize: "10px",
-                      fontWeight: "bold",
-                      whiteSpace: "nowrap",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                      zIndex: 2,
-                      animation: "bounce 1.5s infinite"
-                    }}>
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "-22px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "2px 8px",
+                        borderRadius: "10px",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        whiteSpace: "nowrap",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                        zIndex: 2,
+                        animation: "bounce 1.5s infinite",
+                      }}
+                    >
                       بداية المسار 🚀
                     </div>
                   )}
                   <div
                     className={`wh-stage-node${!unlocked ? " wh-stage-node-locked" : ""}`}
-                    style={isRecommended ? {
-                      boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
-                      border: "3px solid #ffd700",
-                    } : {}}
-                    onClick={() => { if (unlocked) startStage(levelNum, stageIdx); }}
+                    style={
+                      isRecommended
+                        ? {
+                            boxShadow: "0 0 15px #ffd700, 0 0 5px #ffd700",
+                            border: "3px solid #ffd700",
+                          }
+                        : {}
+                    }
+                    onClick={() => {
+                      if (unlocked) startStage(levelNum, stageIdx);
+                    }}
                   >
                     {unlocked ? stageIdx + 1 : "🔒"}
                   </div>
