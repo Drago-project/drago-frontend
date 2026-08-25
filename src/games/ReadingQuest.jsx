@@ -5,7 +5,8 @@ import styles from "../styles/ReadingQuest.module.css";
 import { WinModal, LoseModal } from "../components/WinLose";
 import { BoatSVG, TornadoSVG } from "../components/GameIcons";
 import { shalalAPI, profileAPI, gameProgressAPI } from "../server/endpoints";
-import { getAuthUser } from "../server/auth";
+import { recordXpAttempt } from "../utils/xpDebug";
+import { getAuthUser, getProgressStorageKey } from "../server/auth";
 import { SHALAL_DATA } from "../data/shalal_stories";
 import { useTranslation } from "react-i18next";
 
@@ -165,14 +166,11 @@ const reconstructDetailedProgress = (
 ) => {
   const levelReached = bgProgress?.levelReached || 1;
   const completedStagesCount = bgProgress?.completedStages || 0;
-  const starsEarned = bgProgress?.starsEarned || 0;
 
   const completedStages = {};
   const stars = {};
 
   let stagesRemaining = completedStagesCount;
-  let starsRemaining = starsEarned;
-
   for (let l = 1; l <= totalLevels; l++) {
     completedStages[l.toString()] = [];
     stars[l.toString()] = [];
@@ -181,13 +179,7 @@ const reconstructDetailedProgress = (
       if (stagesRemaining > 0) {
         completedStages[l.toString()].push(true);
         stagesRemaining--;
-
-        const allocated = Math.min(
-          3,
-          Math.max(1, starsRemaining - stagesRemaining),
-        );
-        stars[l.toString()].push(allocated);
-        starsRemaining -= allocated;
+        stars[l.toString()].push(0);
       } else {
         completedStages[l.toString()].push(false);
         stars[l.toString()].push(0);
@@ -212,7 +204,9 @@ function ReadingQuest() {
   const [selectedStageIndex, setSelectedStageIndex] = useState(null);
   const [progress, setProgress] = useState(() => {
     try {
-      const stored = localStorage.getItem("reading_quest_progress");
+      const stored = localStorage.getItem(
+        getProgressStorageKey("reading_quest_progress"),
+      );
       if (stored) {
         const parsed = JSON.parse(stored);
         const newProgress = { ...defaultProgress, ...parsed };
@@ -231,7 +225,9 @@ function ReadingQuest() {
 
   const [showPretestModal, setShowPretestModal] = useState(() => {
     try {
-      const stored = localStorage.getItem("reading_quest_progress");
+      const stored = localStorage.getItem(
+        getProgressStorageKey("reading_quest_progress"),
+      );
       if (stored) {
         const p = JSON.parse(stored);
         return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
@@ -246,7 +242,10 @@ function ReadingQuest() {
     setShowPretestModal(false);
     setProgress((prev) => {
       const updated = { ...prev, showPretestWelcome: false };
-      localStorage.setItem("reading_quest_progress", JSON.stringify(updated));
+      localStorage.setItem(
+        getProgressStorageKey("reading_quest_progress"),
+        JSON.stringify(updated),
+      );
       return updated;
     });
   };
@@ -283,7 +282,7 @@ function ReadingQuest() {
           const reconstructed = reconstructDetailedProgress(bgProgress, 4, 5);
           setProgress(reconstructed);
           localStorage.setItem(
-            "reading_quest_progress",
+            getProgressStorageKey("reading_quest_progress"),
             JSON.stringify(reconstructed),
           );
         }
@@ -407,53 +406,23 @@ function ReadingQuest() {
       };
 
       localStorage.setItem(
-        "reading_quest_progress",
+        getProgressStorageKey("reading_quest_progress"),
         JSON.stringify(updatedProgress),
       );
 
-      // ─────────────────────────────────────────────────────────
-      // Synchronize with backend
-      // ─────────────────────────────────────────────────────────
+      // Synchronize with backend only for registered users.
       const userId = getUserId();
       if (userId) {
         gameProgressAPI
           .completeStage(userId, {
             gameKey: "reading_quest",
+            levelNumber: parseInt(selectedLevelId, 10),
             stageNumber: selectedStageIndex + 1,
             score: score,
             starsEarned: earnedStars,
           })
           .catch((err) => {
             console.error("Failed to complete stage on backend:", err);
-          });
-
-        // 2. تحديث التقدم العام (زي ما كان موجود عندك)
-        let totalCompletedStages = 0;
-        Object.keys(completedStages).forEach((level) => {
-          totalCompletedStages += completedStages[level].filter(Boolean).length;
-        });
-
-        let totalStars = 0;
-        Object.keys(stars).forEach((level) => {
-          totalStars += stars[level].reduce((sum, s) => sum + s, 0);
-        });
-
-        const maxStages = 4 * 5;
-        const completionPercent = Math.min(
-          100,
-          Math.round((totalCompletedStages / maxStages) * 100),
-        );
-
-        gameProgressAPI
-          .update(userId, {
-            gameKey: "reading_quest",
-            levelReached: unlockedLevel,
-            completedStages: totalCompletedStages,
-            starsEarned: totalStars,
-            completionPercent,
-          })
-          .catch((err) => {
-            console.error("Failed to update backend progress:", err);
           });
       }
 
@@ -500,7 +469,16 @@ function ReadingQuest() {
         if (userId) {
           const xpEarned = Math.floor(score / 10) * 5; // 5 XP per level completed
           try {
-            await profileAPI.awardXP(userId, xpEarned, true);
+            const res = await profileAPI.awardXP(userId, xpEarned, true);
+            console.log("awardXP response (ReadingQuest):", res.data ?? res);
+            try {
+              recordXpAttempt(
+                { userId, xp: xpEarned, sessionCompleted: true },
+                res.data ?? res,
+              );
+            } catch (e) {
+              console.warn("Failed to record XP attempt:", e);
+            }
           } catch (xpErr) {
             console.warn("Could not award XP:", xpErr);
           }
@@ -610,6 +588,49 @@ function ReadingQuest() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  // ──────────────── LOADING VIEW ────────────────
+  if (loading) {
+    return (
+      <div className={styles.gameContainer}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            color: "#ffd700",
+            fontSize: "28px",
+            fontWeight: "bold",
+            flexDirection: "column",
+            gap: "15px",
+          }}
+        >
+          <div
+            className={styles.boatRipple}
+            style={{
+              width: "50px",
+              height: "50px",
+              border: "4px solid #ffd700",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          ></div>
+          {t("readingQuest.loading", "جاري التحميل...")} ⏳
+        </div>
+        <style>
+          {`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
+
+  // ... باقي الكود زي ما هو
   // ──────────────── LEVEL SELECTION VIEW ────────────────
   if (view === "levels") {
     const levelIds = Object.keys(LEVEL_META); // ["1","2","3","4"]

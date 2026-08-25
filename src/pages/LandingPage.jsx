@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Footer from "../components/Footer";
 import styles from "../styles/LandingPage.module.css";
 import wave from "../assets/emotions/drago(wave).svg";
@@ -13,11 +13,13 @@ import Separator2 from "../assets/backgrunds/wave-haikei (1).svg";
 import { usePWAInstall } from "../hooks/usePWAInstall";
 import { BsAspectRatio } from "react-icons/bs";
 import Lottie from "lottie-react";
+import { startGuestMode } from "../server/auth";
 
 function LandingPage() {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === "ar";
   const { canInstall, install } = usePWAInstall();
+  const navigate = useNavigate();
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("install") === "true" && canInstall) {
@@ -32,6 +34,10 @@ function LandingPage() {
         i18n={i18n}
         canInstall={canInstall}
         install={install}
+        onGuestMode={() => {
+          startGuestMode();
+          navigate("/home");
+        }}
       />
 
       <img
@@ -87,7 +93,7 @@ function LandingPage() {
   );
 }
 
-function HeroSection({ t, i18n, canInstall, install }) {
+function HeroSection({ t, i18n, canInstall, install, onGuestMode }) {
   return (
     <section className={styles.heroSection}>
       <div className={styles.heroContent}>
@@ -108,6 +114,9 @@ function HeroSection({ t, i18n, canInstall, install }) {
             <Link to="/login" className="btn btn-outline">
               {i18n.language === "ar" ? "تسجيل دخول" : "Sign In"}
             </Link>
+            <button onClick={onGuestMode} className="btn btn-outline">
+              {i18n.language === "ar" ? "الدخول كضيف" : "Continue as Guest"}
+            </button>
 
             {canInstall && (
               <button onClick={install} className="btn btn-outline">
@@ -211,7 +220,10 @@ function Card({ title, description, icon, bounce }) {
       <div className={styles.featureCardInner}>
         {/* Front */}
         <div className={styles.featureCardFront}>
-          <div className={styles.featureIcon} style={bounce ? { animation: "bounce 2s infinite" } : {}}>
+          <div
+            className={styles.featureIcon}
+            style={bounce ? { animation: "bounce 2s infinite" } : {}}
+          >
             {isLottieIcon ? (
               <Lottie
                 animationData={icon.animationData}

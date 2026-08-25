@@ -1,40 +1,68 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+
 import styles from "../styles/VolcanoWords.module.css";
+
 import { useNavigate } from "react-router-dom";
+
 import { useTranslation } from "react-i18next";
-import { gameProgressAPI } from "../server/endpoints";
-import { getAuthUser } from "../server/auth";
+
+import { gameProgressAPI, profileAPI } from "../server/endpoints";
+
+import { recordXpAttempt } from "../utils/xpDebug";
+
+import { getAuthUser, getProgressStorageKey } from "../server/auth";
 
 import reading from "../assets/emotions/drago(reading).svg";
+
 import sitting from "../assets/poses/drago(sitting).svg";
+
 import { WinModal, LoseModal } from "../components/WinLose.jsx";
 
 const API_BASE = "/api/volcano";
-
 const INITIAL_LAVA_LEVEL = 40;
 const INITIAL_HINTS = 5;
 
 // Recording settings
-const API_TIMEOUT_MS = 30000; // 30 second timeout for API calls
+const API_TIMEOUT_MS = 30000;
+
+// ─────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────
+
+const createEmptyStages = (count = 5) =>
+  Array.from({ length: count }, () => false);
+
+const createEmptyStars = (count = 5) => Array.from({ length: count }, () => 0);
+
+const clamp = (value, min, max) =>
+  Math.min(max, Math.max(min, Number(value) || min));
 
 const defaultProgress = {
   unlockedLevel: 1,
+  recommendedLevel: 1,
+  recommendedStage: 1,
+
   completedStages: {
-    1: [false, false, false, false, false],
-    2: [false, false, false, false, false],
-    3: [false, false, false, false, false],
-    4: [false, false, false, false, false],
-    5: [false, false, false, false, false],
-    6: [false, false, false, false, false],
+    1: createEmptyStages(),
+    2: createEmptyStages(),
+    3: createEmptyStages(),
+    4: createEmptyStages(),
+    5: createEmptyStages(),
+    6: createEmptyStages(),
   },
+
   stars: {
-    1: [0, 0, 0, 0, 0],
-    2: [0, 0, 0, 0, 0],
-    3: [0, 0, 0, 0, 0],
-    4: [0, 0, 0, 0, 0],
-    5: [0, 0, 0, 0, 0],
-    6: [0, 0, 0, 0, 0],
+    1: createEmptyStars(),
+    2: createEmptyStars(),
+    3: createEmptyStars(),
+    4: createEmptyStars(),
+    5: createEmptyStars(),
+    6: createEmptyStars(),
   },
+
+  totalStars: 0,
+  totalCompletedStages: 0,
+  showPretestWelcome: false,
 };
 
 const LEVEL_METADATA_EN = {
@@ -91,7 +119,91 @@ const LEVEL_METADATA_AR = {
   },
 };
 
-// ─── Pretest Welcome Modal ─────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Normalize backend progress
+// ─────────────────────────────────────────────────────────────
+
+const normalizeBackendProgress = (
+  bgProgress,
+  totalLevels = 6,
+  stagesPerLevel = 5,
+) => {
+  const levelReached = clamp(bgProgress?.levelReached, 1, totalLevels);
+
+  const totalCompletedStages = clamp(
+    bgProgress?.completedStages,
+    0,
+    totalLevels * stagesPerLevel,
+  );
+
+  const totalStars = clamp(
+    bgProgress?.starsEarned,
+    0,
+    totalLevels * stagesPerLevel * 3,
+  );
+
+  const completedStages = {};
+  const stars = {};
+
+  for (let level = 1; level <= totalLevels; level++) {
+    completedStages[level] = createEmptyStages(stagesPerLevel);
+    stars[level] = createEmptyStars(stagesPerLevel);
+  }
+
+  let completedRemaining = totalCompletedStages;
+
+  // Mark completed stages in levels before the reached level.
+  for (let level = 1; level < levelReached; level++) {
+    const count = Math.min(completedRemaining, stagesPerLevel);
+
+    for (let stage = 0; stage < count; stage++) {
+      completedStages[level][stage] = true;
+    }
+
+    completedRemaining -= count;
+  }
+
+  // Mark remaining completed stages inside the reached level.
+  const currentLevelCompleted = Math.min(completedRemaining, stagesPerLevel);
+
+  for (let stage = 0; stage < currentLevelCompleted; stage++) {
+    completedStages[levelReached][stage] = true;
+  }
+
+  let recommendedLevel = levelReached;
+  let recommendedStage = 1;
+
+  const firstIncompleteStage = completedStages[levelReached].findIndex(
+    (completed) => !completed,
+  );
+
+  if (firstIncompleteStage !== -1) {
+    recommendedStage = firstIncompleteStage + 1;
+  } else if (levelReached < totalLevels) {
+    recommendedLevel = levelReached + 1;
+    recommendedStage = 1;
+  } else {
+    recommendedLevel = totalLevels;
+    recommendedStage = stagesPerLevel;
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    recommendedLevel,
+    recommendedStage,
+    completedStages,
+    stars,
+    totalStars,
+    totalCompletedStages,
+
+    showPretestWelcome: levelReached > 1 && totalCompletedStages === 0,
+  };
+};
+
+// ─────────────────────────────────────────────────────────────
+// Pretest Welcome Modal
+// ─────────────────────────────────────────────────────────────
+
 const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   return (
     <div
@@ -133,6 +245,7 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
         >
           🌟
         </div>
+
         <h2
           style={{
             color: "#ffd700",
@@ -143,6 +256,7 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
         >
           مرحباً بك يا بطل!
         </h2>
+
         <p
           style={{
             color: "#fff",
@@ -166,6 +280,7 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
             رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
           </span>
         </p>
+
         <button
           onClick={onDismiss}
           style={{
@@ -192,203 +307,304 @@ const PretestWelcomeModal = ({ unlockedLevel, onDismiss }) => {
   );
 };
 
-const reconstructDetailedProgress = (
-  bgProgress,
-  totalLevels = 6,
-  stagesPerLevel = 5,
-) => {
-  const levelReached = bgProgress?.levelReached || 1;
-  const completedStagesCount = bgProgress?.completedStages || 0;
-  const starsEarned = bgProgress?.starsEarned || 0;
-
-  const completedStages = {};
-  const stars = {};
-
-  let stagesRemaining = completedStagesCount;
-  let starsRemaining = starsEarned;
-
-  for (let l = 1; l <= totalLevels; l++) {
-    completedStages[l.toString()] = [];
-    stars[l.toString()] = [];
-
-    for (let s = 0; s < stagesPerLevel; s++) {
-      if (stagesRemaining > 0) {
-        completedStages[l.toString()].push(true);
-        stagesRemaining--;
-
-        const allocated = Math.min(
-          3,
-          Math.max(1, starsRemaining - stagesRemaining),
-        );
-        stars[l.toString()].push(allocated);
-        starsRemaining -= allocated;
-      } else {
-        completedStages[l.toString()].push(false);
-        stars[l.toString()].push(0);
-      }
-    }
-  }
-
-  return {
-    unlockedLevel: levelReached,
-    completedStages,
-    stars,
-  };
-};
+// ─────────────────────────────────────────────────────────────
+// Main Component
+// ─────────────────────────────────────────────────────────────
 
 function VolcanoWords() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
-  // Levels & Progress States
+  // Levels & Progress
   const [levels, setLevels] = useState(null);
   const [levelId, setLevelId] = useState("1");
-  const [view, setView] = useState("levels"); // 'levels', 'stages', 'game'
+
+  const [view, setView] = useState("levels");
+
   const [selectedLevelId, setSelectedLevelId] = useState(null);
+
   const [selectedStageIndex, setSelectedStageIndex] = useState(null);
-  const [progress, setProgress] = useState(() => {
-    try {
-      const stored = localStorage.getItem("volcano_words_progress");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        const newProgress = { ...defaultProgress, ...parsed };
-        newProgress.completedStages = {
-          ...defaultProgress.completedStages,
-          ...parsed.completedStages,
-        };
-        newProgress.stars = { ...defaultProgress.stars, ...parsed.stars };
-        return newProgress;
-      }
-    } catch (e) {
-      console.error("Failed to parse progress", e);
-    }
-    return defaultProgress;
-  });
+
+  // Backend is the source of truth.
+  const [progress, setProgress] = useState(defaultProgress);
+
+  const [progressLoading, setProgressLoading] = useState(true);
 
   const [showPretestModal, setShowPretestModal] = useState(false);
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      const authUser = getAuthUser();
-      const userId = authUser?.userId;
-      if (!userId) return;
-
-      try {
-        const res = await gameProgressAPI.getByUser(userId);
-        const progressList = res.data?.data || res.data;
-        const bgProgress = Array.isArray(progressList)
-          ? progressList.find((p) => p.gameKey === "volcano_words")
-          : null;
-
-        if (bgProgress) {
-          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
-          setProgress(reconstructed);
-          localStorage.setItem(
-            "volcano_words_progress",
-            JSON.stringify(reconstructed),
-          );
-        }
-      } catch (err) {
-        console.error(
-          "Failed to fetch backend progress for volcano_words:",
-          err,
-        );
-      }
-    };
-
-    fetchProgress();
-  }, []);
-
-  useEffect(() => {
-    if (progress?.showPretestWelcome && progress?.unlockedLevel > 1) {
-      setShowPretestModal(true);
-    }
-  }, [progress]);
-
-  const dismissPretestModal = () => {
-    setShowPretestModal(false);
-    setProgress((prev) => {
-      const updated = { ...prev, showPretestWelcome: false };
-      localStorage.setItem("volcano_words_progress", JSON.stringify(updated));
-      return updated;
-    });
-  };
-
+  // Game
   const [words, setWords] = useState([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
-  // Game
   const [lavaLevel, setLavaLevel] = useState(INITIAL_LAVA_LEVEL);
+
   const [hints, setHints] = useState(INITIAL_HINTS);
+
   const [score, setScore] = useState(0);
+
   const [gameStatus, setGameStatus] = useState("playing");
 
   // Speech / feedback
   const [isRecording, setIsRecording] = useState(false);
+
   const [phase, setPhase] = useState("idle");
+
   const [transcript, setTranscript] = useState("");
+
   const [feedback, setFeedback] = useState(null);
+
   const [showFeedbackIndicator, setShowFeedbackIndicator] = useState(false);
 
   // Endpoint outputs
   const [diffHtml, setDiffHtml] = useState("");
+
   const [similarity, setSimilarity] = useState(null);
+
   const [analysis, setAnalysis] = useState(null);
+
   const [counts, setCounts] = useState(null);
+
   const [lastError, setLastError] = useState("");
 
   // Dragon pose
   const [dragoPose, setDragoPose] = useState(reading);
 
   const isGameOver = gameStatus !== "playing";
+
   const activeWord = words[currentWordIndex] || "";
+
   const numWords = words.length;
 
   // Recorder refs
   const recorderRef = useRef(null);
+
   const chunksRef = useRef([]);
+
   const stopTimerRef = useRef(null);
 
+  // Prevent duplicate complete-stage requests
+  const stageCompletionInFlightRef = useRef(false);
+
+  // ─────────────────────────────────────────────────────────────
+  // Fetch backend progress
+  // ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+      const userId = authUser?.userId;
+
+      if (!userId) {
+        if (!cancelled) {
+          try {
+            const stored = localStorage.getItem(
+              getProgressStorageKey("volcano_words_progress"),
+            );
+            setProgress(
+              stored
+                ? {
+                    ...defaultProgress,
+                    ...JSON.parse(stored),
+                    completedStages: {
+                      ...defaultProgress.completedStages,
+                      ...(JSON.parse(stored).completedStages || {}),
+                    },
+                    stars: {
+                      ...defaultProgress.stars,
+                      ...(JSON.parse(stored).stars || {}),
+                    },
+                  }
+                : defaultProgress,
+            );
+          } catch {
+            setProgress(defaultProgress);
+          }
+          setProgressLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        const res = await gameProgressAPI.getByUser(userId);
+
+        const progressList = res.data?.data || res.data;
+
+        const bgProgress = Array.isArray(progressList)
+          ? progressList.find((p) => p.gameKey === "volcano_words")
+          : null;
+
+        if (!cancelled) {
+          if (bgProgress) {
+            console.log("VolcanoWords backend progress:", bgProgress);
+
+            const normalized = normalizeBackendProgress(bgProgress, 6, 5);
+
+            console.log("VolcanoWords normalized progress:", normalized);
+
+            setProgress(normalized);
+
+            localStorage.setItem(
+              getProgressStorageKey("volcano_words_progress"),
+              JSON.stringify(normalized),
+            );
+          } else {
+            setProgress(defaultProgress);
+          }
+
+          setProgressLoading(false);
+        }
+      } catch (err) {
+        console.error(
+          "Failed to fetch backend progress for volcano_words:",
+          err,
+        );
+
+        if (!cancelled) {
+          // Local storage is fallback only.
+          try {
+            const stored = localStorage.getItem(
+              getProgressStorageKey("volcano_words_progress"),
+            );
+
+            if (stored) {
+              const parsed = JSON.parse(stored);
+
+              setProgress({
+                ...defaultProgress,
+                ...parsed,
+
+                completedStages: {
+                  ...defaultProgress.completedStages,
+                  ...(parsed.completedStages || {}),
+                },
+
+                stars: {
+                  ...defaultProgress.stars,
+                  ...(parsed.stars || {}),
+                },
+              });
+            } else {
+              setProgress(defaultProgress);
+            }
+          } catch (storageError) {
+            console.error("Failed to read fallback progress:", storageError);
+
+            setProgress(defaultProgress);
+          }
+
+          setProgressLoading(false);
+        }
+      }
+    };
+
+    fetchProgress();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────
+  // Pretest modal
+  // ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (
+      !progressLoading &&
+      progress?.showPretestWelcome &&
+      progress?.recommendedLevel > 1
+    ) {
+      setShowPretestModal(true);
+    }
+  }, [progress, progressLoading]);
+
+  const dismissPretestModal = () => {
+    setShowPretestModal(false);
+
+    setProgress((prev) => {
+      const updated = {
+        ...prev,
+        showPretestWelcome: false,
+      };
+
+      localStorage.setItem(
+        getProgressStorageKey("volcano_words_progress"),
+        JSON.stringify(updated),
+      );
+
+      return updated;
+    });
+  };
+
+  // ─────────────────────────────────────────────────────────────
   // Load levels
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/get_levels`);
-        if (!res.ok) throw new Error(await res.text());
+
+        if (!res.ok) {
+          throw new Error(await res.text());
+        }
+
         const data = await res.json();
+
         setLevels(data);
 
         const first = data["1"] ? "1" : Object.keys(data)[0];
+
         setLevelId(first);
       } catch (e) {
         console.error(e);
+
         setLastError(t("volcanoWords.errors.loadLevelsFailed"));
+
         alert(t("volcanoWords.errors.loadLevelsFailed"));
       }
     })();
   }, [t]);
 
+  // ─────────────────────────────────────────────────────────────
   // Pose based on recording
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     setDragoPose(isRecording ? sitting : reading);
   }, [isRecording]);
 
+  // ─────────────────────────────────────────────────────────────
   // Lava bubbles
+  // ─────────────────────────────────────────────────────────────
+
   const lavaBubbles = useMemo(
     () =>
       [...Array(8)].map((_, i) => ({
         key: i,
+
         width: `${15 + Math.random() * 20}px`,
+
         height: `${15 + Math.random() * 20}px`,
+
         left: `${10 + i * 12}%`,
+
         bottom: `${Math.random() * 30}px`,
+
         animationDelay: `${i * 0.4}s`,
+
         animationDuration: `${2 + Math.random() * 2}s`,
       })),
     [],
   );
 
+  // ─────────────────────────────────────────────────────────────
   // Helpers
+  // ─────────────────────────────────────────────────────────────
+
   function shuffle(arr) {
     return [...arr].sort(() => 0.5 - Math.random());
   }
@@ -405,153 +621,250 @@ function VolcanoWords() {
     setPhase("idle");
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // Select Level
+  // ─────────────────────────────────────────────────────────────
+
   const handleSelectLevel = (levelId) => {
     const levelNum = parseInt(levelId, 10);
-    if (levelNum > progress.unlockedLevel) return;
+
+    if (levelNum > progress.unlockedLevel) {
+      return;
+    }
+
     setSelectedLevelId(levelId);
     setView("stages");
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Select Stage
+  // ─────────────────────────────────────────────────────────────
+
   const handleSelectStage = (stageIndex) => {
-    const isStageUnlocked = (stageIdx) =>
-      stageIdx === 0 ||
-      parseInt(selectedLevelId, 10) < progress.unlockedLevel ||
-      progress.completedStages[selectedLevelId]?.[stageIdx - 1];
-    if (!isStageUnlocked(stageIndex)) return;
+    if (!levels || !selectedLevelId) {
+      return;
+    }
+
+    const levelNumber = Number(selectedLevelId);
+
+    const isStageUnlocked =
+      stageIndex === 0 ||
+      levelNumber < progress.unlockedLevel ||
+      Boolean(progress.completedStages[selectedLevelId]?.[stageIndex - 1]);
+
+    if (!isStageUnlocked) {
+      return;
+    }
 
     setSelectedStageIndex(stageIndex);
 
     const levelData = levels[selectedLevelId];
-    if (!levelData || !levelData.content) return;
+
+    if (!levelData?.content?.length) {
+      return;
+    }
 
     const totalWords = levelData.content;
+
     const numStages = 5;
+
     const stageSize = Math.ceil(totalWords.length / numStages);
 
     let stageWords = totalWords.slice(
       stageIndex * stageSize,
       (stageIndex + 1) * stageSize,
     );
+
     if (stageWords.length === 0) {
       stageWords = totalWords.slice(0, 5);
     }
 
     setLevelId(selectedLevelId);
+
     setWords(shuffle(stageWords));
+
     setCurrentWordIndex(0);
 
     setLavaLevel(INITIAL_LAVA_LEVEL);
+
     setHints(INITIAL_HINTS);
+
     setScore(0);
+
     setGameStatus("playing");
+
     resetPerWordUI();
+
     setView("game");
   };
 
-  const handleStageCompleted = (finalLavaLevel) => {
+  // ─────────────────────────────────────────────────────────────
+  // Complete Stage
+  // ─────────────────────────────────────────────────────────────
+
+  const handleStageCompleted = async (finalLavaLevel) => {
+    if (
+      stageCompletionInFlightRef.current ||
+      selectedLevelId === null ||
+      selectedStageIndex === null
+    ) {
+      return;
+    }
+
+    stageCompletionInFlightRef.current = true;
+
     let earnedStars = 1;
+
     if (finalLavaLevel <= 40) {
       earnedStars = 3;
     } else if (finalLavaLevel <= 75) {
       earnedStars = 2;
     }
 
-    setProgress((prev) => {
-      const completedStages = { ...prev.completedStages };
-      const stars = { ...prev.stars };
+    const levelNumber = Number(selectedLevelId);
 
-      const currentLevelStages = [
-        ...(completedStages[selectedLevelId] || [
-          false,
-          false,
-          false,
-          false,
-          false,
-        ]),
-      ];
-      currentLevelStages[selectedStageIndex] = true;
-      completedStages[selectedLevelId] = currentLevelStages;
+    const stageNumber = Number(selectedStageIndex) + 1;
 
-      const currentLevelStars = [
-        ...(stars[selectedLevelId] || [0, 0, 0, 0, 0]),
-      ];
-      currentLevelStars[selectedStageIndex] = Math.max(
-        currentLevelStars[selectedStageIndex] || 0,
-        earnedStars,
+    const authUser = getAuthUser();
+
+    const userId = authUser?.userId;
+
+    if (!userId) {
+      setProgress((prev) => {
+        const completedStages = { ...prev.completedStages };
+        const stars = { ...prev.stars };
+        const levelStages = [
+          ...(completedStages[selectedLevelId] || createEmptyStages(5)),
+        ];
+        const levelStars = [...(stars[selectedLevelId] || createEmptyStars(5))];
+        levelStages[selectedStageIndex] = true;
+        levelStars[selectedStageIndex] = Math.max(
+          levelStars[selectedStageIndex] || 0,
+          earnedStars,
+        );
+        completedStages[selectedLevelId] = levelStages;
+        stars[selectedLevelId] = levelStars;
+
+        const unlockedLevel = levelStages.every(Boolean)
+          ? Math.min(6, Math.max(prev.unlockedLevel, levelNumber + 1))
+          : prev.unlockedLevel;
+        const updated = { ...prev, unlockedLevel, completedStages, stars };
+        localStorage.setItem(
+          getProgressStorageKey("volcano_words_progress"),
+          JSON.stringify(updated),
+        );
+        return updated;
+      });
+      setGameStatus("won");
+
+      stageCompletionInFlightRef.current = false;
+
+      return;
+    }
+
+    try {
+      const payload = {
+        gameKey: "volcano_words",
+
+        levelNumber,
+
+        stageNumber,
+
+        score: Number(score) || 0,
+
+        starsEarned: Number(earnedStars) || 0,
+      };
+
+      console.log("Completing VolcanoWords stage:", payload);
+
+      // ─────────────────────────────────────────────
+      // Complete THIS specific stage.
+      // This is the progress write operation.
+      // ─────────────────────────────────────────────
+
+      const completeResponse = await gameProgressAPI.completeStage(
+        userId,
+        payload,
       );
-      stars[selectedLevelId] = currentLevelStars;
 
-      // Check if all 5 stages of the current level are completed
-      const allCompleted = currentLevelStages.every(Boolean);
-      let unlockedLevel = prev.unlockedLevel;
-      if (allCompleted) {
-        unlockedLevel = Math.min(
-          6,
-          Math.max(unlockedLevel, parseInt(selectedLevelId, 10) + 1),
+      console.log(
+        "completeStage response:",
+        completeResponse?.data ?? completeResponse,
+      );
+
+      // ─────────────────────────────────────────────
+      // Re-fetch progress from backend.
+      // Backend is source of truth.
+      // ─────────────────────────────────────────────
+
+      const progressResponse = await gameProgressAPI.getByUser(userId);
+
+      const progressList = progressResponse.data?.data || progressResponse.data;
+
+      const bgProgress = Array.isArray(progressList)
+        ? progressList.find((p) => p.gameKey === "volcano_words")
+        : null;
+
+      if (bgProgress) {
+        console.log("Progress after stage completion:", bgProgress);
+
+        const normalized = normalizeBackendProgress(bgProgress, 6, 5);
+
+        console.log("Normalized progress after completion:", normalized);
+
+        setProgress(normalized);
+
+        localStorage.setItem(
+          getProgressStorageKey("volcano_words_progress"),
+          JSON.stringify(normalized),
         );
       }
 
-      const updatedProgress = {
-        ...prev,
-        unlockedLevel,
-        completedStages,
-        stars,
-      };
+      // ─────────────────────────────────────────────
+      // Award XP
+      // ─────────────────────────────────────────────
 
-      localStorage.setItem(
-        "volcano_words_progress",
-        JSON.stringify(updatedProgress),
-      );
+      try {
+        const xpEarned = Math.floor(Number(score) * 10);
 
-      // Synchronize with backend
-      let totalCompletedStages = 0;
-      Object.keys(completedStages).forEach((level) => {
-        totalCompletedStages += completedStages[level].filter(Boolean).length;
-      });
+        const xpResponse = await profileAPI.awardXP(userId, xpEarned, true);
 
-      let totalStars = 0;
-      Object.keys(stars).forEach((level) => {
-        totalStars += stars[level].reduce((sum, s) => sum + s, 0);
-      });
+        console.log(
+          "awardXP response (VolcanoWords):",
+          xpResponse?.data ?? xpResponse,
+        );
 
-      const maxStages = 6 * 5;
-      const completionPercent = Math.min(
-        100,
-        Math.round((totalCompletedStages / maxStages) * 100),
-      );
-
-      const authUser = getAuthUser();
-      const userId = authUser?.userId;
-      if (userId) {
-        // Record this specific stage completion
-        gameProgressAPI
-          .completeStage(userId, {
-            gameKey: "volcano_words",
-            stageNumber: selectedStageIndex + 1,
-            score: score,
-            starsEarned: earnedStars,
-          })
-          .catch((err) => {
-            console.error("Failed to complete stage on backend:", err);
-          });
-
-        // Update aggregate progress
-        gameProgressAPI
-          .update(userId, {
-            gameKey: "volcano_words",
-            levelReached: unlockedLevel,
-            completedStages: totalCompletedStages,
-            starsEarned: totalStars,
-            completionPercent,
-          })
-          .catch((err) => {
-            console.error("Failed to update backend progress:", err);
-          });
+        try {
+          recordXpAttempt(
+            {
+              userId,
+              xp: xpEarned,
+              sessionCompleted: true,
+            },
+            xpResponse?.data ?? xpResponse,
+          );
+        } catch (e) {
+          console.warn("Failed to record XP attempt:", e);
+        }
+      } catch (xpErr) {
+        console.warn("Could not award XP:", xpErr);
       }
+    } catch (err) {
+      console.error("Failed to complete stage on backend:", err);
 
-      return updatedProgress;
-    });
+      console.error("completeStage status:", err?.response?.status);
+
+      console.error("completeStage response:", err?.response?.data);
+
+      console.error("completeStage request body:", err?.config?.data);
+    } finally {
+      stageCompletionInFlightRef.current = false;
+    }
   };
+
+  // ─────────────────────────────────────────────────────────────
+  // Mistakes rendering
+  // ─────────────────────────────────────────────────────────────
 
   function renderMistakes(analysisJson) {
     if (!analysisJson?.mistakes?.length) {
@@ -578,14 +891,24 @@ function VolcanoWords() {
           lineHeight: 1.6,
         }}
       >
-        <div style={{ fontWeight: 800, marginBottom: 6 }}>
+        <div
+          style={{
+            fontWeight: 800,
+            marginBottom: 6,
+          }}
+        >
           {t("volcanoWords.mistakes.title")}
         </div>
 
         {analysisJson.mistakes.map((m, idx) => {
           if (m.type === "missing") {
             return (
-              <div key={idx} style={{ color: "#e53935" }}>
+              <div
+                key={idx}
+                style={{
+                  color: "#e53935",
+                }}
+              >
                 • {t("volcanoWords.mistakes.missing")}: <b>{m.expected}</b>
               </div>
             );
@@ -593,7 +916,12 @@ function VolcanoWords() {
 
           if (m.type === "extra") {
             return (
-              <div key={idx} style={{ color: "#fb8c00" }}>
+              <div
+                key={idx}
+                style={{
+                  color: "#fb8c00",
+                }}
+              >
                 • {t("volcanoWords.mistakes.extra")}: <b>{m.spoken}</b>
               </div>
             );
@@ -601,21 +929,40 @@ function VolcanoWords() {
 
           if (m.type === "substitute") {
             const edits = m?.char_detail?.char_edits || [];
+
             return (
-              <div key={idx} style={{ color: "#e53935" }}>
+              <div
+                key={idx}
+                style={{
+                  color: "#e53935",
+                }}
+              >
                 • {t("volcanoWords.mistakes.substitute")} <b>{m.spoken}</b>{" "}
                 {t("volcanoWords.mistakes.insteadOf")} <b>{m.expected}</b>
                 {edits.length > 0 && (
-                  <div style={{ marginLeft: 10, marginTop: 4, color: "#444" }}>
+                  <div
+                    style={{
+                      marginLeft: 10,
+                      marginTop: 4,
+                      color: "#444",
+                    }}
+                  >
                     {t("volcanoWords.mistakes.letters")}
+
                     {edits.slice(0, 8).map((e, i) => (
-                      <span key={i} style={{ marginLeft: 8 }}>
+                      <span
+                        key={i}
+                        style={{
+                          marginLeft: 8,
+                        }}
+                      >
                         {e.type === "substitute_char" && (
                           <>
                             {" "}
                             {e.expected_char} → {e.spoken_char}{" "}
                           </>
                         )}
+
                         {e.type === "missing_char" && (
                           <>
                             {" "}
@@ -623,6 +970,7 @@ function VolcanoWords() {
                             {e.expected_char}"{" "}
                           </>
                         )}
+
                         {e.type === "extra_char" && (
                           <>
                             {" "}
@@ -644,11 +992,16 @@ function VolcanoWords() {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────
   // Game logic
+  // ─────────────────────────────────────────────────────────────
+
   const handleCorrectAnswer = () => {
     setFeedback("correct");
     setShowFeedbackIndicator(true);
+
     setScore((prev) => prev + 10);
+
     setLavaLevel((prev) => Math.max(0, prev - 10));
 
     setTimeout(() => {
@@ -659,9 +1012,11 @@ function VolcanoWords() {
   const handleNextWord = () => {
     if (currentWordIndex < words.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
+
       resetPerWordUI();
     } else {
       setGameStatus("won");
+
       handleStageCompleted(lavaLevel);
     }
   };
@@ -672,25 +1027,35 @@ function VolcanoWords() {
 
     setLavaLevel((prev) => {
       const newLevel = Math.min(100, prev + 15);
-      if (newLevel >= 100) setGameStatus("lost");
+
+      if (newLevel >= 100) {
+        setGameStatus("lost");
+      }
+
       return newLevel;
     });
 
     setTimeout(() => {
       setShowFeedbackIndicator(false);
+
       setFeedback(null);
     }, 1200);
   };
 
   const handleSkipWord = () => {
-    if (isGameOver) return;
+    if (isGameOver) {
+      return;
+    }
 
     if (currentWordIndex < words.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
+
       resetPerWordUI();
     } else {
       const finalStatus = score > (words.length / 2) * 10 ? "won" : "lost";
+
       setGameStatus(finalStatus);
+
       if (finalStatus === "won") {
         handleStageCompleted(lavaLevel);
       }
@@ -707,49 +1072,72 @@ function VolcanoWords() {
     }
   };
 
+  // ─────────────────────────────────────────────────────────────
   // TTS Hint
+  // ─────────────────────────────────────────────────────────────
+
   const handleUseHint = async () => {
-    if (hints <= 0 || isRecording || isGameOver || !activeWord) return;
+    if (hints <= 0 || isRecording || isGameOver || !activeWord) {
+      return;
+    }
+
     setHints((prev) => prev - 1);
 
     try {
       const audio = new Audio(
-        `${API_BASE}/tts?word=${encodeURIComponent(activeWord)}&t=${Date.now()}`,
+        `${API_BASE}/tts?word=${encodeURIComponent(
+          activeWord,
+        )}&t=${Date.now()}`,
       );
+
       await audio.play();
     } catch (e) {
       console.error(e);
+
       setLastError(t("volcanoWords.errors.ttsFailed"));
     }
   };
 
-  // Recording + API with timeout
+  // ─────────────────────────────────────────────────────────────
+  // Recording
+  // ─────────────────────────────────────────────────────────────
+
   const handleStartRecording = async () => {
-    if (isGameOver) return;
+    if (isGameOver) {
+      return;
+    }
 
     // Manual STOP
     if (isRecording && recorderRef.current?.state === "recording") {
       try {
         clearTimeout(stopTimerRef.current);
+
         recorderRef.current.stop();
-        setPhase("uploading"); // optional: show uploading while stopping
+
+        setPhase("uploading");
       } catch (e) {
         console.error("Error stopping recorder:", e);
       }
+
       return;
     }
 
     // Manual START
     resetPerWordUI();
+
     setIsRecording(true);
+
     setPhase("recording");
 
     try {
       await startRecording(activeWord);
     } catch (e) {
       console.error(e);
+
       setIsRecording(false);
+
       setPhase("idle");
+
       setLastError(t("volcanoWords.errors.recordingFailed"));
     }
   };
@@ -763,19 +1151,27 @@ function VolcanoWords() {
       },
     });
 
-    const recorder = new MediaRecorder(stream); // let browser choose best
+    const recorder = new MediaRecorder(stream);
+
     recorderRef.current = recorder;
+
     chunksRef.current = [];
 
     recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
+      if (e.data && e.data.size > 0) {
+        chunksRef.current.push(e.data);
+      }
     };
 
     recorder.onerror = (e) => {
       console.error("Recorder error:", e);
+
       stream.getTracks().forEach((t) => t.stop());
+
       setIsRecording(false);
+
       setPhase("idle");
+
       setLastError(t("volcanoWords.errors.recordingFailed"));
     };
 
@@ -785,14 +1181,19 @@ function VolcanoWords() {
 
         stream.getTracks().forEach((tr) => tr.stop());
 
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, {
+          type: "audio/webm",
+        });
 
         setIsRecording(false);
 
         if (blob.size < 5000) {
           setPhase("idle");
+
           setLastError(t("volcanoWords.errors.audioNotClear"));
+
           handleWrongAnswer();
+
           return;
         }
 
@@ -802,55 +1203,73 @@ function VolcanoWords() {
 
         if (!check || typeof check.status !== "string") {
           setPhase("idle");
+
           setLastError(t("volcanoWords.errors.checkWordError"));
+
           return;
         }
 
         if (check.status === "retry") {
           setPhase("idle");
+
           setLastError(check.message || t("volcanoWords.errors.audioNotClear"));
+
           handleWrongAnswer();
+
           return;
         }
 
         if (check.status === "error") {
           setPhase("idle");
+
           setLastError(
             check.message || t("volcanoWords.errors.checkWordError"),
           );
+
           return;
         }
 
         if (check.status !== "success") {
           setPhase("idle");
+
           setLastError(check.message || "Unexpected server response");
+
           return;
         }
 
         const recognizedText = check.recognized ?? check.spoken_text ?? "";
+
         setTranscript(recognizedText);
 
         setDiffHtml(check.diff_html || "");
+
         setSimilarity(check.similarity ?? null);
 
         setAnalysis(check.analysis || null);
+
         setCounts(check.counts || null);
 
         setPhase("idle");
 
-        if (check.passed) handleCorrectAnswer();
-        else handleWrongAnswer();
+        if (check.passed) {
+          handleCorrectAnswer();
+        } else {
+          handleWrongAnswer();
+        }
       } catch (e) {
         console.error(e);
+
         setIsRecording(false);
+
         setPhase("idle");
+
         setLastError(t("volcanoWords.errors.connectionError"));
       }
     };
 
-    recorder.start(); // manual stop
+    recorder.start();
 
-    // ✅ Fix "speak immediately": request an early chunk
+    // Request early chunk
     setTimeout(() => {
       try {
         recorder.requestData();
@@ -859,7 +1278,7 @@ function VolcanoWords() {
       }
     }, 150);
 
-    // OPTIONAL safety max: auto-stop after 15s if user forgets
+    // Safety max: 15 seconds
     stopTimerRef.current = setTimeout(() => {
       if (recorderRef.current?.state === "recording") {
         try {
@@ -871,9 +1290,13 @@ function VolcanoWords() {
     }, 15000);
   }
 
-  // Helper: fetch with timeout
+  // ─────────────────────────────────────────────────────────────
+  // Fetch with timeout
+  // ─────────────────────────────────────────────────────────────
+
   async function fetchWithTimeout(url, options, timeout = API_TIMEOUT_MS) {
     const controller = new AbortController();
+
     const id = setTimeout(() => controller.abort(), timeout);
 
     try {
@@ -881,20 +1304,26 @@ function VolcanoWords() {
         ...options,
         signal: controller.signal,
       });
+
       clearTimeout(id);
+
       return response;
     } catch (error) {
       clearTimeout(id);
+
       if (error.name === "AbortError") {
         throw new Error("Request timeout - الطلب استغرق وقتاً طويلاً");
       }
+
       throw error;
     }
   }
 
   async function callCheckWordWithTimeout(audioBlob, targetWord) {
     const form = new FormData();
+
     form.append("file", audioBlob, "speech.webm");
+
     form.append("target_word", targetWord);
 
     try {
@@ -903,10 +1332,17 @@ function VolcanoWords() {
         body: form,
       });
 
-      if (!res.ok) return { status: "error", message: await res.text() };
+      if (!res.ok) {
+        return {
+          status: "error",
+          message: await res.text(),
+        };
+      }
+
       return await res.json();
     } catch (error) {
       console.error("Check word error:", error);
+
       return {
         status: "error",
         message: error.message || t("volcanoWords.errors.connectionError"),
@@ -914,8 +1350,11 @@ function VolcanoWords() {
     }
   }
 
-  // Render
-  if (!levels) {
+  // ─────────────────────────────────────────────────────────────
+  // Loading
+  // ─────────────────────────────────────────────────────────────
+
+  if (!levels || progressLoading) {
     return (
       <div
         className={styles.gameContainer}
@@ -925,27 +1364,38 @@ function VolcanoWords() {
           minHeight: "100vh",
         }}
       >
-        <div style={{ color: "#fff", fontSize: 24, fontWeight: 700 }}>
-          {t("volcanoWords.loading", "جاري تحميل المستويات...")}
+        <div
+          style={{
+            color: "#fff",
+            fontSize: 24,
+            fontWeight: 700,
+          }}
+        >
+          {t("volcanoWords.loading", "جاري تحميل المستويات والتقدم...")}
         </div>
       </div>
     );
   }
 
-  // Level Selection view
+  // ─────────────────────────────────────────────────────────────
+  // Level Selection View
+  // ─────────────────────────────────────────────────────────────
+
   if (view === "levels") {
     return (
       <div className={styles.gameContainer}>
         {showPretestModal && (
           <PretestWelcomeModal
-            unlockedLevel={progress.unlockedLevel}
+            unlockedLevel={progress.recommendedLevel}
             onDismiss={dismissPretestModal}
           />
         )}
+
         <nav className={styles.headerNav}>
           <button className={styles.exitBtn} onClick={() => navigate("/home")}>
             {t("volcanoWords.exit", "خروج")}
           </button>
+
           <div className={styles.scoreBoard}>
             {t("volcanoWords.mapTitle", "خريطة المغامرة")}
           </div>
@@ -956,6 +1406,7 @@ function VolcanoWords() {
             <h1 className={styles.mapTitle}>
               {t("volcanoWords.mapTitle", "خريطة المغامرة")}
             </h1>
+
             <p className={styles.mapSubtitle}>
               {t("volcanoWords.mapSubtitle", "اختر مستوى لتبدأ مغامرة دراغو!")}
             </p>
@@ -964,25 +1415,34 @@ function VolcanoWords() {
           <div className={styles.levelsGrid}>
             {Object.keys(defaultProgress.completedStages).map((id) => {
               const levelNum = parseInt(id, 10);
+
               const isUnlocked = levelNum <= progress.unlockedLevel;
+
               const levelMeta = i18n.language?.startsWith("en")
                 ? LEVEL_METADATA_EN[id]
                 : LEVEL_METADATA_AR[id];
+
               const levelName =
                 levels?.[id]?.name || levelMeta?.name || `Level ${id}`;
+
               const levelFocus = levelMeta?.focus || levels?.[id]?.focus || "";
 
               const completedCount =
                 progress.completedStages[id]?.filter(Boolean).length || 0;
+
               const progressPercent = (completedCount / 5) * 100;
+
               const isRecommended = levelNum === progress.recommendedLevel;
 
               return (
                 <div
                   key={id}
-                  className={`${styles.levelCard} ${!isUnlocked ? styles.levelCardLocked : ""}`}
+                  className={`${styles.levelCard} ${
+                    !isUnlocked ? styles.levelCardLocked : ""
+                  }`}
                   style={{
                     position: "relative",
+
                     ...(isRecommended
                       ? {
                           border: "3px solid #ffd700",
@@ -994,44 +1454,62 @@ function VolcanoWords() {
                   onClick={() => isUnlocked && handleSelectLevel(id)}
                 >
                   {!isUnlocked && <div className={styles.lockOverlay}>🔒</div>}
+
                   {isRecommended && (
                     <div
                       style={{
                         position: "absolute",
+
                         top: "10px",
+
                         left: "10px",
+
                         background: "linear-gradient(135deg, #ffd700, #b8860b)",
+
                         color: "#1a0f00",
+
                         padding: "4px 10px",
+
                         borderRadius: "12px",
+
                         fontSize: "11px",
+
                         fontWeight: "bold",
+
                         boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+
                         zIndex: 2,
                       }}
                     >
                       المستوى الموصى به ⭐
                     </div>
                   )}
+
                   <div className={styles.levelCardContent}>
                     <span className={styles.levelNum}>
                       {t("volcanoWords.level", "المستوى")} {id}
                     </span>
+
                     <h3 className={styles.levelName}>{levelName}</h3>
+
                     <p className={styles.levelFocus}>{levelFocus}</p>
                   </div>
 
                   <div className={styles.levelFooter}>
                     <div className={styles.levelProgressText}>
                       <span>{completedCount}/5</span>
+
                       <span>
                         {t("volcanoWords.progressLabel", "المراحل المكتملة")}
                       </span>
                     </div>
+
                     <div className={styles.progressBarBg}>
                       <div
                         className={styles.progressBarFill}
-                        style={{ width: `${progressPercent}%` }}
+                        style={{
+                          width: `${progressPercent}%`,
+                        }}
                       />
                     </div>
                   </div>
@@ -1044,11 +1522,15 @@ function VolcanoWords() {
     );
   }
 
-  // Stage Selection view
+  // ─────────────────────────────────────────────────────────────
+  // Stage Selection View
+  // ─────────────────────────────────────────────────────────────
+
   if (view === "stages") {
     const levelMeta = i18n.language?.startsWith("en")
       ? LEVEL_METADATA_EN[selectedLevelId]
       : LEVEL_METADATA_AR[selectedLevelId];
+
     const levelName =
       levels?.[selectedLevelId]?.name ||
       levelMeta?.name ||
@@ -1060,6 +1542,7 @@ function VolcanoWords() {
           <button className={styles.exitBtn} onClick={() => setView("levels")}>
             {t("volcanoWords.back", "رجوع")}
           </button>
+
           <div className={styles.scoreBoard}>{levelName}</div>
         </nav>
 
@@ -1072,6 +1555,7 @@ function VolcanoWords() {
               >
                 {t("volcanoWords.backToLevels", "◀ العودة للمستويات")}
               </button>
+
               <h2 className={styles.stagesHeaderTitle}>{levelName}</h2>
             </div>
 
@@ -1080,43 +1564,64 @@ function VolcanoWords() {
                 const isStageUnlocked =
                   stageIdx === 0 ||
                   parseInt(selectedLevelId, 10) < progress.unlockedLevel ||
-                  progress.completedStages[selectedLevelId]?.[stageIdx - 1];
+                  Boolean(
+                    progress.completedStages[selectedLevelId]?.[stageIdx - 1],
+                  );
+
                 const earnedStars =
                   progress.stars[selectedLevelId]?.[stageIdx] || 0;
+
                 const isRecommended =
-                  parseInt(selectedLevelId, 10) === progress.recommendedLevel &&
-                  stageIdx === (progress.recommendedStage - 1 || 0);
+                  Number(selectedLevelId) === progress.recommendedLevel &&
+                  stageIdx === progress.recommendedStage - 1;
 
                 return (
                   <div
                     key={stageIdx}
                     className={styles.stageNodeWrapper}
-                    style={{ position: "relative" }}
+                    style={{
+                      position: "relative",
+                    }}
                   >
                     {isRecommended && (
                       <div
                         style={{
                           position: "absolute",
+
                           top: "-22px",
+
                           left: "50%",
+
                           transform: "translateX(-50%)",
+
                           background:
                             "linear-gradient(135deg, #ffd700, #b8860b)",
+
                           color: "#1a0f00",
+
                           padding: "2px 8px",
+
                           borderRadius: "10px",
+
                           fontSize: "10px",
+
                           fontWeight: "bold",
+
                           whiteSpace: "nowrap",
+
                           boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+
                           zIndex: 2,
                         }}
                       >
                         بداية المسار 🚀
                       </div>
                     )}
+
                     <div
-                      className={`${styles.stageNode} ${!isStageUnlocked ? styles.stageNodeLocked : ""}`}
+                      className={`${styles.stageNode} ${
+                        !isStageUnlocked ? styles.stageNodeLocked : ""
+                      }`}
                       style={
                         isRecommended
                           ? {
@@ -1131,16 +1636,21 @@ function VolcanoWords() {
                     >
                       {isStageUnlocked ? stageIdx + 1 : "🔒"}
                     </div>
+
                     <div className={styles.stageLabel}>
                       {t("volcanoWords.stageLabel", "المرحلة")} {stageIdx + 1}
                     </div>
+
                     <div className={styles.stageStars}>
                       {[...Array(3)].map((_, starIdx) => {
                         const isActive = starIdx < earnedStars;
+
                         return (
                           <span
                             key={starIdx}
-                            className={`${styles.star} ${isActive ? styles.starActive : styles.starInactive}`}
+                            className={`${styles.star} ${
+                              isActive ? styles.starActive : styles.starInactive
+                            }`}
                           >
                             ★
                           </span>
@@ -1157,10 +1667,14 @@ function VolcanoWords() {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────
   // Active Game View
+  // ─────────────────────────────────────────────────────────────
+
   const levelMeta = i18n.language?.startsWith("en")
     ? LEVEL_METADATA_EN[levelId]
     : LEVEL_METADATA_AR[levelId];
+
   const levelName =
     levels?.[levelId]?.name || levelMeta?.name || `Level ${levelId}`;
 
@@ -1176,7 +1690,9 @@ function VolcanoWords() {
             <span
               key={i}
               className={styles.heart}
-              style={{ opacity: i < hints ? 1 : 0.3 }}
+              style={{
+                opacity: i < hints ? 1 : 0.3,
+              }}
             >
               💛
             </span>
@@ -1193,7 +1709,9 @@ function VolcanoWords() {
           }}
         >
           <span>{levelName}</span>
+
           <span>•</span>
+
           <span>
             {t("volcanoWords.stageLabel", "المرحلة")} {selectedStageIndex + 1}
           </span>
@@ -1253,7 +1771,9 @@ function VolcanoWords() {
   );
 }
 
-// Sub-Components
+// ─────────────────────────────────────────────────────────────
+// Volcano Panel
+// ─────────────────────────────────────────────────────────────
 
 function VolcanoPanel({
   lavaLevel,
@@ -1264,17 +1784,25 @@ function VolcanoPanel({
 }) {
   return (
     <div className={styles.volcanoPanel}>
-      <div style={{ position: "relative" }}>
+      <div
+        style={{
+          position: "relative",
+        }}
+      >
         <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} />
+
         <div className={styles.volcanoContainer}>
-          <div className={styles.volcanoTop}></div>
+          <div className={styles.volcanoTop} />
 
           <div className={styles.lavaContainer}>
             <div
               className={styles.lavaLevel}
-              style={{ height: `${lavaLevel}%` }}
+              style={{
+                height: `${lavaLevel}%`,
+              }}
             >
-              <div className={styles.lavaSurface}></div>
+              <div className={styles.lavaSurface} />
+
               {lavaBubbles.map((bubble) => (
                 <div
                   key={bubble.key}
@@ -1294,19 +1822,29 @@ function VolcanoPanel({
 
         <div className={styles.percentageMarkers}>
           <div
-            className={`${styles.marker} ${lavaLevel >= 100 ? styles.critical : ""}`}
+            className={`${styles.marker} ${
+              lavaLevel >= 100 ? styles.critical : ""
+            }`}
           >
             100%
           </div>
+
           <div className={styles.marker}>75%</div>
+
           <div className={styles.marker}>50%</div>
+
           <div className={styles.marker}>25%</div>
+
           <div className={styles.marker}>0%</div>
         </div>
       </div>
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Word Panel
+// ─────────────────────────────────────────────────────────────
 
 function WordPanal({
   word,
@@ -1330,23 +1868,33 @@ function WordPanal({
   similarity,
 }) {
   const isArabic = /[\u0600-\u06FF]/.test(word || "");
+
   const { t } = useTranslation();
 
   return (
     <div className={styles.wordPanel}>
       <div className={styles.wordCard}>
-        {/* <img src={dragoPose} alt="Drago" className={styles.dragonImageMobile} /> */}
         <div
           className={styles.wordDisplay}
-          style={{ direction: isArabic ? "rtl" : "ltr" }}
+          style={{
+            direction: isArabic ? "rtl" : "ltr",
+          }}
         >
           {word || "..."}
         </div>
 
         {phase !== "idle" && (
-          <div style={{ marginTop: 10, fontSize: 14, fontWeight: 800 }}>
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 14,
+              fontWeight: 800,
+            }}
+          >
             {phase === "recording" && t("volcanoWords.phases.recording")}
+
             {phase === "uploading" && t("volcanoWords.phases.uploading")}
+
             {phase === "processing" && t("volcanoWords.phases.processing")}
           </div>
         )}
@@ -1374,7 +1922,9 @@ function WordPanal({
         {transcript && (
           <div
             className={styles.transcriptText}
-            style={{ direction: isArabic ? "rtl" : "ltr" }}
+            style={{
+              direction: isArabic ? "rtl" : "ltr",
+            }}
           >
             {t("volcanoWords.feedback.youSaid")}: "<strong>{transcript}</strong>
             "
@@ -1382,7 +1932,13 @@ function WordPanal({
         )}
 
         {similarity !== null && (
-          <div style={{ marginTop: 6, fontSize: 12, opacity: 0.75 }}>
+          <div
+            style={{
+              marginTop: 6,
+              fontSize: 12,
+              opacity: 0.75,
+            }}
+          >
             Similarity: {Math.round(similarity)}%
           </div>
         )}
@@ -1395,14 +1951,22 @@ function WordPanal({
               direction: "rtl",
               lineHeight: 1.7,
             }}
-            dangerouslySetInnerHTML={{ __html: diffHtml }}
+            dangerouslySetInnerHTML={{
+              __html: diffHtml,
+            }}
           />
         )}
 
         {analysis && renderMistakes(analysis)}
 
         {counts && (
-          <div style={{ marginTop: 10, fontSize: 13, opacity: 0.9 }}>
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 13,
+              opacity: 0.9,
+            }}
+          >
             الأخطاء: ناقص {counts.missing_words}, زائد {counts.extra_words},
             مستبدل {counts.substitute_words}
           </div>
@@ -1438,11 +2002,13 @@ function WordPanal({
               disabled={isGameOver || (!isRecording && phase !== "idle")}
               onClick={handleStartRecording}
             />
+
             <ActionBtn
               icon="💡"
               disabled={hints <= 0 || isRecording || isGameOver}
               onClick={handleUseHint}
             />
+
             <ActionBtn
               icon="➡️"
               disabled={isRecording || isGameOver}
@@ -1454,6 +2020,10 @@ function WordPanal({
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Action Button
+// ─────────────────────────────────────────────────────────────
 
 function ActionBtn({ icon, onClick, disabled = false, primary = false }) {
   return (

@@ -175,13 +175,14 @@ export const profileAPI = {
 // GAME PROGRESS
 // ─────────────────────────────────────────
 export const gameProgressAPI = {
+  // GET /api/GameProgress/{userId}
   getByUser: (userId) => api.get(`/api/GameProgress/${userId}`),
-  update: (userId, data) =>
-    api.post(`/api/GameProgress/${userId}/update`, data),
+
+  // POST /api/GameProgress/{userId}/complete-stage
+  // data should be: { gameKey, levelNumber, stageNumber, score, starsEarned }
   completeStage: (userId, data) =>
     api.post(`/api/GameProgress/${userId}/complete-stage`, data),
 };
-
 // ─────────────────────────────────────────
 // HUT GAME
 // ─────────────────────────────────────────
