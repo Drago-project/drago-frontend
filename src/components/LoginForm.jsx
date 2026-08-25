@@ -49,6 +49,7 @@ export default function LoginForm() {
       if (token) {
         try {
           localStorage.setItem("authToken", token);
+          localStorage.removeItem("drago_guest_mode");
         } catch (e) {
           console.warn("Could not persist token:", e);
         }
@@ -100,7 +101,11 @@ export default function LoginForm() {
       const roleStr = (role || "").toString().toLowerCase();
       if (roleStr.includes("doctor") || roleStr.includes("dr")) {
         navigate("/dashboard", { replace: true });
-        if (typeof window !== "undefined" && window.history && window.history.pushState) {
+        if (
+          typeof window !== "undefined" &&
+          window.history &&
+          window.history.pushState
+        ) {
           window.history.pushState({}, "", "/dashboard");
         }
       } else {
@@ -128,7 +133,11 @@ export default function LoginForm() {
           localStorage.setItem("pretest_completed_scores", JSON.stringify({}));
           localStorage.setItem("needsPretest", "false");
           navigate("/home", { replace: true });
-          if (typeof window !== "undefined" && window.history && window.history.pushState) {
+          if (
+            typeof window !== "undefined" &&
+            window.history &&
+            window.history.pushState
+          ) {
             window.history.pushState({}, "", "/home");
           }
         } else {

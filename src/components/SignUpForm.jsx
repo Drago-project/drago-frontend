@@ -219,6 +219,7 @@ export default function SignUpForm() {
       const response = await usersAPI.register(payload);
 
       console.log("✅ Student Registered Successfully", response.data);
+      localStorage.removeItem("drago_guest_mode");
       localStorage.setItem("needsPretest", "true");
       // Show email verification modal
       setRegisteredEmail(studentForm.email);

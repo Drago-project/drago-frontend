@@ -1,10 +1,12 @@
 // src/components/ProtectedRoute.jsx
 import { Navigate, useLocation } from "react-router-dom";
+import { isGuestMode } from "../server/auth";
 
 function ProtectedRoute({ children, requiredRole }) {
   const location = useLocation();
   const token = localStorage.getItem("authToken");
   const storedUser = localStorage.getItem("userData");
+  const isGuest = isGuestMode() && !token;
 
   // helper to redirect based on role
   const redirectForRole = (role) =>
@@ -96,11 +98,19 @@ function ProtectedRoute({ children, requiredRole }) {
   // Dual-check: explicit flag OR missing completion marker — covers pre-existing accounts
   // that never had the flag set and accounts that haven't completed the pretest yet.
   const needsPretest = localStorage.getItem("needsPretest") === "true";
-  const pretestDone  = localStorage.getItem("pretest_completed_scores");
+  const pretestDone = localStorage.getItem("pretest_completed_scores");
   const isStudentRoute = requiredRole?.toLowerCase().includes("student");
 
   if (
+    isGuest &&
+    (!isStudentRoute || location.pathname.startsWith("/profile"))
+  ) {
+    return <Navigate to="/home" replace />;
+  }
+
+  if (
     isStudentRoute &&
+    !isGuest &&
     !location.pathname.startsWith("/pretest") &&
     (needsPretest || !pretestDone)
   ) {
@@ -112,7 +122,7 @@ function ProtectedRoute({ children, requiredRole }) {
   // if requiredRole is set, check access
   if (requiredRole) {
     const r = (roleFromPayload || "").toString().toLowerCase();
-    if (r && !r.includes(requiredRole.toLowerCase())) {
+    if (!isGuest && r && !r.includes(requiredRole.toLowerCase())) {
       return <Navigate to={redirectForRole(r)} replace />;
     }
   }
