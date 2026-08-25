@@ -1,4 +1,5 @@
 import { gameProgressAPI } from "../../server/endpoints";
+import { getProgressStorageKey } from "../../server/auth";
 
 export async function unlockGamesProgress(userId, domainScores) {
   if (!domainScores || !userId) return;
@@ -64,7 +65,7 @@ export async function unlockGamesProgress(userId, domainScores) {
       pretestScore: score,
     };
 
-    localStorage.setItem(key, JSON.stringify(progress));
+    localStorage.setItem(getProgressStorageKey(key), JSON.stringify(progress));
 
     // Update backend progress
     try {
@@ -76,8 +77,10 @@ export async function unlockGamesProgress(userId, domainScores) {
         completionPercent: 0,
       });
     } catch (e) {
-      console.error(`Failed to initialize backend game progress for ${gameKey}:`, e);
+      console.error(
+        `Failed to initialize backend game progress for ${gameKey}:`,
+        e,
+      );
     }
   }
 }
-

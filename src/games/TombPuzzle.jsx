@@ -1,20 +1,31 @@
 import { useState, useEffect, useRef } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import style from "../styles/TombPuzzle.module.css";
+
 import { fallbackQuestions } from "../data/tombPuzzleFallback";
-import { gameProgressAPI } from "../server/endpoints";
-import { getAuthUser } from "../server/auth";
+
+import { gameProgressAPI, profileAPI } from "../server/endpoints";
+
+import { getAuthUser, getProgressStorageKey } from "../server/auth";
 
 // ─── Local Proxy / Vercel Serverless API source ───────────────────────────────
+
 const HF_QUESTIONS_URL = "/api/tomb/questions";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
+
 const TOTAL_LEVELS = 6;
+
 const STAGES_PER_LEVEL = 5;
-const QUESTIONS_PER_STAGE = 12; // questions shown per stage session
+
+const QUESTIONS_PER_STAGE = 12;
+
 const STORAGE_KEY = "tomb_puzzle_progress";
 
 // ─── Level Metadata ───────────────────────────────────────────────────────────
+
 const LEVEL_META = {
   1: {
     name: "المستوى الأول",
@@ -69,90 +80,268 @@ const categoryMap = {
   basic: "الجمل الأساسية 💬",
 };
 
-// ─── Default progress ─────────────────────────────────────────────────────────
+// ─── Default Progress ─────────────────────────────────────────────────────────
+
 const makeDefaultProgress = () => ({
   unlockedLevel: 1,
+  recommendedLevel: 1,
+  recommendedStage: 1,
+
   completedStages: Object.fromEntries(
     Array.from({ length: TOTAL_LEVELS }, (_, i) => [
       String(i + 1),
       Array(STAGES_PER_LEVEL).fill(false),
     ]),
   ),
+
   stars: Object.fromEntries(
     Array.from({ length: TOTAL_LEVELS }, (_, i) => [
       String(i + 1),
       Array(STAGES_PER_LEVEL).fill(0),
     ]),
   ),
+
+  totalStars: 0,
+  totalCompletedStages: 0,
+
+  showPretestWelcome: false,
 });
 
-const loadProgress = () => {
+// ─── Local Storage fallback ───────────────────────────────────────────────────
+
+const loadLocalProgressFallback = () => {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = localStorage.getItem(getProgressStorageKey(STORAGE_KEY));
+
     if (stored) {
       const parsed = JSON.parse(stored);
       const def = makeDefaultProgress();
+
       return {
         ...def,
         ...parsed,
-        completedStages: { ...def.completedStages, ...parsed.completedStages },
-        stars: { ...def.stars, ...parsed.stars },
+
+        completedStages: {
+          ...def.completedStages,
+          ...(parsed.completedStages || {}),
+        },
+
+        stars: {
+          ...def.stars,
+          ...(parsed.stars || {}),
+        },
       };
     }
   } catch (e) {
-    console.error("Failed to parse progress, resetting to default.", e);
+    console.error("Failed to parse local TombPuzzle progress:", e);
   }
+
   return makeDefaultProgress();
 };
 
 const saveProgress = (prog) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
+    localStorage.setItem(
+      getProgressStorageKey(STORAGE_KEY),
+      JSON.stringify(prog),
+    );
   } catch (e) {
-    console.error("Failed to save progress.", e);
+    console.error("Failed to save TombPuzzle progress.", e);
   }
 };
 
-// ─── Star rating logic (mirrors game_engine.py) ───────────────────────────────
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+const clamp = (value, min, max) =>
+  Math.min(max, Math.max(min, Number(value) || min));
+
+// ─── Backend Progress Normalization ──────────────────────────────────────────
+//
+// IMPORTANT:
+// The backend is the source of truth.
+//
+// The GET endpoint gives aggregate progress such as:
+// - levelReached
+// - completedStages
+// - starsEarned
+//
+// We derive the current/recommended level and stage from those values.
+// We DO NOT invent per-stage star values because aggregate starsEarned
+// does not tell us how many stars belong to each individual stage.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const normalizeBackendProgress = (
+  progressData,
+  totalLevels = TOTAL_LEVELS,
+  stagesPerLevel = STAGES_PER_LEVEL,
+) => {
+  const completedStages = {};
+  const stars = {};
+
+  for (let level = 1; level <= totalLevels; level++) {
+    completedStages[String(level)] = Array(stagesPerLevel).fill(false);
+
+    stars[String(level)] = Array(stagesPerLevel).fill(0);
+  }
+
+  const backendProgress = Array.isArray(progressData)
+    ? progressData.find((item) => item.gameKey === "tomb_puzzle")
+    : progressData?.gameKey === "tomb_puzzle"
+      ? progressData
+      : null;
+
+  if (!backendProgress) {
+    return makeDefaultProgress();
+  }
+
+  const levelReached = clamp(backendProgress.levelReached, 1, totalLevels);
+
+  const totalCompletedStages = clamp(
+    backendProgress.completedStages,
+    0,
+    totalLevels * stagesPerLevel,
+  );
+
+  const totalStars = clamp(
+    backendProgress.starsEarned,
+    0,
+    totalLevels * stagesPerLevel * 3,
+  );
+
+  let remaining = totalCompletedStages;
+
+  // Levels before the reached level.
+  for (let level = 1; level < levelReached; level++) {
+    const count = Math.min(remaining, stagesPerLevel);
+
+    for (let stage = 0; stage < count; stage++) {
+      completedStages[String(level)][stage] = true;
+    }
+
+    remaining -= count;
+  }
+
+  // Completed stages inside the reached/current level.
+  const currentLevelCompleted = Math.min(remaining, stagesPerLevel);
+
+  for (let stage = 0; stage < currentLevelCompleted; stage++) {
+    completedStages[String(levelReached)][stage] = true;
+  }
+
+  // Find where the player should continue.
+  let recommendedLevel = levelReached;
+  let recommendedStage = 1;
+
+  const firstIncompleteStage = completedStages[String(levelReached)].findIndex(
+    (completed) => !completed,
+  );
+
+  if (firstIncompleteStage !== -1) {
+    recommendedStage = firstIncompleteStage + 1;
+  } else if (levelReached < totalLevels) {
+    recommendedLevel = levelReached + 1;
+    recommendedStage = 1;
+  } else {
+    recommendedLevel = totalLevels;
+    recommendedStage = stagesPerLevel;
+  }
+
+  return {
+    unlockedLevel: levelReached,
+    recommendedLevel,
+    recommendedStage,
+
+    completedStages,
+    stars,
+
+    totalStars,
+    totalCompletedStages,
+
+    showPretestWelcome: levelReached > 1 && totalCompletedStages === 0,
+  };
+};
+
+// ─── Star rating logic ────────────────────────────────────────────────────────
+
 function calcStars(correct, total) {
   if (total === 0) return 0;
+
   const pct = (correct / total) * 100;
+
   if (pct >= 90) return 3;
   if (pct >= 75) return 2;
   if (pct >= 50) return 1;
+
   return 0;
 }
 
 // ─── Sound helpers ────────────────────────────────────────────────────────────
+
 function playSound(type) {
   const map = {
     correct: "/sounds/correct.mp3",
     wrong: "/sounds/wrong.mp3",
     win: "/sounds/win.mp3",
     gameover: "/sounds/tomb_lose.mp3",
+
     click: "https://s3.amazonaws.com/freecodecamp/drums/Heater-1.mp3",
+
     pop: "https://s3.amazonaws.com/freecodecamp/drums/Dsc_Oh.mp3",
+
     magic: "https://s3.amazonaws.com/freecodecamp/drums/Give_us_a_light.mp3",
+
     chest: "https://s3.amazonaws.com/freecodecamp/drums/Cev_H2.mp3",
   };
+
   const src = map[type];
+
   if (!src) return;
+
   const audio = new Audio(src);
+
   audio.volume = 0.4;
+
   audio.play().catch(() => {});
 }
 
-// ─── Artifacts (treasure collection) ─────────────────────────────────────────
+// ─── Artifacts ────────────────────────────────────────────────────────────────
+
 const allArtifacts = [
-  { id: 1, name: "القناع الذهبي", icon: "👑" },
-  { id: 2, name: "الجعران المقدس", icon: "🪲" },
-  { id: 3, name: "عين حورس", icon: "👁️" },
-  { id: 4, name: "مفتاح الحياة", icon: "☥" },
-  { id: 5, name: "تمثال باستت", icon: "🐈" },
-  { id: 6, name: "رمح حورس", icon: "⚡" },
+  {
+    id: 1,
+    name: "القناع الذهبي",
+    icon: "👑",
+  },
+  {
+    id: 2,
+    name: "الجعران المقدس",
+    icon: "🪲",
+  },
+  {
+    id: 3,
+    name: "عين حورس",
+    icon: "👁️",
+  },
+  {
+    id: 4,
+    name: "مفتاح الحياة",
+    icon: "☥",
+  },
+  {
+    id: 5,
+    name: "تمثال باستت",
+    icon: "🐈",
+  },
+  {
+    id: 6,
+    name: "رمح حورس",
+    icon: "⚡",
+  },
 ];
 
 // ─── Pretest Welcome Modal ───────────────────────────────────────────────────
+
 function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   return (
     <div
@@ -194,11 +383,17 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
         >
           🌟
         </div>
+
         <h2
-          style={{ color: "#ffd700", margin: "0 0 12px 0", fontSize: "24px" }}
+          style={{
+            color: "#ffd700",
+            margin: "0 0 12px 0",
+            fontSize: "24px",
+          }}
         >
           مرحباً بك يا بطل!
         </h2>
+
         <p
           style={{
             color: "#fff",
@@ -221,6 +416,7 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
             رحلتك تبدأ مباشرة من المستوى {unlockedLevel}!
           </span>
         </p>
+
         <button
           onClick={onDismiss}
           style={{
@@ -247,162 +443,237 @@ function PretestWelcomeModal({ unlockedLevel, onDismiss }) {
   );
 }
 
-const reconstructDetailedProgress = (
-  bgProgress,
-  totalLevels = 6,
-  stagesPerLevel = 5,
-) => {
-  const levelReached = bgProgress?.levelReached || 1;
-  const completedStagesCount = bgProgress?.completedStages || 0;
-  const starsEarned = bgProgress?.starsEarned || 0;
-
-  const completedStages = {};
-  const stars = {};
-
-  let stagesRemaining = completedStagesCount;
-  let starsRemaining = starsEarned;
-
-  for (let l = 1; l <= totalLevels; l++) {
-    completedStages[l.toString()] = [];
-    stars[l.toString()] = [];
-
-    for (let s = 0; s < stagesPerLevel; s++) {
-      if (stagesRemaining > 0) {
-        completedStages[l.toString()].push(true);
-        stagesRemaining--;
-
-        const allocated = Math.min(
-          3,
-          Math.max(1, starsRemaining - stagesRemaining),
-        );
-        stars[l.toString()].push(allocated);
-        starsRemaining -= allocated;
-      } else {
-        completedStages[l.toString()].push(false);
-        stars[l.toString()].push(0);
-      }
-    }
-  }
-
-  return {
-    unlockedLevel: levelReached,
-    completedStages,
-    stars,
-  };
-};
-
 // ─── Main Component ───────────────────────────────────────────────────────────
+
 function TombPuzzle() {
   const navigate = useNavigate();
-  // ── View state: "levels" | "stages" | "game" | "collection" ──────────────
+
+  // ── View state ──────────────────────────────────────────────────────────────
+
   const [view, setView] = useState("levels");
-  const [progress, setProgress] = useState(loadProgress);
-  const [showPretestModal, setShowPretestModal] = useState(() => {
-    const p = loadProgress();
-    return Boolean(p?.showPretestWelcome && p?.unlockedLevel > 1);
-  });
 
-  useEffect(() => {
-    const fetchProgress = async () => {
-      const authUser = getAuthUser();
-      const userId = authUser?.userId;
-      if (!userId) return;
+  // Backend is source of truth.
+  const [progress, setProgress] = useState(makeDefaultProgress());
 
-      try {
-        const res = await gameProgressAPI.getByUser(userId);
-        const progressList = res.data?.data || res.data;
-        const bgProgress = Array.isArray(progressList)
-          ? progressList.find((p) => p.gameKey === "tomb_puzzle")
-          : null;
+  const [progressLoading, setProgressLoading] = useState(true);
 
-        if (bgProgress) {
-          const reconstructed = reconstructDetailedProgress(bgProgress, 6, 5);
-          setProgress(reconstructed);
-          saveProgress(reconstructed);
-        }
-      } catch (err) {
-        console.error("Failed to fetch backend progress for tomb_puzzle:", err);
-      }
-    };
+  const [showPretestModal, setShowPretestModal] = useState(false);
 
-    fetchProgress();
-  }, []);
+  // ── HF data ─────────────────────────────────────────────────────────────────
 
-  const dismissPretestModal = () => {
-    setShowPretestModal(false);
-    setProgress((prev) => {
-      const updated = { ...prev, showPretestWelcome: false };
-      saveProgress(updated);
-      return updated;
-    });
-  };
-
-  // ── HF data ───────────────────────────────────────────────────────────────
-  // allQuestions grouped by level: { "1": [...], "2": [...], ... }
   const [questionsByLevel, setQuestionsByLevel] = useState(null);
+
   const [dataLoading, setDataLoading] = useState(true);
+
   const [dataError, setDataError] = useState(null);
 
-  // ── Selection ─────────────────────────────────────────────────────────────
+  // ── Selection ───────────────────────────────────────────────────────────────
+
   const [selectedLevel, setSelectedLevel] = useState(null);
+
   const [selectedStageIndex, setSelectedStageIndex] = useState(null);
 
-  // ── Game ──────────────────────────────────────────────────────────────────
+  // ── Game ────────────────────────────────────────────────────────────────────
+
   const [stageQuestions, setStageQuestions] = useState([]);
+
   const [questionIndex, setQuestionIndex] = useState(0);
+
   const [shuffledWords, setShuffledWords] = useState([]);
+
   const [userAnswer, setUserAnswer] = useState([]);
+
   const [lives, setLives] = useState(3);
+
   const [correctCount, setCorrectCount] = useState(0);
+
   const [hints, setHints] = useState(3);
+
   const [pharaohMood, setPharaohMood] = useState("neutral");
+
   const [notification, setNotification] = useState({
     show: false,
     message: "",
     type: "",
   });
-  const [secretInfo, setSecretInfo] = useState({ show: false, text: "" });
-  const [stageResult, setStageResult] = useState(null); // { stars, correct, total, passed }
 
-  // ── Collection / Treasure ─────────────────────────────────────────────────
+  const [secretInfo, setSecretInfo] = useState({
+    show: false,
+    text: "",
+  });
+
+  const [stageResult, setStageResult] = useState(null);
+
+  // ── Collection ──────────────────────────────────────────────────────────────
+
   const [myCollection, setMyCollection] = useState([]);
+
   const [reward, setReward] = useState(null);
+
   const [chestOpened, setChestOpened] = useState(false);
 
-  // ── Music ─────────────────────────────────────────────────────────────────
+  // ── Music ────────────────────────────────────────────────────────────────────
+
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+
   const musicRef = useRef(new Audio("/sounds/tomb-bg.mp3"));
 
-  // ─── Load data from HF space on mount ──────────────────────────────────────
+  // Prevent duplicate stage completion requests.
+  const stageCompletionInFlightRef = useRef(false);
+
+  // Prevent duplicated finishStage calls from
+  // the same stage/session.
+  const stageFinishedRef = useRef(false);
+
+  // ─────────────────────────────────────────────────────────────
+  // Fetch progress from backend
+  // ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchProgress = async () => {
+      const authUser = getAuthUser();
+
+      const userId = authUser?.userId;
+
+      if (!userId) {
+        if (!cancelled) {
+          setProgress(loadLocalProgressFallback());
+
+          setProgressLoading(false);
+        }
+
+        return;
+      }
+
+      try {
+        setProgressLoading(true);
+
+        const res = await gameProgressAPI.getByUser(userId);
+
+        const progressList = res.data?.data || res.data;
+
+        console.log("TombPuzzle backend progress:", progressList);
+
+        if (!cancelled) {
+          const normalized = normalizeBackendProgress(
+            progressList,
+            TOTAL_LEVELS,
+            STAGES_PER_LEVEL,
+          );
+
+          console.log("TombPuzzle normalized progress:", normalized);
+
+          setProgress(normalized);
+
+          saveProgress(normalized);
+        }
+      } catch (err) {
+        console.error("Failed to fetch backend progress for tomb_puzzle:", err);
+
+        if (!cancelled) {
+          // Local storage only as fallback.
+          setProgress(loadLocalProgressFallback());
+        }
+      } finally {
+        if (!cancelled) {
+          setProgressLoading(false);
+        }
+      }
+    };
+
+    fetchProgress();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ─────────────────────────────────────────────────────────────
+  // Pretest modal
+  // ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (
+      !progressLoading &&
+      progress?.showPretestWelcome &&
+      progress?.recommendedLevel > 1
+    ) {
+      setShowPretestModal(true);
+    }
+  }, [progress, progressLoading]);
+
+  const dismissPretestModal = () => {
+    setShowPretestModal(false);
+
+    setProgress((prev) => {
+      const updated = {
+        ...prev,
+        showPretestWelcome: false,
+      };
+
+      saveProgress(updated);
+
+      return updated;
+    });
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // Load questions
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     (async () => {
       try {
         setDataLoading(true);
         setDataError(null);
+
         const res = await fetch(HF_QUESTIONS_URL);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
         const data = await res.json();
 
-        // Group by level
         const grouped = {};
-        for (let l = 1; l <= TOTAL_LEVELS; l++) grouped[String(l)] = [];
+
+        for (let l = 1; l <= TOTAL_LEVELS; l++) {
+          grouped[String(l)] = [];
+        }
+
         for (const q of data) {
           const key = String(q.level ?? 1);
-          if (!grouped[key]) grouped[key] = [];
+
+          if (!grouped[key]) {
+            grouped[key] = [];
+          }
+
           grouped[key].push(q);
         }
+
         setQuestionsByLevel(grouped);
       } catch (err) {
         console.warn("HF fetch failed, using fallback:", err);
-        // Build grouped fallback
+
         const grouped = {};
-        for (let l = 1; l <= TOTAL_LEVELS; l++) grouped[String(l)] = [];
-        for (const q of fallbackQuestions) {
-          // Distribute fallback evenly across levels
-          const key = String((fallbackQuestions.indexOf(q) % TOTAL_LEVELS) + 1);
-          grouped[key].push({ ...q, level: parseInt(key) });
+
+        for (let l = 1; l <= TOTAL_LEVELS; l++) {
+          grouped[String(l)] = [];
         }
+
+        for (const q of fallbackQuestions) {
+          const key = String((fallbackQuestions.indexOf(q) % TOTAL_LEVELS) + 1);
+
+          grouped[key].push({
+            ...q,
+            level: parseInt(key, 10),
+          });
+        }
+
         setQuestionsByLevel(grouped);
+
         setDataError("تعذّر الاتصال بالخادم. يتم استخدام البيانات المحلية.");
       } finally {
         setDataLoading(false);
@@ -410,15 +681,21 @@ function TombPuzzle() {
     })();
   }, []);
 
-  // ── Load collection from localStorage ─────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Load collection
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem("pharaoh_treasures");
+
       if (saved) {
         const parsed = JSON.parse(saved);
+
         const valid = parsed.filter((s) =>
           allArtifacts.some((a) => a.id === s.id),
         );
+
         setMyCollection(valid);
       }
     } catch (e) {
@@ -426,16 +703,28 @@ function TombPuzzle() {
     }
   }, []);
 
-  // ── Music ─────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Music
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     musicRef.current.loop = true;
+
     musicRef.current.volume = 0.5;
-    if (isMusicPlaying) musicRef.current.play().catch(() => {});
-    else musicRef.current.pause();
+
+    if (isMusicPlaying) {
+      musicRef.current.play().catch(() => {});
+    } else {
+      musicRef.current.pause();
+    }
+
     return () => musicRef.current.pause();
   }, [isMusicPlaying]);
 
-  // ── Reset words when question changes ──────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Reset words when question changes
+  // ─────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (
       view === "game" &&
@@ -443,32 +732,56 @@ function TombPuzzle() {
       questionIndex < stageQuestions.length
     ) {
       const q = stageQuestions[questionIndex];
+
       const words = q.sentence.trim().split(/\s+/);
+
       setShuffledWords([...words].sort(() => Math.random() - 0.5));
+
       setUserAnswer([]);
+
       setPharaohMood("neutral");
-      setSecretInfo({ show: false, text: "" });
+
+      setSecretInfo({
+        show: false,
+        text: "",
+      });
     }
   }, [view, questionIndex, stageQuestions]);
 
-  // ─── Progress helpers ────────────────────────────────────────────────────────
-  const isLevelUnlocked = (levelNum) => levelNum <= progress.unlockedLevel;
+  // ─────────────────────────────────────────────────────────────
+  // Progress helpers
+  // ─────────────────────────────────────────────────────────────
 
-  // const isAllStagesBeforeRecommendedUnlocked = (levelNum, stageIdx) =>
-  //   levelNum < progress.unlockedLevel;
+  const isLevelUnlocked = (levelNum) => levelNum <= progress.unlockedLevel;
 
   const getLevelProgress = (levelNum) => {
     const key = String(levelNum);
+
     const stages = progress.completedStages[key] || [];
+
     const done = stages.filter(Boolean).length;
+
     const total = STAGES_PER_LEVEL;
+
     const stars = (progress.stars[key] || []).reduce((a, b) => a + b, 0);
-    return { done, total, pct: Math.round((done / total) * 100), stars };
+
+    return {
+      done,
+      total,
+      pct: Math.round((done / total) * 100),
+      stars,
+    };
   };
 
   const isStageUnlocked = (levelNum, stageIdx) => {
-    if (stageIdx === 0) return true;
-    if (levelNum < progress.unlockedLevel) return true;
+    if (stageIdx === 0) {
+      return true;
+    }
+
+    if (levelNum < progress.unlockedLevel) {
+      return true;
+    }
+
     return (
       (progress.completedStages[String(levelNum)] || [])[stageIdx - 1] === true
     );
@@ -477,28 +790,45 @@ function TombPuzzle() {
   const getStageStars = (levelNum, stageIdx) =>
     (progress.stars[String(levelNum)] || [])[stageIdx] || 0;
 
-  // ─── Stage launcher ───────────────────────────────────────────────────────────
-  const launchStage = (levelNum, stageIdx) => {
-    if (!questionsByLevel) return;
-    const pool = questionsByLevel[String(levelNum)] || [];
-    if (pool.length === 0) return;
+  // ─────────────────────────────────────────────────────────────
+  // Stage launcher
+  // ─────────────────────────────────────────────────────────────
 
-    // Shuffle pool, slice stage
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    const size = Math.ceil(pool.length / STAGES_PER_LEVEL);
-    let slice = shuffled.slice(stageIdx * size, (stageIdx + 1) * size);
-    // Ensure we always have at least QUESTIONS_PER_STAGE items (wrap around)
-    while (slice.length < QUESTIONS_PER_STAGE) {
-      slice = [
-        ...slice,
-        ...shuffled.slice(0, QUESTIONS_PER_STAGE - slice.length),
-      ];
+  const launchStage = (levelNum, stageIdx) => {
+    if (!questionsByLevel) {
+      return;
     }
+
+    const pool = questionsByLevel[String(levelNum)] || [];
+
+    if (pool.length === 0) {
+      return;
+    }
+
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+
+    const size = Math.ceil(pool.length / STAGES_PER_LEVEL);
+
+    let slice = shuffled.slice(stageIdx * size, (stageIdx + 1) * size);
+
+    while (slice.length < QUESTIONS_PER_STAGE) {
+      const remaining = QUESTIONS_PER_STAGE - slice.length;
+
+      slice = [...slice, ...shuffled.slice(0, remaining)];
+
+      if (shuffled.length === 0) {
+        break;
+      }
+    }
+
     const questions = slice.slice(0, QUESTIONS_PER_STAGE);
 
     setSelectedLevel(levelNum);
+
     setSelectedStageIndex(stageIdx);
+
     setStageQuestions(questions);
+
     setQuestionIndex(0);
     setLives(3);
     setCorrectCount(0);
@@ -506,241 +836,489 @@ function TombPuzzle() {
     setStageResult(null);
     setChestOpened(false);
     setReward(null);
+
+    stageFinishedRef.current = false;
+
     setView("game");
-    if (!isMusicPlaying) setIsMusicPlaying(true);
+
+    if (!isMusicPlaying) {
+      setIsMusicPlaying(true);
+    }
   };
 
-  // ─── Game logic ───────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Toast
+  // ─────────────────────────────────────────────────────────────
+
   const showToast = (message, type) => {
-    setNotification({ show: true, message, type });
+    setNotification({
+      show: true,
+      message,
+      type,
+    });
+
     setTimeout(
-      () => setNotification({ show: false, message: "", type: "" }),
+      () =>
+        setNotification({
+          show: false,
+          message: "",
+          type: "",
+        }),
       2000,
     );
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Word selection
+  // ─────────────────────────────────────────────────────────────
+
   const handleWordClick = (word) => {
-    if (notification.show || secretInfo.show) return;
+    if (notification.show || secretInfo.show) {
+      return;
+    }
+
     playSound("click");
+
     const newAnswer = [...userAnswer, word];
+
     const newShuffled = [...shuffledWords];
+
     const idx = newShuffled.indexOf(word);
-    if (idx > -1) newShuffled.splice(idx, 1);
+
+    if (idx > -1) {
+      newShuffled.splice(idx, 1);
+    }
+
     setUserAnswer(newAnswer);
+
     setShuffledWords(newShuffled);
-    if (
-      newAnswer.length ===
-      stageQuestions[questionIndex].sentence.trim().split(/\s+/).length
-    ) {
+
+    const expectedLength = stageQuestions[questionIndex].sentence
+      .trim()
+      .split(/\s+/).length;
+
+    if (newAnswer.length === expectedLength) {
       checkAnswer(newAnswer);
     }
   };
 
   const handleReturnWord = (word, idx) => {
-    if (notification.show || secretInfo.show) return;
+    if (notification.show || secretInfo.show) {
+      return;
+    }
+
     playSound("click");
+
     const newAnswer = [...userAnswer];
+
     newAnswer.splice(idx, 1);
+
     setUserAnswer(newAnswer);
+
     setShuffledWords([...shuffledWords, word]);
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Answer checking
+  // ─────────────────────────────────────────────────────────────
+
   const checkAnswer = (answer) => {
     const q = stageQuestions[questionIndex];
+
     const formatted = answer.map((w) => w.trim()).join(" ");
+
     const isCorrect = q.accepted.some((a) => a.trim() === formatted);
 
     if (isCorrect) {
       setPharaohMood("happy");
+
       playSound("correct");
+
       const newCorrect = correctCount + 1;
+
       setCorrectCount(newCorrect);
+
       setTimeout(() => {
         playSound("pop");
+
         const catAr = categoryMap[q.category] || q.category;
+
         setSecretInfo({
           show: true,
           text: `أحسنت! جملة صحيحة من موضوع ${catAr}. استمر في النجاح! ✨`,
         });
       }, 400);
+
+      return;
+    }
+
+    setPharaohMood("angry");
+
+    playSound("wrong");
+
+    const newLives = lives - 1;
+
+    if (newLives <= 0) {
+      setLives(0);
+
+      setTimeout(() => {
+        finishStage(correctCount, stageQuestions.length, true);
+      }, 500);
     } else {
-      setPharaohMood("angry");
-      playSound("wrong");
-      const newLives = lives - 1;
-      if (newLives <= 0) {
-        setLives(0);
-        setTimeout(
-          () => finishStage(correctCount, stageQuestions.length, true),
-          500,
-        );
-      } else {
-        setLives(newLives);
-        showToast("❌ ترتيب خاطئ! خسرت قلب 💔", "error");
-        setTimeout(() => {
-          const orig = stageQuestions[questionIndex].sentence
-            .trim()
-            .split(/\s+/);
-          setShuffledWords([...orig].sort(() => Math.random() - 0.5));
-          setUserAnswer([]);
-          setPharaohMood("neutral");
-        }, 1000);
-      }
+      setLives(newLives);
+
+      showToast("❌ ترتيب خاطئ! خسرت قلب 💔", "error");
+
+      setTimeout(() => {
+        const orig = stageQuestions[questionIndex].sentence.trim().split(/\s+/);
+
+        setShuffledWords([...orig].sort(() => Math.random() - 0.5));
+
+        setUserAnswer([]);
+
+        setPharaohMood("neutral");
+      }, 1000);
     }
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Next question
+  // ─────────────────────────────────────────────────────────────
+
   const handleNextQuestion = () => {
-    setSecretInfo({ show: false, text: "" });
+    setSecretInfo({
+      show: false,
+      text: "",
+    });
+
     const nextIdx = questionIndex + 1;
+
     if (nextIdx < stageQuestions.length) {
       setQuestionIndex(nextIdx);
     } else {
+      /*
+       * The current correctCount already includes
+       * the current question because checkAnswer()
+       * updates it before showing the secret overlay.
+       */
       finishStage(correctCount, stageQuestions.length, false);
     }
   };
 
-  const finishStage = (correct, total, lostAllLives) => {
+  // ─────────────────────────────────────────────────────────────
+  // Finish stage
+  // ─────────────────────────────────────────────────────────────
+
+  const finishStage = async (correct, total, lostAllLives) => {
+    if (stageFinishedRef.current || stageCompletionInFlightRef.current) {
+      return;
+    }
+
+    stageFinishedRef.current = true;
+
     const stars = lostAllLives ? 0 : calcStars(correct, total);
+
     const passed = stars > 0;
-    const result = { stars, correct, total, passed };
+
+    const result = {
+      stars,
+      correct,
+      total,
+      passed,
+    };
+
     setStageResult(result);
+
     playSound(passed ? "win" : "gameover");
 
-    if (passed) {
-      // Update progress
+    if (!passed) {
+      stageFinishedRef.current = false;
+
+      return;
+    }
+
+    const authUser = getAuthUser();
+
+    const userId = authUser?.userId;
+
+    if (!userId) {
       setProgress((prev) => {
-        const key = String(selectedLevel);
-        const newComp = { ...prev.completedStages };
-        const newStar = { ...prev.stars };
-        const stages = [
-          ...(newComp[key] || Array(STAGES_PER_LEVEL).fill(false)),
+        const completedStages = { ...prev.completedStages };
+        const starsByLevel = { ...prev.stars };
+        const levelStages = [
+          ...(completedStages[String(selectedLevel)] ||
+            Array(STAGES_PER_LEVEL).fill(false)),
         ];
-        const starArr = [...(newStar[key] || Array(STAGES_PER_LEVEL).fill(0))];
-        stages[selectedStageIndex] = true;
-        starArr[selectedStageIndex] = Math.max(
-          starArr[selectedStageIndex],
+        const levelStars = [
+          ...(starsByLevel[String(selectedLevel)] ||
+            Array(STAGES_PER_LEVEL).fill(0)),
+        ];
+        levelStages[selectedStageIndex] = true;
+        levelStars[selectedStageIndex] = Math.max(
+          levelStars[selectedStageIndex] || 0,
           stars,
         );
-        newComp[key] = stages;
-        newStar[key] = starArr;
+        completedStages[String(selectedLevel)] = levelStages;
+        starsByLevel[String(selectedLevel)] = levelStars;
 
-        const allDone = stages.every(Boolean);
-        const newUnlocked = allDone
+        const unlockedLevel = levelStages.every(Boolean)
           ? Math.min(
               TOTAL_LEVELS,
-              Math.max(prev.unlockedLevel, selectedLevel + 1),
+              Math.max(prev.unlockedLevel, Number(selectedLevel) + 1),
             )
           : prev.unlockedLevel;
-
         const updated = {
           ...prev,
-          unlockedLevel: newUnlocked,
-          completedStages: newComp,
-          stars: newStar,
+          unlockedLevel,
+          recommendedLevel: unlockedLevel,
+          completedStages,
+          stars: starsByLevel,
+          totalCompletedStages: Object.values(completedStages).reduce(
+            (total, stages) => total + stages.filter(Boolean).length,
+            0,
+          ),
         };
         saveProgress(updated);
-
-        // Synchronize with backend
-        let totalCompletedStages = 0;
-        Object.keys(newComp).forEach((level) => {
-          totalCompletedStages += newComp[level].filter(Boolean).length;
-        });
-
-        let totalStars = 0;
-        Object.keys(newStar).forEach((level) => {
-          totalStars += newStar[level].reduce((sum, s) => sum + s, 0);
-        });
-
-        const maxStages = 6 * 5;
-        const completionPercent = Math.min(
-          100,
-          Math.round((totalCompletedStages / maxStages) * 100),
-        );
-
-        const authUser = getAuthUser();
-        const userId = authUser?.userId;
-        if (userId) {
-          // 1. تسجيل إن المرحلة دي خلصت
-          gameProgressAPI
-            .completeStage(userId, {
-              gameKey: "tomb_puzzle",
-              stageNumber: selectedStageIndex + 1,
-              score: correct * 10,
-              starsEarned: stars,
-            })
-            .catch((err) => {
-              console.error("Failed to complete stage on backend:", err);
-            });
-
-          gameProgressAPI
-            .update(userId, {
-              gameKey: "tomb_puzzle",
-              levelReached: newUnlocked,
-              completedStages: totalCompletedStages,
-              starsEarned: totalStars,
-              completionPercent,
-            })
-            .catch((err) => {
-              console.error("Failed to update backend progress:", err);
-            });
-        }
-
         return updated;
       });
+
+      stageFinishedRef.current = false;
+
+      return;
+    }
+
+    if (selectedLevel === null || selectedStageIndex === null) {
+      console.error(
+        "Cannot complete TombPuzzle stage: level/stage is missing.",
+      );
+
+      stageFinishedRef.current = false;
+
+      return;
+    }
+
+    const levelNumber = Number(selectedLevel);
+
+    const stageNumber = Number(selectedStageIndex) + 1;
+
+    const score = Number(correct) * 10;
+
+    const payload = {
+      gameKey: "tomb_puzzle",
+
+      levelNumber,
+
+      stageNumber,
+
+      score,
+
+      starsEarned: Number(stars),
+    };
+
+    try {
+      stageCompletionInFlightRef.current = true;
+
+      console.log("Completing TombPuzzle stage:", payload);
+
+      /*
+       * ONLY game progress write.
+       */
+      const completeResponse = await gameProgressAPI.completeStage(
+        userId,
+        payload,
+      );
+
+      console.log(
+        "TombPuzzle completeStage response:",
+        completeResponse?.data ?? completeResponse,
+      );
+
+      /*
+       * Re-fetch progress after completion.
+       * Backend remains the source of truth.
+       */
+      const progressResponse = await gameProgressAPI.getByUser(userId);
+
+      const progressList = progressResponse.data?.data || progressResponse.data;
+
+      console.log("TombPuzzle progress after completion:", progressList);
+
+      const normalized = normalizeBackendProgress(
+        progressList,
+        TOTAL_LEVELS,
+        STAGES_PER_LEVEL,
+      );
+
+      console.log(
+        "TombPuzzle normalized progress after completion:",
+        normalized,
+      );
+
+      setProgress(normalized);
+
+      saveProgress(normalized);
+
+      try {
+        const xpResponse = await profileAPI.awardXP(userId, score, true);
+        console.log(
+          "awardXP response (TombPuzzle):",
+          xpResponse?.data ?? xpResponse,
+        );
+      } catch (xpErr) {
+        console.warn("Could not award XP for TombPuzzle:", xpErr);
+      }
+    } catch (err) {
+      console.error("Failed to complete TombPuzzle stage on backend:", err);
+
+      console.error("Status:", err?.response?.status);
+
+      console.error("Response:", err?.response?.data);
+
+      console.error("Request body:", err?.config?.data);
+    } finally {
+      stageCompletionInFlightRef.current = false;
     }
   };
 
+  // ─────────────────────────────────────────────────────────────
+  // Hint
+  // ─────────────────────────────────────────────────────────────
+
   const useHint = () => {
-    if (hints <= 0 || notification.show || secretInfo.show) return;
+    if (hints <= 0 || notification.show || secretInfo.show) {
+      return;
+    }
+
     let firstError = 0;
+
     const correctWords = stageQuestions[questionIndex].sentence
       .trim()
       .split(/\s+/);
+
     while (
       firstError < userAnswer.length &&
       userAnswer[firstError] === correctWords[firstError]
     ) {
       firstError++;
     }
+
     const needed = correctWords[firstError];
-    if (!needed) return;
+
+    if (!needed) {
+      return;
+    }
+
     playSound("magic");
-    setHints(hints - 1);
+
+    setHints((prev) => prev - 1);
 
     const kept = userAnswer.slice(0, firstError);
+
     const removed = userAnswer.slice(firstError);
+
     const newAns = [...kept, needed];
+
     setUserAnswer(newAns);
 
     const newShuf = [...shuffledWords, ...removed];
+
     const rmIdx = newShuf.indexOf(needed);
-    if (rmIdx > -1) newShuf.splice(rmIdx, 1);
+
+    if (rmIdx > -1) {
+      newShuf.splice(rmIdx, 1);
+    }
+
     setShuffledWords(newShuf);
 
-    if (newAns.length === correctWords.length) checkAnswer(newAns);
+    if (newAns.length === correctWords.length) {
+      checkAnswer(newAns);
+    }
   };
 
-  // ── Treasure chest ────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Treasure chest
+  // ─────────────────────────────────────────────────────────────
+
   const openChest = () => {
-    if (chestOpened) return;
+    if (chestOpened) {
+      return;
+    }
+
     playSound("chest");
     playSound("win");
+
     setChestOpened(true);
+
     const artifact =
       allArtifacts[Math.floor(Math.random() * allArtifacts.length)];
+
     setReward(artifact);
+
     if (!myCollection.find((a) => a.id === artifact.id)) {
       const newColl = [...myCollection, artifact];
+
       setMyCollection(newColl);
+
       localStorage.setItem("pharaoh_treasures", JSON.stringify(newColl));
     }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Render loading
+  // ─────────────────────────────────────────────────────────────
+
+  const isLoading = dataLoading || progressLoading;
+
+  if (isLoading) {
+    return (
+      <div className={style["game-container"]}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            color: "#ffd700",
+            fontSize: "28px",
+            fontWeight: "bold",
+            flexDirection: "column",
+            gap: "15px",
+          }}
+        >
+          <div
+            style={{
+              width: "50px",
+              height: "50px",
+              border: "4px solid #ffd700",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          جارٍ فتح المقبرة... ⏳
+        </div>
+
+        <style>
+          {`
+            @keyframes spin {
+              0% {
+                transform: rotate(0deg);
+              }
+
+              100% {
+                transform: rotate(360deg);
+              }
+            }
+          `}
+        </style>
+      </div>
+    );
+  }
+
   return (
     <div className={style["game-container"]}>
       {/* Music toggle */}
+
       <button
         className={style["music-toggle"]}
         onClick={() => setIsMusicPlaying((p) => !p)}
@@ -748,12 +1326,15 @@ function TombPuzzle() {
         {isMusicPlaying ? "🔊" : "🔇"}
       </button>
 
-      {/* Secret info overlay (correct answer) */}
+      {/* Secret info overlay */}
+
       {secretInfo.show && (
         <div className={style["secret-overlay"]}>
           <div className={style["secret-scroll"]}>
             <h2>📜 بردية سرية اكتشفتها!</h2>
+
             <p>{secretInfo.text}</p>
+
             <button className={style["btn-next"]} onClick={handleNextQuestion}>
               {questionIndex + 1 < stageQuestions.length
                 ? "السؤال التالي ➡️"
@@ -763,36 +1344,23 @@ function TombPuzzle() {
         </div>
       )}
 
-      {/* Toast notification */}
+      {/* Toast */}
+
       {notification.show && (
         <div
-          className={`${style["notification-popup"]} ${style[notification.type]}`}
+          className={`${style["notification-popup"]} ${
+            style[notification.type]
+          }`}
         >
           {notification.message}
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: LOADING
-      ════════════════════════════════════════════════════════ */}
-      {dataLoading && (
-        <div className={style["start-screen"]}>
-          <div style={{ fontSize: "60px", animation: "pulse 1s infinite" }}>
-            ⏳
-          </div>
-          <h2 style={{ color: "#ffd700", marginTop: "20px" }}>
-            جارٍ فتح المقبرة...
-          </h2>
-          <p style={{ color: "#d4af37", opacity: 0.8 }}>
-            تحميل الألغاز من الخادم
-          </p>
-        </div>
-      )}
+      {/* ═══════════════════════════════════════════════════════════
+          LEVELS
+      ═══════════════════════════════════════════════════════════ */}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: LEVELS
-      ════════════════════════════════════════════════════════ */}
-      {!dataLoading && view === "levels" && (
+      {view === "levels" && (
         <div
           style={{
             width: "100%",
@@ -808,11 +1376,13 @@ function TombPuzzle() {
         >
           {showPretestModal && (
             <PretestWelcomeModal
-              unlockedLevel={progress.unlockedLevel}
+              unlockedLevel={progress.recommendedLevel}
               onDismiss={dismissPretestModal}
             />
           )}
-          {/* Top Bar with Exit */}
+
+          {/* Top bar */}
+
           <div
             style={{
               display: "flex",
@@ -839,6 +1409,7 @@ function TombPuzzle() {
             >
               🏺 مقبرة الأسرار
             </span>
+
             <button
               onClick={() => navigate("/home")}
               style={{
@@ -857,6 +1428,7 @@ function TombPuzzle() {
           </div>
 
           {/* Header */}
+
           <div
             style={{
               textAlign: "center",
@@ -878,14 +1450,20 @@ function TombPuzzle() {
             >
               🏺 مقبرة الأسرار 🏺
             </h1>
+
             <p
-              style={{ color: "#d4af37", margin: "6px 0 0", fontSize: "14px" }}
+              style={{
+                color: "#d4af37",
+                margin: "6px 0 0",
+                fontSize: "14px",
+              }}
             >
               اختر مستوى وابدأ رحلتك داخل المقبرة!
             </p>
           </div>
 
           {/* Error notice */}
+
           {dataError && (
             <div
               style={{
@@ -903,7 +1481,8 @@ function TombPuzzle() {
             </div>
           )}
 
-          {/* Level cards grid */}
+          {/* Level cards */}
+
           <div
             style={{
               display: "grid",
@@ -914,164 +1493,199 @@ function TombPuzzle() {
               paddingBottom: "30px",
             }}
           >
-            {Array.from({ length: TOTAL_LEVELS }, (_, i) => i + 1).map(
-              (levelNum) => {
-                const meta = LEVEL_META[levelNum];
-                const unlocked = isLevelUnlocked(levelNum);
-                const { done, pct, stars } = getLevelProgress(levelNum);
-                const isRecommended = levelNum === progress.recommendedLevel;
+            {Array.from(
+              {
+                length: TOTAL_LEVELS,
+              },
+              (_, i) => i + 1,
+            ).map((levelNum) => {
+              const meta = LEVEL_META[levelNum];
 
-                return (
-                  <div
-                    key={levelNum}
-                    onClick={() => {
-                      if (unlocked) {
-                        setSelectedLevel(levelNum);
-                        setView("stages");
-                      }
-                    }}
-                    style={{
-                      background: unlocked
-                        ? `linear-gradient(145deg, rgba(${hexToRgb(meta.color)},0.8), rgba(0,0,0,0.65))`
-                        : "rgba(30,20,10,0.75)",
-                      border: isRecommended
-                        ? "3px solid #ffd700"
-                        : `2px solid ${unlocked ? meta.color : "#555"}`,
-                      borderRadius: "20px",
-                      padding: "22px 18px",
-                      cursor: unlocked ? "pointer" : "not-allowed",
-                      opacity: unlocked ? 1 : 0.6,
-                      filter: unlocked ? "none" : "grayscale(70%)",
-                      transition: "all 0.3s ease",
-                      backdropFilter: "blur(8px)",
-                      direction: "rtl",
-                      position: "relative",
-                      overflow: "hidden",
-                      boxShadow: isRecommended
-                        ? `0 0 20px #ffd700, 0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
-                        : unlocked
-                          ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
-                          : "none",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (unlocked)
-                        e.currentTarget.style.transform = "translateY(-6px)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
-                    }}
-                  >
-                    {!unlocked && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "12px",
-                          left: "12px",
-                          fontSize: "20px",
-                          background: "rgba(0,0,0,0.4)",
-                          borderRadius: "50%",
-                          width: "36px",
-                          height: "36px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        🔒
-                      </div>
-                    )}
-                    {isRecommended && (
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          right: "10px",
-                          background:
-                            "linear-gradient(135deg, #ffd700, #b8860b)",
-                          color: "#1a0f00",
-                          padding: "4px 10px",
-                          borderRadius: "12px",
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                          zIndex: 2,
-                        }}
-                      >
-                        المستوى الموصى به ⭐
-                      </div>
-                    )}
+              const unlocked = isLevelUnlocked(levelNum);
+
+              const { done, pct, stars } = getLevelProgress(levelNum);
+
+              const isRecommended = levelNum === progress.recommendedLevel;
+
+              return (
+                <div
+                  key={levelNum}
+                  onClick={() => {
+                    if (unlocked) {
+                      setSelectedLevel(levelNum);
+
+                      setView("stages");
+                    }
+                  }}
+                  style={{
+                    background: unlocked
+                      ? `linear-gradient(145deg, rgba(${hexToRgb(
+                          meta.color,
+                        )},0.8), rgba(0,0,0,0.65))`
+                      : "rgba(30,20,10,0.75)",
+
+                    border: isRecommended
+                      ? "3px solid #ffd700"
+                      : `2px solid ${unlocked ? meta.color : "#555"}`,
+
+                    borderRadius: "20px",
+
+                    padding: "22px 18px",
+
+                    cursor: unlocked ? "pointer" : "not-allowed",
+
+                    opacity: unlocked ? 1 : 0.6,
+
+                    filter: unlocked ? "none" : "grayscale(70%)",
+
+                    transition: "all 0.3s ease",
+
+                    backdropFilter: "blur(8px)",
+
+                    direction: "rtl",
+
+                    position: "relative",
+
+                    overflow: "hidden",
+
+                    boxShadow: isRecommended
+                      ? `0 0 20px #ffd700, 0 8px 24px rgba(${hexToRgb(
+                          meta.color,
+                        )},0.3)`
+                      : unlocked
+                        ? `0 8px 24px rgba(${hexToRgb(meta.color)},0.3)`
+                        : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (unlocked) {
+                      e.currentTarget.style.transform = "translateY(-6px)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                  }}
+                >
+                  {!unlocked && (
                     <div
                       style={{
-                        color: meta.color,
-                        fontSize: "13px",
-                        fontWeight: 800,
-                        letterSpacing: "1px",
+                        position: "absolute",
+                        top: "12px",
+                        left: "12px",
+                        fontSize: "20px",
+                        background: "rgba(0,0,0,0.4)",
+                        borderRadius: "50%",
+                        width: "36px",
+                        height: "36px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {meta.icon} المستوى {levelNum}
+                      🔒
                     </div>
-                    <h3
+                  )}
+
+                  {isRecommended && (
+                    <div
                       style={{
-                        color: "#fff",
-                        margin: "8px 0 4px",
-                        fontSize: "16px",
-                        fontWeight: 800,
+                        position: "absolute",
+                        top: "10px",
+                        right: "10px",
+                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
+                        color: "#1a0f00",
+                        padding: "4px 10px",
+                        borderRadius: "12px",
+                        fontSize: "11px",
+                        fontWeight: "bold",
+                        boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+                        zIndex: 2,
                       }}
                     >
-                      {meta.name}
-                    </h3>
-                    <p
+                      المستوى الموصى به ⭐
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      color: meta.color,
+                      fontSize: "13px",
+                      fontWeight: 800,
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    {meta.icon} المستوى {levelNum}
+                  </div>
+
+                  <h3
+                    style={{
+                      color: "#fff",
+                      margin: "8px 0 4px",
+                      fontSize: "16px",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {meta.name}
+                  </h3>
+
+                  <p
+                    style={{
+                      color: "#d4af37",
+                      margin: 0,
+                      fontSize: "12px",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    {meta.focus}
+                  </p>
+
+                  <div
+                    style={{
+                      marginTop: "14px",
+                    }}
+                  >
+                    <div
                       style={{
-                        color: "#d4af37",
-                        margin: 0,
+                        display: "flex",
+                        justifyContent: "space-between",
+                        color: unlocked ? meta.color : "#888",
                         fontSize: "12px",
-                        fontStyle: "italic",
+                        fontWeight: 700,
+                        marginBottom: "5px",
                       }}
                     >
-                      {meta.focus}
-                    </p>
-                    <div style={{ marginTop: "14px" }}>
+                      <span>
+                        {done}/{STAGES_PER_LEVEL} مراحل
+                      </span>
+
+                      <span>{"★".repeat(stars)}</span>
+                    </div>
+
+                    <div
+                      style={{
+                        height: "8px",
+                        background: "rgba(255,255,255,0.1)",
+                        borderRadius: "4px",
+                        overflow: "hidden",
+                      }}
+                    >
                       <div
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          color: unlocked ? meta.color : "#888",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          marginBottom: "5px",
-                        }}
-                      >
-                        <span>
-                          {done}/{STAGES_PER_LEVEL} مراحل
-                        </span>
-                        <span>{"★".repeat(stars)}</span>
-                      </div>
-                      <div
-                        style={{
-                          height: "8px",
-                          background: "rgba(255,255,255,0.1)",
+                          height: "100%",
+                          width: `${pct}%`,
+                          background: `linear-gradient(90deg, ${meta.color}, #ffd700)`,
                           borderRadius: "4px",
-                          overflow: "hidden",
+                          transition: "width 0.5s ease",
                         }}
-                      >
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${pct}%`,
-                            background: `linear-gradient(90deg, ${meta.color}, #ffd700)`,
-                            borderRadius: "4px",
-                            transition: "width 0.5s ease",
-                          }}
-                        />
-                      </div>
+                      />
                     </div>
                   </div>
-                );
-              },
-            )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Collection button */}
+          {/* Collection */}
+
           <button
             onClick={() => setView("collection")}
             style={{
@@ -1090,10 +1704,11 @@ function TombPuzzle() {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: STAGES
-      ════════════════════════════════════════════════════════ */}
-      {!dataLoading && view === "stages" && selectedLevel && (
+      {/* ═══════════════════════════════════════════════════════════
+          STAGES
+      ═══════════════════════════════════════════════════════════ */}
+
+      {view === "stages" && selectedLevel && (
         <div
           style={{
             width: "100%",
@@ -1106,6 +1721,7 @@ function TombPuzzle() {
           }}
         >
           {/* Header */}
+
           <div
             style={{
               display: "flex",
@@ -1132,13 +1748,24 @@ function TombPuzzle() {
               >
                 {LEVEL_META[selectedLevel].icon} المستوى {selectedLevel}
               </div>
+
               <h2
-                style={{ color: "#fff", margin: "4px 0 0", fontSize: "18px" }}
+                style={{
+                  color: "#fff",
+                  margin: "4px 0 0",
+                  fontSize: "18px",
+                }}
               >
                 {LEVEL_META[selectedLevel].name}
               </h2>
             </div>
-            <div style={{ display: "flex", gap: "10px" }}>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+              }}
+            >
               <button
                 onClick={() => navigate("/home")}
                 style={{
@@ -1154,6 +1781,7 @@ function TombPuzzle() {
               >
                 خروج 🚪
               </button>
+
               <button
                 onClick={() => setView("levels")}
                 style={{
@@ -1173,6 +1801,7 @@ function TombPuzzle() {
           </div>
 
           {/* Stage nodes */}
+
           <div
             style={{
               display: "flex",
@@ -1188,139 +1817,178 @@ function TombPuzzle() {
               boxSizing: "border-box",
             }}
           >
-            {Array.from({ length: STAGES_PER_LEVEL }, (_, stageIdx) => {
-              const unlocked = isStageUnlocked(selectedLevel, stageIdx);
-              const stars = getStageStars(selectedLevel, stageIdx);
-              const color = LEVEL_META[selectedLevel].color;
-              const isRecommended =
-                selectedLevel === progress.recommendedLevel &&
-                stageIdx === (progress.recommendedStage - 1 || 0);
+            {Array.from(
+              {
+                length: STAGES_PER_LEVEL,
+              },
+              (_, stageIdx) => {
+                const unlocked = isStageUnlocked(selectedLevel, stageIdx);
 
-              return (
-                <div
-                  key={stageIdx}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    position: "relative",
-                    paddingTop: "28px",
-                  }}
-                >
-                  {isRecommended && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "4px",
-                        background: "linear-gradient(135deg, #ffd700, #b8860b)",
-                        color: "#1a0f00",
-                        padding: "2px 8px",
-                        borderRadius: "10px",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        whiteSpace: "nowrap",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
-                        zIndex: 2,
-                      }}
-                    >
-                      بداية المسار 🚀
-                    </div>
-                  )}
+                const stars = getStageStars(selectedLevel, stageIdx);
+
+                const color = LEVEL_META[selectedLevel].color;
+
+                const isRecommended =
+                  selectedLevel === progress.recommendedLevel &&
+                  stageIdx === progress.recommendedStage - 1;
+
+                return (
                   <div
-                    onClick={() => {
-                      if (unlocked) launchStage(selectedLevel, stageIdx);
-                    }}
+                    key={stageIdx}
                     style={{
-                      width: "88px",
-                      height: "88px",
-                      borderRadius: "50%",
-                      background: unlocked
-                        ? `radial-gradient(circle at 35% 35%, #fff8e0, ${color})`
-                        : "radial-gradient(circle at 35% 35%, #ccc, #777)",
-                      border: isRecommended
-                        ? `5px solid #ffd700`
-                        : `5px solid ${unlocked ? "#fff" : "#bbb"}`,
-                      boxShadow: isRecommended
-                        ? `0 0 18px #ffd700, 0 8px 20px rgba(${hexToRgb(color)},0.5)`
-                        : unlocked
-                          ? `0 8px 20px rgba(${hexToRgb(color)},0.5)`
-                          : "0 4px 10px rgba(0,0,0,0.3)",
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "32px",
-                      fontWeight: 900,
-                      color: unlocked ? "#3d1f00" : "#666",
-                      cursor: unlocked ? "pointer" : "not-allowed",
-                      transition:
-                        "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (unlocked) {
-                        e.currentTarget.style.transform =
-                          "scale(1.15) translateY(-5px)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "none";
+                      position: "relative",
+                      paddingTop: "28px",
                     }}
                   >
-                    {unlocked ? stageIdx + 1 : "🔒"}
-                  </div>
-                  <div
-                    style={{
-                      color: "#fff",
-                      fontSize: "12px",
-                      fontWeight: 700,
-                      marginTop: "8px",
-                      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-                    }}
-                  >
-                    المرحلة {stageIdx + 1}
-                  </div>
-                  <div
-                    style={{ display: "flex", gap: "2px", marginTop: "4px" }}
-                  >
-                    {[1, 2, 3].map((s) => (
-                      <span
-                        key={s}
+                    {isRecommended && (
+                      <div
                         style={{
-                          fontSize: "15px",
-                          color:
-                            s <= stars ? "#ffd700" : "rgba(255,255,255,0.2)",
-                          filter:
-                            s <= stars
-                              ? "drop-shadow(0 0 4px #ffd700)"
-                              : "none",
+                          position: "absolute",
+                          top: "4px",
+                          background:
+                            "linear-gradient(135deg, #ffd700, #b8860b)",
+                          color: "#1a0f00",
+                          padding: "2px 8px",
+                          borderRadius: "10px",
+                          fontSize: "10px",
+                          fontWeight: "bold",
+                          whiteSpace: "nowrap",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+                          zIndex: 2,
                         }}
                       >
-                        ★
-                      </span>
-                    ))}
+                        بداية المسار 🚀
+                      </div>
+                    )}
+
+                    <div
+                      onClick={() => {
+                        if (unlocked) {
+                          launchStage(selectedLevel, stageIdx);
+                        }
+                      }}
+                      style={{
+                        width: "88px",
+                        height: "88px",
+                        borderRadius: "50%",
+
+                        background: unlocked
+                          ? `radial-gradient(circle at 35% 35%, #fff8e0, ${color})`
+                          : "radial-gradient(circle at 35% 35%, #ccc, #777)",
+
+                        border: isRecommended
+                          ? "5px solid #ffd700"
+                          : `5px solid ${unlocked ? "#fff" : "#bbb"}`,
+
+                        boxShadow: isRecommended
+                          ? `0 0 18px #ffd700, 0 8px 20px rgba(${hexToRgb(
+                              color,
+                            )},0.5)`
+                          : unlocked
+                            ? `0 8px 20px rgba(${hexToRgb(color)},0.5)`
+                            : "0 4px 10px rgba(0,0,0,0.3)",
+
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "32px",
+                        fontWeight: 900,
+                        color: unlocked ? "#3d1f00" : "#666",
+                        cursor: unlocked ? "pointer" : "not-allowed",
+
+                        transition:
+                          "all 0.3s cubic-bezier(0.175,0.885,0.32,1.275)",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (unlocked) {
+                          e.currentTarget.style.transform =
+                            "scale(1.15) translateY(-5px)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "none";
+                      }}
+                    >
+                      {unlocked ? stageIdx + 1 : "🔒"}
+                    </div>
+
+                    <div
+                      style={{
+                        color: "#fff",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        marginTop: "8px",
+                        textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
+                      }}
+                    >
+                      المرحلة {stageIdx + 1}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "2px",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {[1, 2, 3].map((s) => (
+                        <span
+                          key={s}
+                          style={{
+                            fontSize: "15px",
+                            color:
+                              s <= stars ? "#ffd700" : "rgba(255,255,255,0.2)",
+                            filter:
+                              s <= stars
+                                ? "drop-shadow(0 0 4px #ffd700)"
+                                : "none",
+                          }}
+                        >
+                          ★
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              },
+            )}
           </div>
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: GAME
-      ════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════════
+          GAME
+      ═══════════════════════════════════════════════════════════ */}
+
       {view === "game" && stageQuestions.length > 0 && !stageResult && (
         <div className={style["game-screen"]}>
           <img
             src="/tomb/pharaoh.png"
             alt="Pharaoh"
-            className={`${style["character-avatar"]} ${pharaohMood === "happy" ? style["avatar-happy"] : pharaohMood === "angry" ? style["avatar-angry"] : style["bounce"]}`}
+            className={`${style["character-avatar"]} ${
+              pharaohMood === "happy"
+                ? style["avatar-happy"]
+                : pharaohMood === "angry"
+                  ? style["avatar-angry"]
+                  : style["bounce"]
+            }`}
           />
 
           <div className={style["status-bar"]}>
             <span>
               المستوى {selectedLevel} | المرحلة {selectedStageIndex + 1}
             </span>
-            <span style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+
+            <span
+              style={{
+                display: "flex",
+                gap: "4px",
+                alignItems: "center",
+              }}
+            >
               {[...Array(3)].map((_, i) => (
                 <span
                   key={i}
@@ -1371,7 +2039,8 @@ function TombPuzzle() {
           </h2>
 
           <div className={style["puzzle-container"]}>
-            {/* Answer area + hint */}
+            {/* Answer area */}
+
             <div className={style["answer-wrapper"]}>
               <button
                 className={style["hint-btn"]}
@@ -1379,16 +2048,27 @@ function TombPuzzle() {
                 disabled={hints === 0}
                 title="مساعدة"
               >
-                💡 <div className={style["hint-badge"]}>{hints}</div>
+                💡
+                <div className={style["hint-badge"]}>{hints}</div>
               </button>
+
               <div className={style["answer-box"]}>
                 {userAnswer.length === 0 ? (
-                  <span style={{ opacity: 0.5 }}>رتب الكلمات هنا...</span>
+                  <span
+                    style={{
+                      opacity: 0.5,
+                    }}
+                  >
+                    رتب الكلمات هنا...
+                  </span>
                 ) : null}
+
                 {userAnswer.map((word, idx) => (
                   <span
                     key={idx}
-                    className={`${style["word-card"]} ${style["user-word"]} ${style["clickable"]}`}
+                    className={`${style["word-card"]} ${style["user-word"]} ${
+                      style["clickable"]
+                    }`}
                     onClick={() => handleReturnWord(word, idx)}
                   >
                     {word}
@@ -1398,6 +2078,7 @@ function TombPuzzle() {
             </div>
 
             {/* Word pool */}
+
             <div className={style["words-pool"]}>
               {shuffledWords.map((word, idx) => (
                 <button
@@ -1415,6 +2096,7 @@ function TombPuzzle() {
             className={style["btn-secondary"]}
             onClick={() => {
               setView("stages");
+
               setIsMusicPlaying(false);
             }}
           >
@@ -1423,9 +2105,10 @@ function TombPuzzle() {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: STAGE RESULT
-      ════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════════
+          STAGE RESULT
+      ═══════════════════════════════════════════════════════════ */}
+
       {view === "game" && stageResult && (
         <div
           className={
@@ -1433,14 +2116,22 @@ function TombPuzzle() {
               ? style["victory-screen"]
               : style["gameover-screen"]
           }
-          style={{ zIndex: 100 }}
+          style={{
+            zIndex: 100,
+          }}
         >
           {stageResult.passed ? (
             <>
               {!chestOpened ? (
                 <>
                   <h1>🎉 مبروك يا بطل! 🎉</h1>
-                  <div style={{ fontSize: "28px", margin: "8px 0" }}>
+
+                  <div
+                    style={{
+                      fontSize: "28px",
+                      margin: "8px 0",
+                    }}
+                  >
                     {[1, 2, 3].map((s) => (
                       <span
                         key={s}
@@ -1449,6 +2140,7 @@ function TombPuzzle() {
                             s <= stageResult.stars
                               ? "#ffd700"
                               : "rgba(255,255,255,0.2)",
+
                           textShadow:
                             s <= stageResult.stars
                               ? "0 0 12px #ffd700"
@@ -1459,25 +2151,39 @@ function TombPuzzle() {
                       </span>
                     ))}
                   </div>
+
                   <p>
                     الصحيحة: {stageResult.correct} / {stageResult.total}
                   </p>
+
                   <p>لقد وجدت صندوق كنز قديم!</p>
+
                   <button className={style["chest-btn"]} onClick={openChest}>
                     🎁
                   </button>
+
                   <p>اضغط لفتح الصندوق</p>
                 </>
               ) : (
                 <>
                   <div className={style["artifact-reveal"]}>
                     <h1>✨ اكتشاف مذهل! ✨</h1>
+
                     <span className={style["artifact-icon"]}>
                       {reward?.icon}
                     </span>
-                    <h2 style={{ color: "#ffd700" }}>{reward?.name}</h2>
+
+                    <h2
+                      style={{
+                        color: "#ffd700",
+                      }}
+                    >
+                      {reward?.name}
+                    </h2>
+
                     <p>تمت إضافته إلى متحفك</p>
                   </div>
+
                   <div
                     style={{
                       display: "flex",
@@ -1486,7 +2192,6 @@ function TombPuzzle() {
                       flexWrap: "wrap",
                     }}
                   >
-                    {/* Next stage if available */}
                     {selectedStageIndex + 1 < STAGES_PER_LEVEL &&
                       isStageUnlocked(
                         selectedLevel,
@@ -1500,9 +2205,11 @@ function TombPuzzle() {
                           المرحلة التالية ▶️
                         </button>
                       )}
+
                     <button onClick={() => setView("collection")}>
                       الذهاب للمتحف 🏛️
                     </button>
+
                     <button
                       onClick={() =>
                         launchStage(selectedLevel, selectedStageIndex)
@@ -1510,6 +2217,7 @@ function TombPuzzle() {
                     >
                       إعادة المرحلة 🔄
                     </button>
+
                     <button onClick={() => setView("stages")}>
                       خريطة المراحل 🗺️
                     </button>
@@ -1519,14 +2227,30 @@ function TombPuzzle() {
             </>
           ) : (
             <>
-              <div style={{ fontSize: "80px", marginBottom: "20px" }}>☠️</div>
-              <h1 style={{ color: "#e74c3c", textShadow: "0 0 10px red" }}>
+              <div
+                style={{
+                  fontSize: "80px",
+                  marginBottom: "20px",
+                }}
+              >
+                ☠️
+              </div>
+
+              <h1
+                style={{
+                  color: "#e74c3c",
+                  textShadow: "0 0 10px red",
+                }}
+              >
                 محاولة فاشلة!
               </h1>
+
               <p>
                 الصحيحة: {stageResult.correct} / {stageResult.total}
               </p>
+
               <p>لا تستسلم! أعد المحاولة.</p>
+
               <div
                 style={{
                   display: "flex",
@@ -1545,6 +2269,7 @@ function TombPuzzle() {
                 >
                   إعادة نفس المرحلة 🔄
                 </button>
+
                 <button
                   className={style["btn-secondary"]}
                   onClick={() => setView("stages")}
@@ -1557,26 +2282,33 @@ function TombPuzzle() {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          VIEW: COLLECTION
-      ════════════════════════════════════════════════════════ */}
+      {/* ═══════════════════════════════════════════════════════════
+          COLLECTION
+      ═══════════════════════════════════════════════════════════ */}
+
       {view === "collection" && (
         <div className={style["start-screen"]}>
           <h2>🏆 مجموعتي الأثرية</h2>
+
           <p>
             لقد جمعت {myCollection.length} من {allArtifacts.length} كنوز
           </p>
+
           <div className={style["collection-grid"]}>
             {allArtifacts.map((artifact) => {
               const unlocked = myCollection.find((a) => a.id === artifact.id);
+
               return (
                 <div
                   key={artifact.id}
-                  className={`${style["artifact-slot"]} ${unlocked ? style["unlocked"] : style["locked"]}`}
+                  className={`${style["artifact-slot"]} ${
+                    unlocked ? style["unlocked"] : style["locked"]
+                  }`}
                 >
                   <span className={style["slot-icon"]}>
                     {unlocked ? artifact.icon : "🔒"}
                   </span>
+
                   <span className={style["slot-name"]}>
                     {unlocked ? artifact.name : "؟؟؟"}
                   </span>
@@ -1584,6 +2316,7 @@ function TombPuzzle() {
               );
             })}
           </div>
+
           <button
             className={style["btn-secondary"]}
             onClick={() => setView("levels")}
@@ -1597,10 +2330,14 @@ function TombPuzzle() {
 }
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
+
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
+
   const g = parseInt(hex.slice(3, 5), 16);
+
   const b = parseInt(hex.slice(5, 7), 16);
+
   return `${r},${g},${b}`;
 }
 

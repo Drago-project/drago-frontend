@@ -1,3 +1,4 @@
+import { readLastXpAttempt, clearLastXpAttempt } from "../utils/xpDebug";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -404,8 +405,27 @@ function Profile() {
           xp: data.totalXp,
           streak: data.streakDays,
         }));
+        setLastXp(readLastXpAttempt());
       })
       .catch((err) => console.error("XP error:", err));
+  };
+
+  const [lastXp, setLastXp] = useState(() => readLastXpAttempt());
+
+  const handleRefreshProfile = () => {
+    if (!userId) return;
+    profileAPI
+      .get(userId)
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        setUserData((prev) => ({ ...prev, xp: data.totalXp || prev.xp }));
+      })
+      .catch((err) => console.error("Profile refresh error:", err));
+  };
+
+  const handleClearLastXp = () => {
+    clearLastXpAttempt();
+    setLastXp(null);
   };
 
   const handleSaveChanges = () => {
@@ -524,6 +544,29 @@ function Profile() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+              <div style={{ marginTop: 16 }}>
+                <strong>Last XP Award:</strong>
+                {lastXp ? (
+                  <div style={{ marginTop: 8 }}>
+                    <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>
+                      {JSON.stringify(lastXp, null, 2)}
+                    </pre>
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={handleRefreshProfile} style={{ marginRight: 8 }}>
+                        Refresh Profile XP
+                      </button>
+                      <button onClick={handleClearLastXp}>Clear</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 8 }}>
+                    <em>No recent XP award recorded.</em>
+                    <div style={{ marginTop: 8 }}>
+                      <button onClick={handleRefreshProfile}>Refresh Profile XP</button>
+                    </div>
+                  </div>
+                )}
+              </div>
           </div>
 
           {/* Individual Games Stats Grid */}

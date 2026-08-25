@@ -1,15 +1,22 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import LanguageToggle from "./LanguageToggle";
 import styles from "../styles/NavBar.module.css";
 import logo from "../assets/backgrunds/web-logo.png";
+import { isGuestMode } from "../server/auth";
 
 function NavInside() {
   const { i18n } = useTranslation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isGuest, setIsGuest] = useState(isGuestMode);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsGuest(isGuestMode());
+  }, [location.pathname]);
 
   // Handle scroll effect
   useEffect(() => {
@@ -31,6 +38,7 @@ function NavInside() {
   const handleLogout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+    localStorage.removeItem("drago_guest_mode");
 
     closeMobileMenu();
     navigate("/");
@@ -83,24 +91,37 @@ function NavInside() {
             </NavLink>
           </li> */}
 
-          <li className={styles.navItem}>
-            <NavLink
-              to="/profile"
-              className={({ isActive }) =>
-                `${styles.navLink} ${isActive ? styles.active : ""}`
-              }
-            >
-              {i18n.language === "ar" ? "حسابي" : "My Account"}
-            </NavLink>
-          </li>
-          <li className={styles.navItem}>
-            <button
-              onClick={handleLogout}
-              className={`${styles.navLink} ${styles.authButton}`}
-            >
-              {i18n.language === "ar" ? "تسجيل الخروج" : "Logout"}
-            </button>
-          </li>
+          {isGuest ? (
+            <li className={styles.navItem}>
+              <NavLink
+                to="/auth/signup"
+                className={`${styles.navLink} ${styles.authButton}`}
+              >
+                {i18n.language === "ar" ? "اشتراك" : "Sign Up"}
+              </NavLink>
+            </li>
+          ) : (
+            <>
+              <li className={styles.navItem}>
+                <NavLink
+                  to="/profile"
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.active : ""}`
+                  }
+                >
+                  {i18n.language === "ar" ? "حسابي" : "My Account"}
+                </NavLink>
+              </li>
+              <li className={styles.navItem}>
+                <button
+                  onClick={handleLogout}
+                  className={`${styles.navLink} ${styles.authButton}`}
+                >
+                  {i18n.language === "ar" ? "تسجيل الخروج" : "Logout"}
+                </button>
+              </li>
+            </>
+          )}
         </ul>
 
         {/* Mobile Menu Button */}
@@ -141,23 +162,37 @@ function NavInside() {
               </NavLink>
             </li>
 
-            <li className={styles.mobileNavItem}>
-              <NavLink
-                to="/profile"
-                className={styles.mobileNavLink}
-                onClick={closeMobileMenu}
-              >
-                {i18n.language === "ar" ? "حسابي" : "My Account"}
-              </NavLink>
-            </li>
-            <li className={styles.mobileNavItem}>
-              <button
-                onClick={handleLogout}
-                className={`${styles.mobileNavLink} ${styles.authButton}`}
-              >
-                {i18n.language === "ar" ? "تسجيل الخروج" : "Logout"}
-              </button>
-            </li>
+            {isGuest ? (
+              <li className={styles.mobileNavItem}>
+                <NavLink
+                  to="/auth/signup"
+                  className={`${styles.mobileNavLink} ${styles.authButton}`}
+                  onClick={closeMobileMenu}
+                >
+                  {i18n.language === "ar" ? "اشتراك" : "Sign Up"}
+                </NavLink>
+              </li>
+            ) : (
+              <>
+                <li className={styles.mobileNavItem}>
+                  <NavLink
+                    to="/profile"
+                    className={styles.mobileNavLink}
+                    onClick={closeMobileMenu}
+                  >
+                    {i18n.language === "ar" ? "حسابي" : "My Account"}
+                  </NavLink>
+                </li>
+                <li className={styles.mobileNavItem}>
+                  <button
+                    onClick={handleLogout}
+                    className={`${styles.mobileNavLink} ${styles.authButton}`}
+                  >
+                    {i18n.language === "ar" ? "تسجيل الخروج" : "Logout"}
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </div>
